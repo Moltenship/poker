@@ -1219,7 +1219,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/pages/Home.tsx, src/components/CreateRoomForm.tsx, src/components/JoinRoomForm.tsx, src/pages/__tests__/Home.test.tsx`
   - Pre-commit: `npx vitest run`
 
-- [ ] 13. Room View Layout: Sidebar + Voting Area + Participants
+- [x] 13. Room View Layout: Sidebar + Voting Area + Participants
 
   **What to do**:
   - Create `src/pages/Room.tsx` — main room page with 3-panel layout:
@@ -1325,7 +1325,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/pages/Room.tsx, src/components/TaskSidebar.tsx, src/components/ParticipantList.tsx, src/pages/__tests__/Room.test.tsx`
   - Pre-commit: `npx vitest run`
 
-- [ ] 14. Voting Interface: Card Deck, Selection, Indicators
+- [x] 14. Voting Interface: Card Deck, Selection, Indicators
 
   **What to do**:
   - Create `src/components/CardDeck.tsx`:
@@ -1420,7 +1420,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/components/CardDeck.tsx, src/components/VoteCard.tsx, src/components/VoteIndicator.tsx, src/components/__tests__/CardDeck.test.tsx`
   - Pre-commit: `npx vitest run`
 
-- [ ] 15. Results Panel: Reveal, Average, Distribution, Hours Input
+- [x] 15. Results Panel: Reveal, Average, Distribution, Hours Input
 
   **What to do**:
   - Create `src/components/ResultsPanel.tsx`:
@@ -1518,7 +1518,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/components/ResultsPanel.tsx, src/components/VoteDistribution.tsx, src/components/HoursInput.tsx, src/components/FinalEstimateSelector.tsx, tests`
   - Pre-commit: `npx vitest run`
 
-- [ ] 16. Jira Import Modal: Project Input, JQL, Progress, Errors
+- [x] 16. Jira Import Modal: Project Input, JQL, Progress, Errors
 
   **What to do**:
   - Create `src/components/JiraImportModal.tsx`:
@@ -1621,7 +1621,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/components/JiraImportModal.tsx, src/components/__tests__/JiraImportModal.test.tsx`
   - Pre-commit: `npx vitest run`
 
-- [ ] 17. Room History Page: Past Rooms, Estimates
+- [x] 17. Room History Page: Past Rooms, Estimates
 
   **What to do**:
   - Create `src/pages/History.tsx`:
@@ -1704,7 +1704,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/pages/History.tsx, src/components/RoomCard.tsx, src/pages/__tests__/History.test.tsx`
   - Pre-commit: `npx vitest run`
 
-- [ ] 18. Identity Flow: Name Entry, Returning User Detection, Session Takeover UX
+- [x] 18. Identity Flow: Name Entry, Returning User Detection, Session Takeover UX
 
   **What to do**:
   - **REPLACES Task 13's temporary inline identity prompt** with a full-featured modal flow:

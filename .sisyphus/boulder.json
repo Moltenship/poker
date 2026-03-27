@@ -16,7 +16,11 @@
     "ses_2d02000e9ffetRpaS77oMZlfgS",
     "ses_2d01635a5ffejr6qLAqw19Cfi4",
     "ses_2d0107851ffeMnX0uLGT4jLOaB",
-    "ses_2d00fd182ffes9thcL4K2ph9ZH"
+    "ses_2d00fd182ffes9thcL4K2ph9ZH",
+    "ses_2d00f7c93ffeFg2ze1vpo9UdDv",
+    "ses_2d0102338ffeeyeB17CAVkHCzS",
+    "ses_2d010ccefffeGFi7gdKFWQ8q2U",
+    "ses_2cffa27c8ffeimzzsI0NZLcqAp"
   ],
   "plan_name": "planning-poker",
   "task_sessions": {
@@ -91,6 +95,24 @@
       "agent": "Sisyphus-Junior",
       "category": "visual-engineering",
       "updated_at": "2026-03-27T15:33:47.971Z"
+    },
+    "todo:13": {
+      "task_key": "todo:13",
+      "task_label": "13",
+      "task_title": "Room View Layout: Sidebar + Voting Area + Participants",
+      "session_id": "ses_2d010ccefffeGFi7gdKFWQ8q2U",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-03-27T15:55:33.234Z"
+    },
+    "todo:18": {
+      "task_key": "todo:18",
+      "task_label": "18",
+      "task_title": "Identity Flow: Name Entry, Returning User Detection, Session Takeover UX",
+      "session_id": "ses_2cffa27c8ffeimzzsI0NZLcqAp",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-03-27T16:09:46.604Z"
     }
   }
 }
