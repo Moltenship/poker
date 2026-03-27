@@ -1,8 +1,12 @@
 import { convexTest } from "convex-test";
 import schema from "./schema";
+import * as api from "./_generated/api";
 
 test("convex-test round-trips a rooms document", async () => {
-  const t = convexTest(schema, {});
+  const modules = {
+    "../_generated/api": () => Promise.resolve({ default: api }),
+  };
+  const t = convexTest(schema, modules);
   await t.run(async (ctx) => {
     const id = await ctx.db.insert("rooms", {
       name: "Sprint 1",
