@@ -1,0 +1,17 @@
+
+ RUN  v4.1.2 /Users/tmaksimov/pgm/poker
+
+ ✓ convex/__tests__/tasks.test.ts > tasks > addTask creates a manual task with auto-incremented order 43ms
+ ✓ convex/__tests__/tasks.test.ts > tasks > importTasks upserts by jiraKey — no duplicates on reimport 5ms
+ ✓ convex/__tests__/tasks.test.ts > tasks > getTasksForRoom returns tasks ordered by order field 2ms
+ ✓ convex/__tests__/tasks.test.ts > tasks > setHoursEstimate persists hours 1ms
+ ✓ convex/__tests__/tasks.test.ts > tasks > setFinalEstimate persists estimate 1ms
+ ✓ convex/__tests__/tasks.test.ts > tasks > setCurrentTask updates room currentTaskIndex 1ms
+ ✓ convex/__tests__/tasks.test.ts > tasks > deleteTask removes manual tasks 1ms
+ ✓ convex/__tests__/tasks.test.ts > tasks > deleteTask throws for imported (non-manual) tasks 1ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  19:12:05
+   Duration  628ms (transform 55ms, setup 47ms, import 46ms, tests 55ms, environment 387ms)
+

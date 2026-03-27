@@ -1,0 +1,165 @@
+import { v } from "convex/values";
+import { query, mutation } from "./_generated/server";
+import { sessionMutation } from "./lib/sessions";
+
+export const addTask = sessionMutation({
+  args: {
+    roomId: v.id("rooms"),
+    title: v.string(),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("tasks")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const maxOrder = existing.length > 0 ? Math.max(...existing.map((t) => t.order)) : 0;
+
+    return await ctx.db.insert("tasks", {
+      roomId: args.roomId,
+      title: args.title,
+      description: args.description,
+      order: maxOrder + 1,
+      isManual: true,
+    });
+  },
+});
+
+export const importTasks = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    tasks: v.array(
+      v.object({
+        jiraKey: v.string(),
+        title: v.string(),
+        description: v.union(v.string(), v.null()),
+        jiraUrl: v.union(v.string(), v.null()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const existingTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    let maxOrder =
+      existingTasks.length > 0 ? Math.max(...existingTasks.map((t) => t.order)) : 0;
+
+    for (const task of args.tasks) {
+      const existing = await ctx.db
+        .query("tasks")
+        .withIndex("by_room_jira_key", (q) =>
+          q.eq("roomId", args.roomId).eq("jiraKey", task.jiraKey)
+        )
+        .unique();
+
+      if (existing) {
+        await ctx.db.patch(existing._id, {
+          title: task.title,
+          description: task.description ?? undefined,
+          jiraUrl: task.jiraUrl ?? undefined,
+        });
+      } else {
+        maxOrder += 1;
+        await ctx.db.insert("tasks", {
+          roomId: args.roomId,
+          jiraKey: task.jiraKey,
+          title: task.title,
+          description: task.description ?? undefined,
+          jiraUrl: task.jiraUrl ?? undefined,
+          order: maxOrder,
+          isManual: false,
+        });
+      }
+    }
+  },
+});
+
+export const getTasksForRoom = query({
+  args: { roomId: v.id("rooms") },
+  handler: async (ctx, args) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    return tasks.sort((a, b) => a.order - b.order);
+  },
+});
+
+export const getCurrentTask = query({
+  args: { roomId: v.id("rooms") },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) return null;
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const sorted = tasks.sort((a, b) => a.order - b.order);
+    return sorted[room.currentTaskIndex] ?? null;
+  },
+});
+
+export const setHoursEstimate = sessionMutation({
+  args: {
+    taskId: v.id("tasks"),
+    hours: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.taskId, { hoursEstimate: args.hours });
+  },
+});
+
+export const setFinalEstimate = sessionMutation({
+  args: {
+    taskId: v.id("tasks"),
+    estimate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.taskId, { finalEstimate: args.estimate });
+  },
+});
+
+export const setCurrentTask = sessionMutation({
+  args: {
+    roomId: v.id("rooms"),
+    taskIndex: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+
+    if (args.taskIndex < 0 || args.taskIndex >= tasks.length) {
+      throw new Error(`Task index ${args.taskIndex} out of range (${tasks.length} tasks)`);
+    }
+
+    await ctx.db.patch(args.roomId, {
+      currentTaskIndex: args.taskIndex,
+      status: "voting",
+    });
+  },
+});
+
+export const reorderTask = sessionMutation({
+  args: {
+    taskId: v.id("tasks"),
+    newOrder: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.taskId, { order: args.newOrder });
+  },
+});
+
+export const deleteTask = sessionMutation({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) throw new Error("Task not found");
+    if (!task.isManual) throw new Error("Cannot delete imported tasks");
+    await ctx.db.delete(args.taskId);
+  },
+});

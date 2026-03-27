@@ -200,3 +200,12 @@ src/
 - Convex React hooks use tuple-style rest args, so local wrapper hooks need to build `OptionalRestArgs` / `OptionalRestArgsOrSkip` tuples explicitly for type-safe session injection.
 - Installing `convex-helpers` changed the dependency tree enough that `@testing-library/dom` had to be restored explicitly for existing React Testing Library tests to keep passing.
 - Adding `"types": ["vitest/globals"]` to the root `tsconfig.json` is required here so test files included in the build graph still pass `tsc -b` and `npm run build`.
+
+## [2026-03-27] Task: T9
+
+- **convex-test module discovery**: The `modules` arg to `convexTest()` must include ALL convex function files, not just `_generated/api`. The correct pattern for tests inside `convex/__tests__/` is `import.meta.glob("../**/*.ts")` — this captures all `*.ts` files in the `convex/` directory including `_generated/`. Passing only `{ "../_generated/api": ... }` causes "Could not find module" errors for any function module (rooms, tasks, etc.) because convex-test resolves the root from `_generated` then looks up function paths like `tasks` in the full map.
+- **Named vs namespace import for api**: When using `import.meta.glob` modules, import `{ api }` from `"../_generated/api"` (named export). When using manual modules map, the old code used `import * as api from` which produces `api.api.xxx` double prefix. With named `{ api }` import, refs are simply `api.tasks.addTask`.
+- **importTasks as plain mutation**: `importTasks` is a plain `mutation` (not `sessionMutation`) because it will be called from a Convex action in T11 (Jira import). Actions run server-side without a browser session, so wrapping with sessionMutation would require a dummy sessionId.
+- **Upsert by jiraKey**: The `by_room_jira_key` index on `["roomId", "jiraKey"]` enables O(1) lookup for upsert. Since `jiraKey` is optional in the schema, the index only applies to documents where jiraKey is defined — which is all imported tasks. Query with `.withIndex("by_room_jira_key", q => q.eq("roomId", id).eq("jiraKey", key)).unique()` returns null for missing docs.
+- **deleteTask guards**: Throwing `"Cannot delete imported tasks"` when `!task.isManual` provides a clean contract. Manual tasks (created via `addTask`) have `isManual: true`; imported tasks have `isManual: false`.
+- **Pre-existing test failures**: `rooms.test.ts` and `participants.test.ts` were already broken before T9 (wrong modules map pattern + `api.api.xxx` double-prefix for participants). These are 13 pre-existing failures, not regressions from T9.
