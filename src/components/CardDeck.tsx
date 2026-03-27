@@ -13,14 +13,7 @@ interface CardDeckProps {
   onVoteChange?: (value: string) => void;
 }
 
-export function CardDeck({
-  cardSet,
-  currentVote,
-  roomStatus,
-  taskId,
-  participantId,
-  onVoteChange,
-}: CardDeckProps) {
+export function CardDeck({ cardSet, currentVote, roomStatus, taskId, participantId, onVoteChange }: CardDeckProps) {
   const castVote = useSessionMutation((api as any).voting.castVote);
 
   const handleVote = useCallback(
@@ -32,21 +25,16 @@ export function CardDeck({
   );
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-4">
-      {cardSet.map((value) => {
-        const isSelected = value === currentVote;
-        const isDisabled = roomStatus !== "voting";
-
-        return (
-          <VoteCard
-            key={value}
-            value={value}
-            isSelected={isSelected}
-            isDisabled={isDisabled}
-            onClick={() => handleVote(value)}
-          />
-        );
-      })}
+    <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+      {cardSet.map((value) => (
+        <VoteCard
+          key={value}
+          value={value}
+          isSelected={value === currentVote}
+          isDisabled={roomStatus !== "voting"}
+          onClick={() => handleVote(value)}
+        />
+      ))}
     </div>
   );
 }

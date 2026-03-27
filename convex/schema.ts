@@ -48,6 +48,7 @@ export default defineSchema({
     finalEstimate: v.optional(v.string()),
     hoursEstimate: v.optional(v.number()),
     isManual: v.boolean(),
+    isQuickVote: v.optional(v.boolean()),
   })
     .index("by_room", ["roomId"])
     .index("by_room_jira_key", ["roomId", "jiraKey"]),

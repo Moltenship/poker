@@ -21,16 +21,16 @@ export function AddTaskForm({ roomId, onSuccess }: AddTaskFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
       setError("Title is required");
       return;
     }
-    
+
     setError(null);
     setIsPending(true);
-    
+
     try {
       await addTask({
         roomId,
@@ -48,44 +48,37 @@ export function AddTaskForm({ roomId, onSuccess }: AddTaskFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3" data-testid="add-task-form">
-      <div>
-        <label htmlFor="task-title" className="text-sm font-medium mb-1 block">
-          Task title
-        </label>
-        <Input
-          id="task-title"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            if (error) setError(null);
-          }}
-          placeholder="e.g. Implement login"
-          maxLength={200}
-          disabled={isPending}
-        />
-        {error && <p className="text-sm text-destructive mt-1">{error}</p>}
-      </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2" data-testid="add-task-form">
+      <Input
+        id="task-title"
+        value={title}
+        onChange={(e) => {
+          setTitle(e.target.value);
+          if (error) setError(null);
+        }}
+        placeholder="Task title"
+        maxLength={200}
+        disabled={isPending}
+        className="text-[13px]"
+      />
+      {error && <p className="text-[12px] text-destructive">{error}</p>}
 
-      <div>
-        <label htmlFor="task-description" className="text-sm font-medium mb-1 block">
-          Description (optional)
-        </label>
-        <textarea
-          id="task-description"
-          rows={2}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add more details..."
-          disabled={isPending}
-          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        />
-      </div>
+      <textarea
+        id="task-description"
+        rows={2}
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Description (optional)"
+        disabled={isPending}
+        className="w-full rounded-md bg-muted/80 px-2.5 py-1.5 text-[13px] outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring/50 disabled:opacity-50 resize-none"
+      />
 
-      <Button type="submit" disabled={isPending} className="w-full">
-        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Add Task
-      </Button>
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={isPending} className="flex-1 text-[13px]">
+          {isPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+          Add Task
+        </Button>
+      </div>
     </form>
   );
 }

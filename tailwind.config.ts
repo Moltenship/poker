@@ -7,7 +7,11 @@ export default {
     './src/**/*.{ts,tsx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Geist Variable', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 } satisfies Config

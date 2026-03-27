@@ -52,6 +52,38 @@ async function upsertImportedTasks(
   }
 }
 
+export const ensureQuickVoteTask = sessionMutation({
+  args: { roomId: v.id("rooms") },
+  handler: async (ctx, args) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const existing = tasks.find((t) => t.isQuickVote);
+    if (existing) {
+      const sorted = tasks.sort((a, b) => a.order - b.order);
+      const idx = sorted.findIndex((t) => t._id === existing._id);
+      await ctx.db.patch(args.roomId, { currentTaskIndex: idx });
+      return existing._id;
+    }
+    const id = await ctx.db.insert("tasks", {
+      roomId: args.roomId,
+      title: "Quick Vote",
+      order: 0,
+      isManual: false,
+      isQuickVote: true,
+    });
+    const allTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const sorted = allTasks.sort((a, b) => a.order - b.order);
+    const idx = sorted.findIndex((t) => t._id === id);
+    await ctx.db.patch(args.roomId, { currentTaskIndex: idx });
+    return id;
+  },
+});
+
 export const addTask = sessionMutation({
   args: {
     roomId: v.id("rooms"),
@@ -194,6 +226,32 @@ export const deleteTask = sessionMutation({
     const task = await ctx.db.get(args.taskId);
     if (!task) throw new Error("Task not found");
     if (!task.isManual) throw new Error("Cannot delete imported tasks");
+
+    const roomId = task.roomId;
     await ctx.db.delete(args.taskId);
+
+    const room = await ctx.db.get(roomId);
+    if (!room) return;
+
+    if (room.status === "voting" || room.status === "revealed") {
+      const remaining = await ctx.db
+        .query("tasks")
+        .withIndex("by_room", (q) => q.eq("roomId", roomId))
+        .collect();
+      const sorted = remaining.sort((a, b) => a.order - b.order);
+
+      if (sorted.length === 0) {
+        await ctx.db.insert("tasks", {
+          roomId,
+          title: "Quick Vote",
+          order: 0,
+          isManual: false,
+          isQuickVote: true,
+        });
+        await ctx.db.patch(roomId, { currentTaskIndex: 0 });
+      } else if (room.currentTaskIndex >= sorted.length) {
+        await ctx.db.patch(roomId, { currentTaskIndex: sorted.length - 1 });
+      }
+    }
   },
 });

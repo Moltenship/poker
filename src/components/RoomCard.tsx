@@ -1,6 +1,5 @@
 import { Id } from "../../convex/_generated/dataModel"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { ChevronRight } from "lucide-react"
 
 interface RoomCardProps {
   room: {
@@ -18,60 +17,29 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
   const formattedDate = new Date(room._creationTime).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
   })
 
-  const getStatusBadge = (status: RoomCardProps["room"]["status"]) => {
-    switch (status) {
-      case "lobby":
-        return <Badge variant="secondary">In Lobby</Badge>
-      case "voting":
-        return <Badge variant="default">Voting</Badge>
-      case "revealed":
-        return <Badge className="bg-green-600 text-white hover:bg-green-700">Results</Badge>
-      default:
-        return null
-    }
-  }
-
-  const formatCardSet = (cardSet: string[]) => {
-    if (cardSet.length <= 3) {
-      return cardSet.join(", ")
-    }
-    return `${cardSet.slice(0, 3).join(", ")}...`
-  }
+  const statusLabel = { lobby: "Lobby", voting: "Voting", revealed: "Done" }[room.status]
+  const statusColor = {
+    lobby: "text-muted-foreground",
+    voting: "text-primary",
+    revealed: "text-emerald-500",
+  }[room.status]
 
   return (
-    <Card
-      className="cursor-pointer transition-colors hover:bg-muted/50"
+    <button
+      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent group"
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault()
-          onClick()
-        }
-      }}
     >
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-bold line-clamp-1" title={room.name}>
-          {room.name}
-        </CardTitle>
-        <div className="ml-4 shrink-0">{getStatusBadge(room.status)}</div>
-      </CardHeader>
-      <CardContent className="grid gap-2 text-sm text-muted-foreground">
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1">
-            Code: <Badge variant="outline" className="font-mono">{room.roomCode}</Badge>
-          </span>
-          <span>{formattedDate}</span>
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-medium truncate">{room.name}</div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <code className="text-[11px] text-muted-foreground font-mono">{room.roomCode}</code>
+          <span className="text-[11px] text-muted-foreground">{formattedDate}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-foreground">Cards:</span>
-          <span>{formatCardSet(room.cardSet)}</span>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+      <span className={`text-[11px] font-medium ${statusColor}`}>{statusLabel}</span>
+      <ChevronRight className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground shrink-0 transition-colors" />
+    </button>
   )
 }

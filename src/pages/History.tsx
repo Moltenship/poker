@@ -1,53 +1,36 @@
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { api } from "../../convex/_generated/api"
 import { useSessionQuery } from "@/hooks/useSession"
 import { RoomCard } from "@/components/RoomCard"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 
 export default function History() {
   const rooms = useSessionQuery(api.rooms.listMyRooms, {})
   const navigate = useNavigate()
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Room History</h1>
+    <div className="mx-auto max-w-2xl px-4 py-10">
+      <div className="mb-6">
+        <h1 className="text-lg font-semibold tracking-tight">History</h1>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">Your recent sessions</p>
       </div>
 
       {rooms === undefined ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="flex flex-row justify-between space-y-0 pb-2">
-                <div className="h-6 w-3/4 rounded bg-muted"></div>
-                <div className="h-5 w-16 rounded-full bg-muted"></div>
-              </CardHeader>
-              <CardContent className="space-y-4 pt-4">
-                <div className="flex justify-between">
-                  <div className="h-4 w-24 rounded bg-muted"></div>
-                  <div className="h-4 w-24 rounded bg-muted"></div>
-                </div>
-                <div className="h-4 w-full rounded bg-muted"></div>
-              </CardContent>
-            </Card>
+            <div key={i} className="h-14 rounded-lg border border-border animate-pulse bg-muted/30" />
           ))}
         </div>
       ) : rooms.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
-          <h2 className="mb-2 text-2xl font-semibold tracking-tight">
-            No rooms yet
-          </h2>
-          <p className="mb-6 text-muted-foreground">
-            You haven't participated in any planning poker rooms recently.
+        <div className="flex flex-col items-center justify-center rounded-lg bg-accent/30 py-12 text-center">
+          <h2 className="text-sm font-medium mb-1">No rooms yet</h2>
+          <p className="text-[13px] text-muted-foreground mb-4">
+            Create a room to get started.
           </p>
-          <Button onClick={() => navigate("/")}>
-            Create a Room
-          </Button>
+          <Button size="sm" className="h-7 text-[13px]" onClick={() => navigate("/")}>Create Room</Button>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-2">
           {rooms.map((room) => (
             <RoomCard
               key={room._id}

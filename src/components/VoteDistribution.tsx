@@ -23,30 +23,25 @@ export function VoteDistribution({ votes, cardSet }: VoteDistributionProps) {
   });
 
   return (
-    <div className="flex flex-col gap-3 py-4 w-full">
-      <h3 className="text-sm font-medium">Vote Distribution</h3>
-      <div className="flex flex-col gap-2">
+    <div className="space-y-1.5">
+      <h3 className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Distribution</h3>
+      <div className="space-y-1">
         {sortedValues.map((value) => {
           const count = voteCounts[value];
           const percentage = (count / maxVotes) * 100;
-          const voters = votes
-            .filter((v) => v.value === value)
-            .map((v) => v.displayName)
-            .join(", ");
+          const voters = votes.filter((v) => v.value === value).map((v) => v.displayName).join(", ");
 
           return (
-            <div key={value} className="flex items-center gap-3">
-              <div className="w-12 text-right font-medium">{value}</div>
-              <div className="flex-1 max-w-[200px]">
+            <div key={value} className="flex items-center gap-2">
+              <span className="w-6 text-right text-[13px] font-medium text-foreground/70">{value}</span>
+              <div className="flex-1 max-w-[140px]">
                 <div
-                  className="h-4 bg-primary rounded-sm transition-all duration-500"
-                  style={{ width: `${percentage}%` }}
+                  className="h-2.5 bg-primary/60 rounded-sm transition-all duration-500"
+                  style={{ width: `${percentage}%`, minWidth: percentage > 0 ? '3px' : '0' }}
                   title={voters}
                 />
               </div>
-              <div className="w-20 text-sm text-muted-foreground">
-                {count} {count === 1 ? "vote" : "votes"}
-              </div>
+              <span className="text-[11px] text-muted-foreground w-4">{count}</span>
             </div>
           );
         })}
