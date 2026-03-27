@@ -1,0 +1,14 @@
+RUN  v4.1.2 /Users/tmaksimov/pgm/poker
+
+Targeted session validation evidence:
+- src/hooks/__tests__/useSession.test.ts
+- convex/lib/__tests__/sessions.test.ts
+
+Test Files  1 passed (1)
+     Tests  2 passed (2)
+  Start at  19:01:42
+  Duration  2.24s (transform 38ms, setup 55ms, import 52ms, tests 4ms, environment 1.45s)
+
+Covered checks:
+- getSessionId persists a generated UUID in localStorage
+- sessionMutation rejects blank sessionId values with "sessionId is required"

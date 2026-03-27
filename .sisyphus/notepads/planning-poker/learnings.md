@@ -190,3 +190,13 @@ src/
 - Add test utilities: `@testing-library/user-event` for interaction testing
 - Create helpers for Convex mutation/query testing (currently smoke test uses raw db ops)
 - Consider snapshot testing for UI components when stabilized
+
+## [2026-03-27 19:02] Task: T6
+
+### Session Management with convex-helpers
+- `convex-helpers` installs cleanly in this repo only with `--legacy-peer-deps` because the package declares an optional `typescript@^5.5` peer while the project is already on TypeScript 6.0.2.
+- The real `customMutation` / `customQuery` API in `convex-helpers/server/customFunctions` matches the middleware pattern from the task: wrapper args are merged into validation, `input()` can strip `sessionId` from handler args, and returned `ctx` fields are added to the Convex handler context.
+- `convex-test` can exercise a wrapped custom mutation directly with `t.mutation(customMutationRef, args)` as long as the modules map includes `"../_generated/api"`.
+- Convex React hooks use tuple-style rest args, so local wrapper hooks need to build `OptionalRestArgs` / `OptionalRestArgsOrSkip` tuples explicitly for type-safe session injection.
+- Installing `convex-helpers` changed the dependency tree enough that `@testing-library/dom` had to be restored explicitly for existing React Testing Library tests to keep passing.
+- Adding `"types": ["vitest/globals"]` to the root `tsconfig.json` is required here so test files included in the build graph still pass `tsc -b` and `npm run build`.
