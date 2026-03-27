@@ -1,0 +1,32 @@
+Task T8: Participant Service — Rejoin / No-Duplicate Evidence
+==============================================================
+
+Test: "joinRoom again with same session returns same participant (no duplicate)"
+
+Scenario:
+  1. Session A joins room → participant record created (id = P1)
+  2. Session A calls joinRoom again (same roomId, same sessionId)
+  3. Returns same id P1 (no new document inserted)
+  4. getParticipants returns exactly 1 participant
+  5. Participant is connected with updated displayName
+
+This confirms deduplication via by_room_session index lookup:
+  ctx.db.query("participants")
+    .withIndex("by_room_session", q =>
+      q.eq("roomId", roomId).eq("sessionId", sessionId))
+    .unique()
+  → if found: patch isConnected+displayName, return existing _id
+  → if not: insert new record
+
+Verified by running:
+  npm test -- convex/__tests__/participants.test.ts --reporter=verbose
+
+Test output:
+  ✓ convex/__tests__/participants.test.ts > participants > joinRoom creates a participant                                   5ms
+  ✓ convex/__tests__/participants.test.ts > participants > joinRoom again with same session returns same participant (no duplicate) 2ms
+
+Full test suite result:
+  Test Files  1 passed (1)
+       Tests  8 passed (8)
+    Start at  19:15:10
+    Duration  590ms

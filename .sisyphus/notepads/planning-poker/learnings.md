@@ -224,3 +224,16 @@ src/
 - **sessionMutation/sessionQuery arg injection**: Handler receives `ctx.sessionId` (stripped from args by wrapper). The test must pass `sessionId` as a top-level arg: `t.mutation(api.api.rooms.createRoom, { sessionId: "...", name: "...", ... })`.
 - **api.api.rooms.xxx double-prefix**: When importing `import * as api from "../_generated/api"`, the named `api` export (= `anyApi`) lives at `api.api`. Function refs must use `api.api.rooms.createRoom`, not `api.rooms.createRoom`.
 - **nanoid(8)** generates 8-char URL-safe strings matching `/^[A-Za-z0-9_-]{8}$/`.
+
+## [2026-03-27] Task: T8 — Participant Service
+
+- **convex-test direct function import pattern**: When tests live in `convex/__tests__/`, the `api.api.xxx` double-prefix pattern breaks at runtime for `sessionMutation`/`sessionQuery` wrappers. The working pattern is to import functions directly and pass them to `t.mutation()`/`t.query()`:
+  ```typescript
+  import { joinRoom, leaveRoom, getParticipants } from "../participants";
+  await t.mutation(joinRoom, { sessionId: "...", roomId, displayName: "Alice" });
+  ```
+- **sessionMutation test arg injection**: `sessionMutation` strips `sessionId` from the handler args and places it on `ctx.sessionId`. Tests must pass `sessionId` as a top-level arg alongside the declared mutation args.
+- **by_room_session index for deduplication**: `joinRoom` uses `.withIndex("by_room_session", q => q.eq("roomId", ...).eq("sessionId", ...)).unique()` to find an existing participant before inserting. This guarantees idempotent joins — same session rejoining gets the same document id.
+- **takeoverSession pattern**: Validates the participant exists (`db.get(participantId)`) then patches `sessionId` to the caller's `ctx.sessionId`. The old session effectively loses ownership. No separate claim-token needed since `ctx.sessionId` is injected by the session middleware and cannot be spoofed.
+- **Presence via isConnected flag**: Participants are never deleted. `leaveRoom` sets `isConnected: false`; `joinRoom` and `heartbeat` set it back to `true`. `listRoomParticipants` exposes all (for facilitators); `getParticipants` can filter to connected-only.
+- **stderr "Convex functions should not directly call other Convex functions"**: These are expected warnings from convex-test when using direct function references. They do not cause test failures and are a known limitation of the test harness — not a production concern.
