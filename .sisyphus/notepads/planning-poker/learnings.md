@@ -46,3 +46,45 @@ src/
 - TypeScript check: ✓ no errors
 - Build output: ✓ dist/ generated (283KB uncompressed, 90KB gzip)
 - All routes working: / → Home, /room/:roomCode → Room, /history → History, * → 404
+
+## Tailwind + shadcn/ui Setup (Task 2)
+
+### Key Installation Steps
+- Installed `tailwindcss@^3` (NOT v4 — shadcn incompatible with v4)
+- Added peer dependencies: `class-variance-authority`, `clsx`, `tailwind-merge`
+- shadcn/ui init auto-configured with `--defaults` flag
+  - Used Radix component library + Nova preset (Lucide icons + Geist font)
+  - Created `components.json` with proper Tailwind + import alias config
+
+### Configuration Files Created
+- `postcss.config.js` — tailwindcss + autoprefixer
+- `tailwind.config.ts` — typed config with content paths to `./index.html` and `./src/**/*.{ts,tsx}`
+- Updated `src/index.css`:
+  - `@import "tw-animate-css"` (shadcn animations)
+  - `@import "shadcn/tailwind.css"` (shadcn theme)
+  - `@import "@fontsource-variable/geist"` (Geist font)
+  - `@tailwind` directives
+  - CSS custom properties for theme tokens (oklch color space for light/dark modes)
+
+### Component Installation
+- shadcn/ui auto-installed `button` during init
+- Manually added: `input`, `card`, `dialog`, `select`, `badge`, `separator`, `scroll-area`
+- All components in `src/components/ui/` using proper shadcn structure
+
+### Build Verification
+- `npm run build` ✓ exit code 0
+- Dist output: 30KB gzipped CSS, 90KB gzipped JS
+- MinifyCSS warnings about `@theme`, `@utility` directives (from tw-animate-css) are harmless — not build errors
+
+### Theme System
+- CSS variables use oklch color space (perceptually uniform)
+- Light mode: white background, dark text
+- Dark mode (`.dark` class): dark background, light text
+- Additional variables: primary, secondary, chart colors, sidebar theme
+- Destructive state red defined via oklch
+
+### Integration Notes
+- `@fontsource-variable/geist` auto-installed for Geist font
+- Import alias `@/` already configured, shadcn honored it in components.json
+- PostCSS runs before Tailwind to process imports
+- No custom styling needed — shadcn defaults perfectly styled

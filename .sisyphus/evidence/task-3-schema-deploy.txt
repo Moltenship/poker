@@ -1,0 +1,5 @@
+CONVEX_AGENT_MODE=anonymous mode is in beta, functionality may change in the future.
+- Preparing Convex functions...
+
+Convex AI files are not installed. Run npx convex ai-files install to get started or npx convex ai-files disable to hide this message.
+[32m✔[39m 18:46:18 Convex functions ready! (482.52ms)

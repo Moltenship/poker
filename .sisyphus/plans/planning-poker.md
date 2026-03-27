@@ -315,7 +315,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `package.json, vite.config.ts, tsconfig.json, src/main.tsx, src/App.tsx, src/routes/`
   - Pre-commit: `npm run build`
 
-- [ ] 2. Tailwind CSS + shadcn/ui Setup + Theme Tokens
+- [x] 2. Tailwind CSS + shadcn/ui Setup + Theme Tokens
 
   **What to do**:
   - Install and configure Tailwind CSS v4 (or v3 if shadcn requires it)
