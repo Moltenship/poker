@@ -119,7 +119,7 @@ describe("IdentityFlow", () => {
 
     await user.click(screen.getByLabelText(/i've joined this room before/i));
     await user.click(screen.getByRole("combobox", { name: /your name/i }));
-    await user.click(screen.getByRole("option", { name: "Alice" }));
+    await user.click(await screen.findByRole("option", { name: "Alice" }));
     expect(screen.getByRole("combobox", { name: /your name/i })).toHaveTextContent("p1");
     await user.click(screen.getByRole("button", { name: /rejoin and disconnect other session/i }));
 

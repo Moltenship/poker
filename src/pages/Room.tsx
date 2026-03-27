@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -9,6 +9,8 @@ import { TaskListManager } from "@/components/TaskListManager";
 import { ParticipantList } from "@/components/ParticipantList";
 import { IdentityFlow } from "@/components/IdentityFlow";
 import { SessionKickedBanner } from "@/components/SessionKickedBanner";
+import { CardDeck } from "@/components/CardDeck";
+import { ResultsPanel } from "@/components/ResultsPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -42,6 +44,7 @@ export default function Room() {
   const votedIds = voteStatus?.filter((v: any) => v.hasVoted).map((v: any) => v.participantId) || [];
   const showVoteStatus = room?.status === "voting";
   const autoRejoinKeyRef = useRef<string | null>(null);
+  const [currentVote, setCurrentVote] = useState<string | null>(null);
 
   useEffect(() => {
     if (!room?._id || !participantId || !displayName) {
@@ -132,7 +135,13 @@ export default function Room() {
   return (
     <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-background">
       <aside className="w-full md:w-80 border-b md:border-b-0 md:border-r bg-muted/10 shrink-0 h-1/3 md:h-auto overflow-hidden">
-        <TaskListManager roomId={room._id} tasks={tasks || []} currentTaskIndex={room.currentTaskIndex} />
+        <TaskListManager
+          roomId={room._id}
+          tasks={tasks || []}
+          currentTaskIndex={room.currentTaskIndex}
+          importStatus={room.importStatus}
+          importError={room.importError}
+        />
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 bg-background relative h-1/3 md:h-auto">
@@ -177,15 +186,32 @@ export default function Room() {
             </div>
           )}
 
-          {room.status === "voting" && (
-            <div data-testid="voting-area" className="flex-1 flex items-center justify-center">
-              <p className="text-muted-foreground">Voting Area (Task 14)</p>
-            </div>
-          )}
-
-          {room.status === "revealed" && (
-            <div data-testid="results-area" className="flex-1 flex items-center justify-center">
-              <p className="text-muted-foreground">Results Area (Task 15)</p>
+          {(room.status === "voting" || room.status === "revealed") && currentTask && participantId && (
+            <div data-testid="voting-area" className="flex-1 flex flex-col items-center justify-center gap-8 p-6">
+              <div className="w-full max-w-2xl">
+                <h2 className="text-xl font-semibold mb-2">{currentTask.title}</h2>
+                {currentTask.description && (
+                  <p className="text-sm text-muted-foreground mb-6">{currentTask.description}</p>
+                )}
+              </div>
+              {room.status === "voting" && (
+                <CardDeck
+                  cardSet={room.cardSet}
+                  currentVote={currentVote}
+                  roomStatus={room.status}
+                  taskId={currentTask._id}
+                  participantId={participantId}
+                  onVoteChange={setCurrentVote}
+                />
+              )}
+              <ResultsPanel
+                roomId={room._id}
+                taskId={currentTask._id}
+                roomStatus={room.status}
+                cardSet={room.cardSet}
+                participantCount={participants?.length ?? 0}
+                votedCount={votedIds.length}
+              />
             </div>
           )}
         </div>

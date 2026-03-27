@@ -1,15 +1,10 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { vi, describe, it, expect, beforeEach } from "vitest"
 import { JiraImportModal } from "../JiraImportModal"
-import { useQuery } from "convex/react"
-import { useSessionMutation } from "@/hooks/useSession"
+import { useMutation } from "convex/react"
 
 vi.mock("convex/react", () => ({
-  useQuery: vi.fn(),
-}))
-
-vi.mock("@/hooks/useSession", () => ({
-  useSessionMutation: vi.fn(),
+  useMutation: vi.fn(),
 }))
 
 describe("JiraImportModal", () => {
@@ -25,8 +20,7 @@ describe("JiraImportModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(useQuery).mockReturnValue({ status: "idle" })
-    vi.mocked(useSessionMutation).mockReturnValue(mockTriggerImport)
+    vi.mocked(useMutation).mockReturnValue(mockTriggerImport as any)
   })
 
   it("renders form with project key input and JQL textarea", () => {
@@ -48,7 +42,7 @@ describe("JiraImportModal", () => {
     expect(screen.queryByText(/Re-import will update existing tasks/i)).not.toBeInTheDocument()
   })
 
-  it("import button calls triggerJiraImport mutation", async () => {
+  it("import button calls importFromJira mutation", async () => {
     render(<JiraImportModal {...defaultProps} />)
     
     const projectKeyInput = screen.getByPlaceholderText("e.g. PROJ")
@@ -62,15 +56,13 @@ describe("JiraImportModal", () => {
     await waitFor(() => {
       expect(mockTriggerImport).toHaveBeenCalledWith({
         roomId: "room123",
-        projectKey: "BOARD",
-        jqlFilter: "status = Open",
+        jql: "status = Open",
       })
     })
   })
 
   it("shows loading state when import is in progress", () => {
-    vi.mocked(useQuery).mockReturnValue({ status: "importing" })
-    render(<JiraImportModal {...defaultProps} />)
+    render(<JiraImportModal {...defaultProps} importStatus="loading" />)
     
     expect(screen.getByText("Importing tasks from Jira...")).toBeInTheDocument()
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument()
@@ -78,30 +70,22 @@ describe("JiraImportModal", () => {
   })
 
   it("shows error state when importStatus=error with error message", () => {
-    vi.mocked(useQuery).mockReturnValue({ status: "error", error: "Failed to connect to Jira" })
-    render(<JiraImportModal {...defaultProps} />)
+    render(<JiraImportModal {...defaultProps} importStatus="error" importError="Failed to connect to Jira" />)
     
     expect(screen.getByText("Failed to connect to Jira")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument()
   })
 
   it("shows success state when importStatus=success", () => {
-    vi.mocked(useQuery).mockReturnValue({ status: "success", taskCount: 5 })
-    render(<JiraImportModal {...defaultProps} />)
+    render(<JiraImportModal {...defaultProps} importStatus="success" />)
     
     expect(screen.getByText("Import complete!")).toBeInTheDocument()
     expect(screen.getByText(/Imported successfully/i)).toBeInTheDocument()
-    expect(screen.getByText(/5/)).toBeInTheDocument()
     expect(screen.getAllByRole("button", { name: "Close" }).length).toBeGreaterThan(0)
   })
 
   it("Try Again button resets to idle state locally when in error", async () => {
-    // Initial render with error state
-    const { rerender } = render(<JiraImportModal {...defaultProps} />)
-    
-    // Simulate query returning error
-    vi.mocked(useQuery).mockReturnValue({ status: "error", error: "Jira timeout" })
-    rerender(<JiraImportModal {...defaultProps} />)
+    render(<JiraImportModal {...defaultProps} importStatus="error" importError="Jira timeout" />)
     
     const tryAgainButton = screen.getByRole("button", { name: "Try Again" })
     fireEvent.click(tryAgainButton)

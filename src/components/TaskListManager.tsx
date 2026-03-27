@@ -24,15 +24,21 @@ interface TaskListManagerProps {
   roomId: Id<"rooms">;
   tasks: Task[];
   currentTaskIndex: number;
+  importStatus?: "idle" | "loading" | "success" | "error";
+  importError?: string;
 }
 
-export function TaskListManager({ roomId, tasks, currentTaskIndex }: TaskListManagerProps) {
+export function TaskListManager({
+  roomId,
+  tasks,
+  currentTaskIndex,
+  importStatus,
+  importError,
+}: TaskListManagerProps) {
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [isAddingTask, setIsAddingTask] = useState(false);
 
-  // @ts-expect-error api not strictly typed here
   const setCurrentTask = useSessionMutation(api.tasks.setCurrentTask);
-  // @ts-expect-error api not strictly typed here
   const deleteTask = useSessionMutation(api.tasks.deleteTask);
 
   const handleTaskClick = async (index: number) => {
@@ -141,6 +147,8 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex }: TaskListMan
         isOpen={isJiraModalOpen}
         onClose={() => setIsJiraModalOpen(false)}
         hasExistingTasks={tasks.length > 0}
+        importStatus={importStatus}
+        importError={importError}
       />
     </Card>
   );

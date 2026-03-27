@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { useQuery } from "convex/react"
 import { useSessionId, useSessionMutation } from "@/hooks/useSession"
@@ -30,6 +30,18 @@ vi.mock("@/components/SessionKickedBanner", () => ({
   SessionKickedBanner: () => <div data-testid="session-kicked-banner">Session Kicked Banner</div>,
 }))
 
+vi.mock("@/components/CardDeck", () => ({
+  CardDeck: ({ taskId, participantId }: { taskId: string; participantId: string }) => (
+    <div data-testid="card-deck">Card Deck {taskId} {participantId}</div>
+  ),
+}))
+
+vi.mock("@/components/ResultsPanel", () => ({
+  ResultsPanel: ({ roomStatus }: { roomStatus: string }) => (
+    <div data-testid="results-panel">Results {roomStatus}</div>
+  ),
+}))
+
 const mockRoom = {
   _id: "room123",
   name: "Test Room",
@@ -41,7 +53,7 @@ const mockRoom = {
 }
 
 const mockTasks = [
-  { _id: "task1", roomId: "room123", title: "Task 1", order: 1, isManual: true },
+  { _id: "task1", roomId: "room123", title: "Task 1", description: "Task 1 description", order: 1, isManual: true },
   { _id: "task2", roomId: "room123", title: "Task 2", order: 2, isManual: true },
 ]
 
@@ -197,7 +209,7 @@ describe("Room Layout", () => {
       expect(btn).toBeDisabled()
     })
 
-    it("renders voting placeholder when status is voting", () => {
+    it("renders card deck and results panel when status is voting", () => {
       let taskQueryCount = 0;
       vi.mocked(useQuery).mockImplementation((...argsArray: any[]) => {
         const args = argsArray[1];
@@ -215,10 +227,15 @@ describe("Room Layout", () => {
       });
 
       renderWithRouter("/room/TESTCODE")
-      expect(screen.getByTestId("voting-area")).toBeInTheDocument()
+      const votingArea = screen.getByTestId("voting-area")
+      expect(votingArea).toBeInTheDocument()
+      expect(within(votingArea).getByRole("heading", { name: "Task 1" })).toBeInTheDocument()
+      expect(within(votingArea).getByText("Task 1 description")).toBeInTheDocument()
+      expect(within(votingArea).getByTestId("card-deck")).toBeInTheDocument()
+      expect(within(votingArea).getByTestId("results-panel")).toBeInTheDocument()
     })
 
-    it("renders results placeholder when status is revealed", () => {
+    it("renders results panel without card deck when status is revealed", () => {
       let taskQueryCount = 0;
       vi.mocked(useQuery).mockImplementation((...argsArray: any[]) => {
         const args = argsArray[1];
@@ -236,7 +253,9 @@ describe("Room Layout", () => {
       });
 
       renderWithRouter("/room/TESTCODE")
-      expect(screen.getByTestId("results-area")).toBeInTheDocument()
+      expect(screen.getByTestId("voting-area")).toBeInTheDocument()
+      expect(screen.queryByTestId("card-deck")).not.toBeInTheDocument()
+      expect(screen.getByTestId("results-panel")).toBeInTheDocument()
     })
   })
 })

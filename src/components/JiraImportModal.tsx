@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
-import { useQuery } from "convex/react"
-import { useSessionMutation } from "@/hooks/useSession"
+import { useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import { Id } from "../../convex/_generated/dataModel"
 import {
@@ -18,6 +17,8 @@ interface JiraImportModalProps {
   isOpen: boolean
   onClose: () => void
   hasExistingTasks: boolean
+  importStatus?: "idle" | "loading" | "success" | "error"
+  importError?: string
 }
 
 export function JiraImportModal({
@@ -25,21 +26,20 @@ export function JiraImportModal({
   isOpen,
   onClose,
   hasExistingTasks,
+  importStatus,
+  importError,
 }: JiraImportModalProps) {
   const [projectKey, setProjectKey] = useState("")
   const [jqlFilter, setJqlFilter] = useState("")
-  const [localStatus, setLocalStatus] = useState<"idle" | "importing" | "error" | "success">("idle")
+  const [localStatus, setLocalStatus] = useState<"idle" | "loading" | "error" | "success">("idle")
 
-  // @ts-expect-error Backend not updated yet
-  const triggerImport = useSessionMutation(api.jira.triggerJiraImport)
-  // @ts-expect-error Backend not updated yet
-  const importStatusQuery = useQuery(api.jira.getImportStatus, { roomId }) as { status: "idle" | "importing" | "error" | "success", error?: string, taskCount?: number } | undefined
+  const triggerImport = useMutation(api.jira.importFromJira)
 
   useEffect(() => {
-    if (importStatusQuery && importStatusQuery.status !== "idle") {
-      setLocalStatus(importStatusQuery.status as "idle" | "importing" | "error" | "success")
+    if (importStatus && importStatus !== "idle") {
+      setLocalStatus(importStatus)
     }
-  }, [importStatusQuery?.status])
+  }, [importStatus])
 
   useEffect(() => {
     if (!isOpen) {
@@ -51,12 +51,11 @@ export function JiraImportModal({
 
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLocalStatus("importing")
+    setLocalStatus("loading")
     try {
       await triggerImport({
         roomId,
-        projectKey,
-        jqlFilter: jqlFilter.trim() || undefined,
+        jql: jqlFilter.trim() || undefined,
       })
     } catch (err: any) {
       setLocalStatus("error")
@@ -113,7 +112,7 @@ export function JiraImportModal({
           </form>
         )}
 
-        {localStatus === "importing" && (
+        {localStatus === "loading" && (
           <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
             <Loader2 data-testid="loading-spinner" className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Importing tasks from Jira...</p>
@@ -124,12 +123,12 @@ export function JiraImportModal({
           <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
             <CheckCircle2 className="h-12 w-12 text-green-500" />
             <div className="space-y-1">
-              <h3 className="font-semibold text-lg">Import complete!</h3>
-              <p className="text-sm text-muted-foreground">
-                Imported successfully. {importStatusQuery?.taskCount || 0} tasks added.
-              </p>
-            </div>
-            <Button onClick={onClose} className="mt-4 w-full">Close</Button>
+                <h3 className="font-semibold text-lg">Import complete!</h3>
+                <p className="text-sm text-muted-foreground">
+                  Imported successfully.
+                </p>
+              </div>
+              <Button onClick={onClose} className="mt-4 w-full">Close</Button>
           </div>
         )}
 
@@ -139,7 +138,7 @@ export function JiraImportModal({
             <div className="space-y-1">
               <h3 className="font-semibold text-lg text-destructive">Import Failed</h3>
               <p className="text-sm text-muted-foreground">
-                {importStatusQuery?.error || "An unknown error occurred"}
+                {importError || "An unknown error occurred"}
               </p>
             </div>
             <Button onClick={handleTryAgain} variant="outline" className="mt-4 w-full">

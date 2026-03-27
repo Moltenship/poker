@@ -314,3 +314,37 @@ Jira Cloud imports fit the existing Convex architecture best as a public mutatio
 - Successfully built `AddTaskForm` and `TaskListManager` components integrating Convex session mutations.
 - Leveraged `vi.mock` for `useSessionMutation` to mock different backend procedures cleanly without over-relying on `.name` properties since it might become obfuscated or unavailable.
 - Safely swapped `<TaskSidebar>` with `<TaskListManager>` in `Room.tsx` without deleting `TaskSidebar.tsx` and updated respective test files using `data-testid` correctly.
+
+
+## [2026-03-27 20:24] Task: F1 — Plan Compliance Audit
+- The implementation satisfies all 11 requested Must Have checks from the plan when audited against the specified source files and required test commands.
+- `npm test` passed with 117/117 tests, and `npx vitest run convex/__tests__/voting.test.ts` passed with 11/11 tests.
+- Forbidden-pattern grep checks produced only acceptable false positives: `PUT.*jira` matched `input` in a Jira type line, `customfield_10016` appears only in Jira test fixtures, and `"use node"` appears only in generated Convex docs.
+
+## F2: Code Quality Patterns Observed (Fri Mar 28 2026)
+
+### Convex API Type Workaround
+- Custom hooks `useSessionMutation` and `useSessionQuery` lack proper generic typing
+- All callers use `(api as any).module.fn` cast as workaround — 14 prod occurrences
+- This is systematic, not random — one root cause
+
+### Error Handling Pattern
+- All async operations use try/catch + console.error (10 occurrences)
+- No empty catch blocks — all errors are at minimum logged
+- No console.log debug statements in production code
+
+### Test File `as any` Pattern
+- Convex test harness (`convex-test`) requires typed `FunctionReference` args
+- All test files use `fn as any` to pass Convex functions to t.mutation/t.query
+- This is an unavoidable Convex test harness limitation (37 occurrences in tests)
+
+### shadcn Select in Tests
+- Select component renders listbox as a portal; JSDOM may not render options unless
+  the component is opened AND we await the portal render with `findByRole` not `getByRole`
+
+## [2026-03-27 20:45] Final Verification Wave Integration Fixes
+- `src/main.tsx` must create a real `ConvexReactClient` and wrap the app in `ConvexProvider`; leaving the placeholder wrapper breaks all live Convex queries and mutations at runtime.
+- The clean Jira integration path in this codebase is prop-driven UI state: `Room.tsx` already has the room document, so `importStatus` and `importError` can flow through `TaskListManager` into `JiraImportModal` without adding another Convex query.
+- `api.jira.importFromJira` is a plain Convex mutation, not a session-wrapped mutation, so client code must call it with `useMutation` rather than `useSessionMutation` to satisfy both runtime and TypeScript contracts.
+- Integrating the real voting UI into `Room.tsx` makes task titles appear in both the sidebar and center panel; Room tests need scoped assertions (`within(voting-area)`) instead of global `getByText("Task 1")` checks.
+- The pre-existing `IdentityFlow` select test bug was the documented Base UI portal timing issue; waiting with `findByRole("option", ...)` unblocks the required full-suite verification.
