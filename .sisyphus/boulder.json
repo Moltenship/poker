@@ -4,7 +4,8 @@
   "session_ids": [
     "ses_2d079a063ffe0My9951sXTFNI7",
     "ses_2d0456654ffesMp9QuPacQu8XR",
-    "ses_2d0423b03ffeppay29THgcZ6OQ"
+    "ses_2d0423b03ffeppay29THgcZ6OQ",
+    "ses_2d03e8b5dffeWrXiB3cWmy9wC3"
   ],
   "plan_name": "planning-poker",
   "task_sessions": {
@@ -25,6 +26,15 @@
       "agent": "Sisyphus-Junior",
       "category": "quick",
       "updated_at": "2026-03-27T14:43:04.205Z"
+    },
+    "todo:3": {
+      "task_key": "todo:3",
+      "task_label": "3",
+      "task_title": "Convex Project Init + Full Schema Definition",
+      "session_id": "ses_2d03e8b5dffeWrXiB3cWmy9wC3",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-27T14:49:11.336Z"
     }
   }
 }

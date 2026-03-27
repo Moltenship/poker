@@ -386,7 +386,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `tailwind.config.ts, postcss.config.js, src/index.css, components.json, src/components/ui/`
   - Pre-commit: `npm run build`
 
-- [ ] 3. Convex Project Init + Full Schema Definition
+- [x] 3. Convex Project Init + Full Schema Definition
 
   **What to do**:
   - Install Convex: `npm install convex`

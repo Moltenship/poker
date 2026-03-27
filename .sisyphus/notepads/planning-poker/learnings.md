@@ -88,3 +88,23 @@ src/
 - Import alias `@/` already configured, shadcn honored it in components.json
 - PostCSS runs before Tailwind to process imports
 - No custom styling needed — shadcn defaults perfectly styled
+
+## [2026-03-27 18:46] Task: T3
+
+### Convex Anonymous Agent Mode
+- `npx convex dev --once` requires interactive terminal input for the login prompt by default
+- Solution: Use `CONVEX_AGENT_MODE=anonymous` environment variable to skip the login prompt and use local deployment
+- This creates a local Convex backend running on http://127.0.0.1:3212 (or similar)
+- Perfect for development/testing without cloud deployment
+
+### Schema Index Patterns
+- Convex automatically generates database indexes efficiently
+- Multiple indexes on same table are cumulative (additive)
+- Index naming should be descriptive: `by_<field>` or `by_<field1>_<field2>` patterns work well
+- The schema validates field presence and auto-adds timestamps (_creationTime, etc.)
+
+### TypeScript with Convex
+- Convex generates types in `convex/_generated/` automatically
+- tsconfig.json in convex/ directory can extend the root tsconfig
+- The generated types include all table schemas and ID references
+- `npx tsc --noEmit` passes cleanly once Convex deployment is set up
