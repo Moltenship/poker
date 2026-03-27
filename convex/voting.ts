@@ -213,16 +213,6 @@ export const advanceToNextTask = sessionMutation({
       throw new Error("No more tasks");
     }
 
-    const currentTask = tasks[nextTaskIndex];
-    const existingVotes = await ctx.db
-      .query("votes")
-      .withIndex("by_task", (q) => q.eq("taskId", currentTask._id))
-      .collect();
-
-    for (const vote of existingVotes) {
-      await ctx.db.delete(vote._id);
-    }
-
     await ctx.db.patch(args.roomId, {
       currentTaskIndex: nextTaskIndex,
       status: "voting",
