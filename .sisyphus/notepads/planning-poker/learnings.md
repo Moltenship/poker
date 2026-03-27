@@ -209,3 +209,18 @@ src/
 - **Upsert by jiraKey**: The `by_room_jira_key` index on `["roomId", "jiraKey"]` enables O(1) lookup for upsert. Since `jiraKey` is optional in the schema, the index only applies to documents where jiraKey is defined — which is all imported tasks. Query with `.withIndex("by_room_jira_key", q => q.eq("roomId", id).eq("jiraKey", key)).unique()` returns null for missing docs.
 - **deleteTask guards**: Throwing `"Cannot delete imported tasks"` when `!task.isManual` provides a clean contract. Manual tasks (created via `addTask`) have `isManual: true`; imported tasks have `isManual: false`.
 - **Pre-existing test failures**: `rooms.test.ts` and `participants.test.ts` were already broken before T9 (wrong modules map pattern + `api.api.xxx` double-prefix for participants). These are 13 pre-existing failures, not regressions from T9.
+
+## [2026-03-27] Task: T7
+
+- **convex-test moduleCache path bug**: The `moduleCache` in convex-test uses regex `/\.[^.]+$/` to strip extensions. Paths starting with `../` (e.g. `"../_generated/api"`, `"../rooms"`) both get mangled to `"."` because the regex matches from the second dot in `".."`, consuming `"/_generated/api"` as a "non-dot sequence after dot". The fix: use `"./`-prefixed paths with `.js` extension — e.g. `"./_generated/api.js"` and `"./rooms.js"`. These strip correctly to `"./_generated/api"` and `"./rooms"`, prefix is computed as `"./"`, and lookup `"./rooms"` succeeds.
+- **Correct modules map pattern for __tests__/ subdirectory**:
+  ```typescript
+  const modules = {
+    "./_generated/api.js": () => Promise.resolve({ default: api }),
+    "./rooms.js": () => Promise.resolve(rooms),
+  };
+  ```
+  The keys use `./`-relative paths with `.js` extension — NOT `../`-relative paths without extension.
+- **sessionMutation/sessionQuery arg injection**: Handler receives `ctx.sessionId` (stripped from args by wrapper). The test must pass `sessionId` as a top-level arg: `t.mutation(api.api.rooms.createRoom, { sessionId: "...", name: "...", ... })`.
+- **api.api.rooms.xxx double-prefix**: When importing `import * as api from "../_generated/api"`, the named `api` export (= `anyApi`) lives at `api.api`. Function refs must use `api.api.rooms.createRoom`, not `api.rooms.createRoom`.
+- **nanoid(8)** generates 8-char URL-safe strings matching `/^[A-Za-z0-9_-]{8}$/`.

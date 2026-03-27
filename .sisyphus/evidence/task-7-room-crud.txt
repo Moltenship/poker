@@ -1,0 +1,43 @@
+Task: T7 — Room Service — Create, Get, List
+Date: 2026-03-27
+
+## Files Created
+- convex/__tests__/rooms.test.ts — TDD tests (written first)
+- convex/rooms.ts — implementation
+
+## npm test output (final run)
+
+> poker@1.0.0 test
+> vitest run
+
+ RUN  v4.1.2 /Users/tmaksimov/pgm/poker
+
+ ✓ convex/__tests__/rooms.test.ts (5 tests)
+   ✓ createRoom returns roomCode and roomId
+   ✓ getRoom returns room by code
+   ✓ getRoom returns null for non-existent room
+   ✓ room code is 8 characters
+   ✓ getRoomById returns room by ID
+
+ Test Files  1 failed | 8 passed (9)
+      Tests  8 failed | 42 passed (50)
+   Start at  19:11:41
+   Duration  1.42s
+
+NOTE: The 8 failures are ALL in convex/__tests__/participants.test.ts with
+"Could not find module for: participants" — this is a pre-existing failure
+because convex/participants.ts does not exist yet (future task). These
+failures existed before T7 work began and are NOT caused by rooms.ts.
+
+## Key Finding: convex-test moduleCache path format
+The modules map passed to convexTest() must use keys with .js extensions
+and starting with ./ (not ../) for correct resolution by convex-test's
+moduleCache function. The regex /\.[^.]+$/ in moduleCache strips file
+extensions, but "../rooms" gets mangled to "." because the regex matches
+from the second dot in "../". The correct pattern:
+  "./_generated/api.js": () => Promise.resolve({ default: api }),
+  "./rooms.js": () => Promise.resolve(rooms),
+
+## LSP diagnostics: 0 errors on convex/rooms.ts
+
+## nanoid installed: yes (v5.x, URL-safe 8-char codes)
