@@ -1,6 +1,20 @@
 {
   "active_plan": "/Users/tmaksimov/pgm/poker/.sisyphus/plans/planning-poker.md",
   "started_at": "2026-03-27T14:35:43.101Z",
-  "session_ids": ["ses_2d079a063ffe0My9951sXTFNI7"],
-  "plan_name": "planning-poker"
+  "session_ids": [
+    "ses_2d079a063ffe0My9951sXTFNI7",
+    "ses_2d0456654ffesMp9QuPacQu8XR"
+  ],
+  "plan_name": "planning-poker",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Vite + React + TypeScript + React Router Project Scaffold",
+      "session_id": "ses_2d0456654ffesMp9QuPacQu8XR",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-27T14:39:58.444Z"
+    }
+  }
 }

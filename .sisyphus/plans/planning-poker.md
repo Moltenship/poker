@@ -224,7 +224,7 @@ Max Concurrent: 6 (Waves 2 & 3)
 
 ## TODOs
 
-- [ ] 1. Vite + React + TypeScript + React Router Project Scaffold
+- [x] 1. Vite + React + TypeScript + React Router Project Scaffold
 
   **What to do**:
   - Initialize project with `npm create vite@latest . -- --template react-ts`
