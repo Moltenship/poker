@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["src/test/setup.ts"],
-    include: ["src/test/**/*.test.{ts,tsx}", "convex/**/*.test.ts", "src/lib/**/*.test.ts", "src/pages/**/*.test.{ts,tsx}"],
+    include: ["src/test/**/*.test.{ts,tsx}", "convex/**/*.test.ts", "src/lib/**/*.test.ts", "src/pages/**/*.test.{ts,tsx}", "src/components/**/*.test.{ts,tsx}"],
     environmentMatchGlobs: [
       ["convex/**/*.test.ts", "node"],
       ["src/lib/**/*.test.ts", "node"],
