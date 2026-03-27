@@ -8,6 +8,15 @@ export default defineSchema({
     cardSet: v.array(v.string()),
     jiraProjectKey: v.optional(v.string()),
     jiraBaseUrl: v.optional(v.string()),
+    importStatus: v.optional(
+      v.union(
+        v.literal("idle"),
+        v.literal("loading"),
+        v.literal("success"),
+        v.literal("error")
+      )
+    ),
+    importError: v.optional(v.string()),
     status: v.union(
       v.literal("lobby"),
       v.literal("voting"),

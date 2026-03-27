@@ -1,6 +1,56 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { query, mutation, internalMutation } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
+
+async function upsertImportedTasks(
+  ctx: MutationCtx,
+  args: {
+    roomId: Id<"rooms">;
+    tasks: Array<{
+      jiraKey: string;
+      title: string;
+      description: string | null;
+      jiraUrl: string | null;
+    }>;
+  }
+) {
+  const existingTasks = await ctx.db
+    .query("tasks")
+    .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+    .collect();
+  let maxOrder =
+    existingTasks.length > 0 ? Math.max(...existingTasks.map((t) => t.order)) : 0;
+
+  for (const task of args.tasks) {
+    const existing = await ctx.db
+      .query("tasks")
+      .withIndex("by_room_jira_key", (q) =>
+        q.eq("roomId", args.roomId).eq("jiraKey", task.jiraKey)
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        title: task.title,
+        description: task.description ?? undefined,
+        jiraUrl: task.jiraUrl ?? undefined,
+      });
+    } else {
+      maxOrder += 1;
+      await ctx.db.insert("tasks", {
+        roomId: args.roomId,
+        jiraKey: task.jiraKey,
+        title: task.title,
+        description: task.description ?? undefined,
+        jiraUrl: task.jiraUrl ?? undefined,
+        order: maxOrder,
+        isManual: false,
+      });
+    }
+  }
+}
 
 export const addTask = sessionMutation({
   args: {
@@ -38,40 +88,24 @@ export const importTasks = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const existingTasks = await ctx.db
-      .query("tasks")
-      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
-      .collect();
-    let maxOrder =
-      existingTasks.length > 0 ? Math.max(...existingTasks.map((t) => t.order)) : 0;
+    await upsertImportedTasks(ctx, args);
+  },
+});
 
-    for (const task of args.tasks) {
-      const existing = await ctx.db
-        .query("tasks")
-        .withIndex("by_room_jira_key", (q) =>
-          q.eq("roomId", args.roomId).eq("jiraKey", task.jiraKey)
-        )
-        .unique();
-
-      if (existing) {
-        await ctx.db.patch(existing._id, {
-          title: task.title,
-          description: task.description ?? undefined,
-          jiraUrl: task.jiraUrl ?? undefined,
-        });
-      } else {
-        maxOrder += 1;
-        await ctx.db.insert("tasks", {
-          roomId: args.roomId,
-          jiraKey: task.jiraKey,
-          title: task.title,
-          description: task.description ?? undefined,
-          jiraUrl: task.jiraUrl ?? undefined,
-          order: maxOrder,
-          isManual: false,
-        });
-      }
-    }
+export const importTasksInternal = internalMutation({
+  args: {
+    roomId: v.id("rooms"),
+    tasks: v.array(
+      v.object({
+        jiraKey: v.string(),
+        title: v.string(),
+        description: v.union(v.string(), v.null()),
+        jiraUrl: v.union(v.string(), v.null()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    await upsertImportedTasks(ctx, args);
   },
 });
 
