@@ -1,0 +1,54 @@
+F1 COMPLIANCE AUDIT
+Date: 2026-03-27
+
+PLAN: .sisyphus/plans/planning-poker.md
+AUDIT MODE: Read-only verification
+
+MUST HAVE VERIFICATION
+1. Real-time vote synchronization across all participants
+   - Verified test pass: `npx vitest run convex/__tests__/voting.test.ts` -> 11/11 tests passed.
+   - Verified implementation in `convex/voting.ts`: `castVote`, `getVoteStatus`, and `revealVotes` are exported.
+
+2. Configurable card sets per room
+   - Verified `convex/rooms.ts` `createRoom` accepts `cardSet` and stores it on the room document.
+   - Verified `convex/schema.ts` rooms table includes `cardSet: v.array(v.string())`.
+
+3. Jira backlog import with pagination
+   - Verified `convex/jira.ts` `_importFromJiraInternal` loops with `do { ... } while (nextPageToken)` and forwards `body.nextPageToken` when present.
+
+4. Manual task creation without Jira
+   - Verified `convex/tasks.ts` exports `addTask` mutation for manual task creation.
+   - Verified `src/components/AddTaskForm.tsx` exists and calls `api.tasks.addTask` via `useSessionMutation`.
+
+5. Vote reveal by any participant (not all votes required)
+   - Verified `convex/voting.ts` `revealVotes` only checks room existence then patches `status: "revealed"`.
+   - No permission check and no "all must vote" guard found.
+
+6. Average + distribution display on reveal
+   - Verified `src/components/ResultsPanel.tsx` displays `Average: {averageDisplay}` and suggested estimate.
+   - Verified `src/components/VoteDistribution.tsx` renders vote counts/bar chart by card value.
+
+7. Optional hours annotation
+   - Verified `src/components/HoursInput.tsx` exists and submits hours annotation.
+   - Verified `convex/tasks.ts` exports `setHoursEstimate` mutation.
+
+8. Cross-device session takeover
+   - Verified `convex/participants.ts` exports `takeoverSession` mutation and reassigns `sessionId`.
+   - Verified `src/hooks/useIdentity.ts` persists per-room identity in localStorage.
+
+9. Connection status banner
+   - Verified `src/components/ConnectionBanner.tsx` imports and uses `useConvexConnectionState`.
+
+10. Persistent rooms with history
+   - Verified `src/pages/History.tsx` exists and queries `api.rooms.listMyRooms` via `useSessionQuery`.
+   - Verified `convex/rooms.ts` exports `listMyRooms`.
+
+11. TDD with Vitest + convex-test
+   - Verified full test pass: `npm test` -> 117/117 tests passed.
+
+TEST EVIDENCE
+- Targeted voting suite: passed
+- Full suite: 21 test files, 117 tests passed
+
+FINAL VERDICT
+VERDICT: APPROVE

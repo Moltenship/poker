@@ -1,0 +1,119 @@
+F4 Scope Fidelity Audit — Run 3
+Date: 2026-03-27
+Workspace: /Users/tmaksimov/pgm/poker
+
+VERDICT: REJECT
+
+Summary:
+- Required functional checks are present in production code.
+- Critical prior issue is fixed: convex/voting.ts advanceToNextTask no longer deletes votes.
+- npm test passed: 117/117 tests.
+- npm run build passed (exit 0) with non-blocking LightningCSS/Tailwind and chunk-size warnings.
+- One explicit forbidden-pattern violation remains: hardcoded customfield_10016 literal exists in convex/__tests__/jira.test.ts.
+
+Required checks verified:
+1) Real-time subscriptions
+- src/pages/Room.tsx imports useQuery from convex/react and subscribes to rooms.getRoom, tasks.getTasksForRoom, participants.getParticipants, voting.getVoteStatus.
+- src/components/ResultsPanel.tsx subscribes to voting.getVoteResults, participants.getParticipants, tasks.getCurrentTask.
+
+2) Configurable card sets
+- convex/schema.ts:8 -> cardSet: v.array(v.string())
+- src/pages/Room.tsx:198-205 -> CardDeck receives cardSet={room.cardSet}
+
+3) Jira pagination
+- convex/jira.ts:137-171 uses nextPageToken cursor pagination loop.
+
+4) Manual task creation
+- convex/tasks.ts:55-76 exports addTask sessionMutation.
+- src/components/AddTaskForm.tsx is a real form calling api.tasks.addTask.
+
+5) Reveal by any participant
+- convex/voting.ts:164-174 revealVotes patches room status with no role check.
+
+6) Average + distribution
+- src/components/ResultsPanel.tsx:98-109 shows Average and renders VoteDistribution.
+- src/components/VoteDistribution.tsx exists and renders vote bars/counts.
+
+7) Hours annotation
+- src/components/HoursInput.tsx exists and calls api.tasks.setHoursEstimate.
+- convex/tasks.ts:137-145 exports setHoursEstimate.
+
+8) Session takeover
+- convex/participants.ts:74-104 exports takeoverSession.
+
+9) Connection banner
+- src/components/ConnectionBanner.tsx imports useConvexConnectionState from convex/react.
+- src/components/Layout.tsx mounts <ConnectionBanner />.
+
+10) Room history
+- src/pages/History.tsx exists and calls api.rooms.listMyRooms via useSessionQuery.
+- convex/rooms.ts:48-64 exports listMyRooms.
+
+11) Tests exist
+- convex/__tests__/ contains jira.test.ts, voting.test.ts, participants.test.ts, rooms.test.ts, tasks.test.ts.
+- src/ contains 15 test files including Room, History, ResultsPanel, AddTaskForm, ConnectionBanner, smoke test.
+
+Key decision checks:
+- advanceToNextTask does NOT delete votes:
+  * convex/voting.ts:202-220 only computes nextTaskIndex and patches currentTaskIndex/status.
+- resetVoting DOES delete votes:
+  * convex/voting.ts:176-199 queries current task votes and deletes them.
+- ConvexProvider in src/main.tsx:
+  * src/main.tsx:11-17 wraps app with <ConvexProvider client={convex}>.
+- CardDeck + ResultsPanel wired in src/pages/Room.tsx:
+  * src/pages/Room.tsx:197-215 renders both components, not placeholders.
+- Jira uses POST /rest/api/3/search/jql:
+  * convex/jira.ts:150-157 fetches /rest/api/3/search/jql with method POST.
+- Story points discovered at runtime via GET /rest/api/3/field:
+  * convex/jira.ts:110-131 fetches /rest/api/3/field and derives storyPointsFieldId dynamically.
+
+Forbidden-pattern review:
+- No production Jira write-back found. Jira code only fetches GET /field and POST /search/jql in convex/jira.ts.
+- No Clerk/Auth0/OAuth usage found in code (matches only in planning doc text).
+- No custom WebSocket found.
+- No SSR/RSC / use server found.
+- No Next.js usage found.
+- No "use node" found in Convex functions.
+- No isSpectator field found.
+- VIOLATION: hardcoded customfield_10016 found in convex/__tests__/jira.test.ts lines 63, 162, 174.
+
+Command results:
+- npm test
+  * Test Files: 21 passed
+  * Tests: 117 passed (117)
+- npm run build
+  * Exit 0
+  * Warnings only: LightningCSS unknown at-rules from Tailwind/shadcn CSS, and Vite chunk-size warning.
+
+Conclusion:
+- Functional implementation meets the requested scope.
+- Under the strict Must NOT Have rule, this audit is REJECT because customfield_10016 still exists in repository test code.
+
+
+--- CORRECTION / REVISED INTERPRETATION ---
+Date: 2026-03-27
+
+The previous REJECT rationale for `customfield_10016` was incorrect.
+
+Re-check against plan:
+- `.sisyphus/plans/planning-poker.md:1058` explicitly requires a Jira test case where field discovery finds `"customfield_10016"` and that discovered value is then used.
+- `.sisyphus/plans/planning-poker.md:1065` forbids hardcoding `customfield_10016` in implementation, meaning production code must discover it dynamically via `/rest/api/3/field`.
+
+Re-check against code:
+- `convex/__tests__/jira.test.ts:63` uses `customfield_10016` as mock Jira field-discovery data.
+- `convex/__tests__/jira.test.ts:162,174` assert that the implementation uses the discovered field id in subsequent search requests.
+- `grep customfield_10016 convex/jira.ts` returned no matches, confirming production code does not hardcode the field id.
+- `convex/jira.ts:110-143` fetches `/rest/api/3/field` and derives `storyPointsFieldId` dynamically.
+
+Therefore the test usage is plan-required evidence of dynamic discovery, not a Must-NOT-Have violation.
+
+REVISED VERDICT: APPROVE
+
+Final justification:
+- `advanceToNextTask` no longer deletes votes; `resetVoting` still deletes votes explicitly.
+- `ConvexProvider` is mounted in `src/main.tsx`.
+- `Room.tsx` wires real `CardDeck` and `ResultsPanel` components and uses realtime `useQuery` subscriptions.
+- Jira import uses `POST /rest/api/3/search/jql`, paginates with `nextPageToken`, and discovers story points fields at runtime via `GET /rest/api/3/field`.
+- Required manual task creation, hours annotation, session takeover, connection banner, room history, average, and vote distribution are all present.
+- `npm test` passed with 117/117 tests.
+- `npm run build` exited 0.

@@ -34,3 +34,15 @@
 ## [2026-03-27 20:45] Final Verification Wave Integration Fixes
 - **Decision**: Use the frontend alignment path for Jira import instead of adding new Convex exports.
 - **Rationale**: `Room.tsx` already subscribes to the room doc, which includes `importStatus` and `importError`; passing those fields into `JiraImportModal` keeps the backend surface smaller and removes the temporary `@ts-expect-error` workaround without changing the overall architecture.
+
+## [2026-03-27 21:00] Task: F4 Rerun
+- **Decision**: Reject scope fidelity again.
+- **Rationale**: The previous six rejection reasons are now fixed, and T7/T11 are acceptable implementation deviations, but `convex/voting.ts:advanceToNextTask` still deletes votes for the next task before advancing. That behavior directly conflicts with the explicit decision to preserve vote history, so one substantive scope violation remains.
+
+## [2026-03-27 20:59] Task: F4 Run 3
+- **Decision**: Reject scope fidelity.
+- **Rationale**: All required runtime features are present, the prior `advanceToNextTask` history bug is fixed, and both required gates pass; however, the explicit Must NOT Have check still fails because `customfield_10016` is hardcoded in `convex/__tests__/jira.test.ts`.
+
+## [2026-03-27 21:05] Task: F4 Run 3 Correction
+- **Decision**: Approve scope fidelity.
+- **Rationale**: The only remaining rejection reason was invalid because the plan explicitly requires the Jira test to use `customfield_10016` as discovered mock data; production code does not hardcode that field id, all required checks pass, and both verification gates succeed.

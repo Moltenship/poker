@@ -1,0 +1,64 @@
+F4 SCOPE FIDELITY REVIEW
+Date: 2026-03-27
+Plan: .sisyphus/plans/planning-poker.md
+Mode: Read-only audit
+
+SUMMARY
+- Reviewed the original request, Must Have / Must NOT Have guardrails, and task specs T1-T21.
+- Verified required spot-check files: `convex/rooms.ts`, `convex/voting.ts`, `convex/jira.ts`, `convex/lib/sessions.ts`, `src/hooks/useSession.ts`, `src/hooks/useIdentity.ts`, `src/components/IdentityFlow.tsx`, `src/router.tsx`.
+- Additional implementation spot-checks covered `src/pages/Home.tsx`, `src/pages/Room.tsx`, `src/pages/History.tsx`, `src/components/CardDeck.tsx`, `src/components/ResultsPanel.tsx`, `src/components/JiraImportModal.tsx`, `src/components/TaskListManager.tsx`, `src/components/ConnectionBanner.tsx`, `src/main.tsx`, `vercel.json`, `.env.example`, `package.json`.
+
+ORIGINAL REQUEST CHECK
+- Jira remains read-only in intent: no Jira write-back code found.
+- Session/localStorage identity exists (`src/hooks/useSession.ts:10-43`, `src/hooks/useIdentity.ts:9-71`).
+- Configurable card sets exist (`src/lib/cards.ts:1-27`, `convex/rooms.ts:6-27`).
+- Optional hours + average exist in isolated components/services (`convex/tasks.ts:137-155`, `src/components/HoursInput.tsx:12-49`, `src/components/ResultsPanel.tsx:68-76`).
+- Realtime/reconnect implementation is incomplete at app root: `src/main.tsx:8` still says `// ConvexProvider placeholder for future integration` and does not mount a Convex provider.
+
+TASK-BY-TASK VERIFICATION
+T1  PASS    `package.json` contains `dev`, `dev:frontend`, `dev:backend`; `src/router.tsx` defines `/`, `/room/:roomCode`, `/history`, `*`.
+T2  PASS    Tailwind/shadcn setup exists: `tailwind.config.ts`, `components.json`, `src/index.css`, and base UI components under `src/components/ui/`.
+T3  PASS    `convex/schema.ts` defines rooms/participants/tasks/votes with required indexes; import status fields were added.
+T4  PASS    Vitest + RTL + convex-test infra exists in `vitest.config.ts`, `src/test/*`, `convex/smoke.test.ts`.
+T5  PASS    Shared utilities exist in `src/lib/cards.ts`, `src/lib/adf.ts`, `src/lib/average.ts`.
+T6  PASS    `convex/lib/sessions.ts` exports `sessionMutation`/`sessionQuery`; `src/hooks/useSession.ts` uses localStorage key `poker_session_id` and exports session wrapper hooks.
+T7  FAIL    `convex/rooms.ts:getRoom` returns only the room doc (`convex/rooms.ts:30-38`) instead of "room + participants + current task" from spec; `listMyRooms` also returns bare room docs rather than joined room summaries.
+T8  PASS    `convex/participants.ts` includes `joinRoom`, `leaveRoom`, `getParticipants`, `listRoomParticipants`, `takeoverSession`, `heartbeat`.
+T9  PASS    `convex/tasks.ts` includes add/import/list/current/hours/finalEstimate/reorder/setCurrent/delete task functions matching the plan.
+T10 FAIL    `convex/voting.ts` exports the required functions, but `advanceToNextTask` deletes votes for the next task (`convex/voting.ts:216-224`) even though the plan explicitly chose to keep vote docs for history; voting logic also duplicates average helpers locally instead of using the shared utility required by T10.
+T11 FAIL    Jira implementation does not match the required mutation -> scheduler -> internalAction -> internalMutation contract names/signatures: file exports `importFromJira` / `_importFromJiraInternal` / `_setImportStatus` / `_setImportError` instead of `triggerJiraImport` / `executeJiraImport` / `storeImportedTasks` / `getImportStatus`; uses `loading` instead of required `importing` (`convex/jira.ts:73-75`, `198-206`); no `getImportStatus` query exists; persistence is delegated directly to `internalJira.tasks.importTasksInternal` instead of `internal.jira.storeImportedTasks`.
+T12 PASS    `src/pages/Home.tsx` implements create room, join room, custom cards, optional Jira fields, and recent rooms.
+T13 FAIL    `src/pages/Room.tsx` renders the 3-panel shell, but the center area still contains placeholders `Voting Area (Task 14)` and `Results Area (Task 15)` (`src/pages/Room.tsx:180-189`) and the lobby state does not display the current task title/description required by spec.
+T14 FAIL    `src/components/CardDeck.tsx` exists, but Room never renders it; no `withOptimisticUpdate()` usage was found anywhere in `src/`.
+T15 FAIL    `src/components/ResultsPanel.tsx` exists, but Room never renders it, so reveal/results/hour/final estimate flow is not integrated.
+T16 FAIL    `src/components/JiraImportModal.tsx` references `api.jira.triggerJiraImport` and `api.jira.getImportStatus` behind `@ts-expect-error`, but the backend does not export those functions; modal/backend contract is therefore out of sync.
+T17 FAIL    `src/pages/History.tsx` and `src/components/RoomCard.tsx` omit key requested history data (task count, completion status X/Y, participant count) and show only room name/code/date/card set/status.
+T18 PASS    `src/components/IdentityFlow.tsx` implements name entry, returning-user selection, takeover confirmation, and uses `useIdentity`; `src/components/SessionKickedBanner.tsx` handles takeover disconnect UX.
+T19 FAIL    `src/components/ConnectionBanner.tsx` exists, but the >30s disconnect message from spec is missing, and the app root still lacks an actual Convex provider (`src/main.tsx:8-12`), so the connection banner/realtime flow is not fully wired.
+T20 PASS    `src/components/AddTaskForm.tsx` and `src/components/TaskListManager.tsx` implement manual add/delete/jump/import entry points and are integrated into `src/pages/Room.tsx`.
+T21 FAIL    `vercel.json` and `.env.example` exist, but `package.json` still uses `"build": "tsc -b && vite build"` and does not add the required `preview` script from the task spec.
+
+SPOT-CHECKED TASKS
+1. T7 Room Service: NON-COMPLIANT
+   - Required functions exist, but `getRoom` does not return room + participants + current task.
+2. T10 Voting Engine: NON-COMPLIANT
+   - Required functions exist, but history retention decision was violated by deleting votes during task advance.
+3. T11 Jira Integration: NON-COMPLIANT
+   - Scheduler/internalAction pattern exists, but names/status contract/query shape do not match the spec and field/status API is incomplete.
+4. T18 Identity Flow: COMPLIANT
+   - New user, returning user, and takeover confirmation flows are present.
+5. T6 Session Management: COMPLIANT
+   - Session wrappers and localStorage-based session hooks match the spec.
+
+ROUTES REVIEW
+- `src/router.tsx` contains only `/`, `/room/:roomCode`, `/history`, and `*`.
+- No extra routes found.
+
+CONCLUSION
+- Fully compliant tasks: 11/21
+- Non-compliant tasks: 10/21
+- Required spot-checks compliant: 2/5
+- Core rejection reasons: incomplete backend/frontend contract matching for T7/T10/T11/T16, incomplete Room integration for T13-T15, incomplete Convex root wiring/reconnect fulfillment for T19, and deployment script drift in T21.
+
+VERDICT: REJECT
+Reason: Multiple planned tasks were only partially implemented or left with mismatched interfaces, so the delivered app is not 1:1 with the requested scope.

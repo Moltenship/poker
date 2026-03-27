@@ -1798,7 +1798,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/components/IdentityFlow.tsx, src/components/SessionKickedBanner.tsx, src/hooks/useIdentity.ts, tests`
   - Pre-commit: `npx vitest run`
 
-- [ ] 19. Connection Status Banner + Offline/Reconnect Handling
+- [x] 19. Connection Status Banner + Offline/Reconnect Handling
 
   **What to do**:
   - Create `src/components/ConnectionBanner.tsx`:
@@ -1871,7 +1871,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/components/ConnectionBanner.tsx, src/components/__tests__/ConnectionBanner.test.tsx`
   - Pre-commit: `npx vitest run`
 
-- [ ] 20. Manual Task Creation UI + Task List Management
+- [x] 20. Manual Task Creation UI + Task List Management
 
   **What to do**:
   - Create `src/components/AddTaskForm.tsx`:
@@ -1970,7 +1970,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/components/AddTaskForm.tsx, src/components/TaskListManager.tsx, tests`
   - Pre-commit: `npx vitest run`
 
-- [ ] 21. Vercel Deployment: Config, Env Vars, Build
+- [x] 21. Vercel Deployment: Config, Env Vars, Build
 
   **What to do**:
   - Create `vercel.json` with:

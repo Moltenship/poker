@@ -17,7 +17,6 @@ export function AddTaskForm({ roomId, onSuccess }: AddTaskFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
-  // @ts-expect-error Ignoring type error for api until it's generated
   const addTask = useSessionMutation(api.tasks.addTask);
 
   const handleSubmit = async (e: React.FormEvent) => {

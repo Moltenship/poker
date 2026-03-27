@@ -1,0 +1,51 @@
+F4 FORBIDDEN FEATURES / DEPENDENCIES REVIEW
+Date: 2026-03-27
+Plan: .sisyphus/plans/planning-poker.md
+
+FORBIDDEN FEATURE SEARCHES
+1. Drag-and-drop libraries
+   - Search covered `package.json` and source files.
+   - No application matches for `react-beautiful-dnd`, `@dnd-kit`, `react-dnd`, or sortable libraries.
+   - One false positive appeared in `node_modules/typescript/lib/typesMap.json`; ignored as non-app code.
+
+2. Timer / countdown voting
+   - No countdown or voting timer implementation found.
+   - Only benign UI timeout found: `src/components/ConnectionBanner.tsx:14` uses `setTimeout(..., 3000)` to auto-hide the reconnect banner.
+
+3. Export functionality
+   - No CSV/PDF/Excel export matches found.
+
+4. Notification sounds / notifications
+   - No `Audio`, browser notification, or toast-notification feature found.
+
+5. Chat / comments
+   - No room chat/comment feature found in `src/` or `convex/`.
+
+6. Keyboard shortcuts
+   - No hotkey or keydown-listener shortcut system found.
+
+7. Avatar / image uploads
+   - No avatar upload or image upload feature found.
+
+8. Dark mode toggle
+   - No dark mode toggle implementation found in app code.
+   - Note: `tailwind.config.ts:4` sets `darkMode: ['class']` and `src/index.css:45-77` defines `.dark` theme variables, but there is no user-facing toggle. This is latent styling support, not a surfaced scope violation.
+
+DEPENDENCY REVIEW (`package.json`)
+- Dev dependencies (22): Testing, Vite, TypeScript, Tailwind/PostCSS, concurrently, convex-test, React packages.
+- Dependencies (11): `convex`, `convex-helpers`, `nanoid`, shadcn/base-ui stack, styling helpers, icons, Geist font.
+- No unexpected auth libraries.
+- No unexpected drag-and-drop libraries.
+- No export/charting libraries.
+- No notification libraries.
+
+NOTABLE SCOPE DRIFT THAT IS NOT A FORBIDDEN FEATURE
+- `src/index.css` includes `.dark` theme tokens even though no dark mode toggle exists.
+- `package.json` includes `glob` in devDependencies though it was not part of the requested stack; this is extra but not a forbidden product feature.
+
+FORBIDDEN FEATURES VERDICT
+- Application-level forbidden features: CLEAN
+- Forbidden dependency additions: CLEAN
+- Non-forbidden scope drift: present elsewhere (see `f4-fidelity.txt`), but not in the forbidden-feature category.
+
+VERDICT: CLEAN

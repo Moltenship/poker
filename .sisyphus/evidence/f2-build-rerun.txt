@@ -1,0 +1,27 @@
+F2 Re-Run: Build & Test Evidence
+Date: Fri Mar 27 2026
+Commit context: bc6ba1e fix(integration): wire ConvexProvider, CardDeck/ResultsPanel into Room, align Jira API
+
+=== BUILD ===
+Command: npm run build
+Exit code: 0 (PASS)
+
+Output summary:
+- tsc -b: PASSED (no TypeScript errors)
+- vite build: SUCCESS in 605ms
+- 2065 modules transformed
+- dist/index.html, dist/assets/index.css, dist/assets/index.js generated
+- Warnings: lightningcss minify unknown at-rules (@theme, @utility, @custom-variant) — these are Tailwind v4 CSS features, not errors. Bundle chunk size warning is informational only.
+
+=== TESTS ===
+Command: npm test
+Runner: vitest v4.1.2
+
+Test Files: 21 passed (21)
+Tests:      117 passed (117)
+Start at:   20:46:12
+Duration:   4.70s
+
+All 117 tests PASS. No failures, no skips.
+
+VERDICT: BUILD PASS, TESTS 117/117 PASS

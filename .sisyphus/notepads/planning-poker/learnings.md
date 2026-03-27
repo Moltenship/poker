@@ -348,3 +348,9 @@ Jira Cloud imports fit the existing Convex architecture best as a public mutatio
 - `api.jira.importFromJira` is a plain Convex mutation, not a session-wrapped mutation, so client code must call it with `useMutation` rather than `useSessionMutation` to satisfy both runtime and TypeScript contracts.
 - Integrating the real voting UI into `Room.tsx` makes task titles appear in both the sidebar and center panel; Room tests need scoped assertions (`within(voting-area)`) instead of global `getByText("Task 1")` checks.
 - The pre-existing `IdentityFlow` select test bug was the documented Base UI portal timing issue; waiting with `findByRole("option", ...)` unblocks the required full-suite verification.
+
+## [2026-03-27 20:59] F4 Audit Learning
+- Forbidden-pattern audits need to scan test fixtures too, not just production code: this repo now discovers Jira story-point fields dynamically in `convex/jira.ts`, but a leftover literal in `convex/__tests__/jira.test.ts` is still enough to fail a strict repo-wide fidelity check.
+
+## [2026-03-27 21:05] F4 Audit Interpretation Learning
+- When a plan contains both a production prohibition and a test-case requirement using the same literal, the correct reading is scope-specific: test fixtures may include the literal to prove dynamic discovery, while production code must remain free of it.

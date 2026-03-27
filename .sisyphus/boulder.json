@@ -21,7 +21,18 @@
     "ses_2d0102338ffeeyeB17CAVkHCzS",
     "ses_2d010ccefffeGFi7gdKFWQ8q2U",
     "ses_2cffa27c8ffeimzzsI0NZLcqAp",
-    "ses_2cfefce02ffeznwWy7t80PHnEZ"
+    "ses_2cfefce02ffeznwWy7t80PHnEZ",
+    "ses_2cfef52c0ffecuv5AZUtwyMpr8",
+    "ses_2cfea2c78ffewLeJckxhipjit2",
+    "ses_2cfe5d6b3ffe6Oobtr79PlUQ5W",
+    "ses_2cfdfafe9ffeuTVDlWUop4N34s",
+    "ses_2cfdf2bc3ffei6hEki1EIKnm4X",
+    "ses_2cfd61a59ffeBgrvSDvvmZCvXZ",
+    "ses_2cfcfc9baffeglaiZPTJ79VOlC",
+    "ses_2cfcf55c4ffeq87iTOsQrsI1M6",
+    "ses_2cfcf0787ffeISoU57RVZTwLAY",
+    "ses_2cfcaf081ffe0eyG5m5K4UYB7J",
+    "ses_2cfc923caffebfPVRTz4mKWaMG"
   ],
   "plan_name": "planning-poker",
   "task_sessions": {
@@ -123,6 +134,23 @@
       "agent": "Sisyphus-Junior",
       "category": "quick",
       "updated_at": "2026-03-27T16:13:13.205Z"
+    },
+    "todo:21": {
+      "task_key": "todo:21",
+      "task_label": "21",
+      "task_title": "Vercel Deployment: Config, Env Vars, Build",
+      "session_id": "ses_2cfea2c78ffewLeJckxhipjit2",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-27T16:18:03.640Z"
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — `oracle`",
+      "session_id": "ses_2cfc923caffebfPVRTz4mKWaMG",
+      "agent": "oracle",
+      "updated_at": "2026-03-27T16:57:00.435Z"
     }
   }
 }
