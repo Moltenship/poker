@@ -458,7 +458,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `convex/schema.ts, convex/tsconfig.json, .env.local`
   - Pre-commit: `npx convex dev --once`
 
-- [ ] 4. Vitest + convex-test + React Testing Library Infrastructure
+- [x] 4. Vitest + convex-test + React Testing Library Infrastructure
 
   **What to do**:
   - Install test dependencies: `npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom convex-test`
@@ -532,7 +532,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `vitest.config.ts, src/test/setup.ts, src/test/utils.ts, convex/test.setup.ts, src/test/smoke.test.tsx, convex/smoke.test.ts`
   - Pre-commit: `npx vitest run`
 
-- [ ] 5. Shared Utilities: Card Sets, ADF Parser, Vote Average Calculator
+- [x] 5. Shared Utilities: Card Sets, ADF Parser, Vote Average Calculator
 
   **What to do**:
   - **Card Sets** (`src/lib/cards.ts`):
@@ -616,7 +616,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `src/lib/cards.ts, src/lib/adf.ts, src/lib/average.ts, src/lib/__tests__/cards.test.ts, src/lib/__tests__/adf.test.ts, src/lib/__tests__/average.test.ts`
   - Pre-commit: `npx vitest run`
 
-- [ ] 6. Session Management with convex-helpers
+- [x] 6. Session Management with convex-helpers
 
   **What to do**:
   - Install `convex-helpers`: `npm install convex-helpers`
@@ -700,7 +700,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `convex/lib/sessions.ts, src/hooks/useSession.ts, src/providers/SessionProvider.tsx, tests`
   - Pre-commit: `npx vitest run`
 
-- [ ] 7. Room Service: Create, Get, List
+- [x] 7. Room Service: Create, Get, List
 
   **What to do**:
   - Create `convex/rooms.ts` with session-wrapped functions:
@@ -781,7 +781,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `convex/rooms.ts, convex/__tests__/rooms.test.ts`
   - Pre-commit: `npx vitest run`
 
-- [ ] 8. Participant Service: Join, Leave, Presence, Session Takeover
+- [x] 8. Participant Service: Join, Leave, Presence, Session Takeover
 
   **What to do**:
   - Create `convex/participants.ts` with session-wrapped functions:
@@ -862,7 +862,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `convex/participants.ts, convex/__tests__/participants.test.ts`
   - Pre-commit: `npx vitest run`
 
-- [ ] 9. Task Service: CRUD, Ordering, Hours Annotation
+- [x] 9. Task Service: CRUD, Ordering, Hours Annotation
 
   **What to do**:
   - Create `convex/tasks.ts`:
@@ -947,7 +947,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `convex/tasks.ts, convex/__tests__/tasks.test.ts`
   - Pre-commit: `npx vitest run`
 
-- [ ] 10. Voting Engine: Cast, Change, Reveal, Reset, Advance
+- [x] 10. Voting Engine: Cast, Change, Reveal, Reset, Advance
 
   **What to do**:
   - Create `convex/voting.ts`:
@@ -1035,7 +1035,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `convex/voting.ts, convex/__tests__/voting.test.ts`
   - Pre-commit: `npx vitest run`
 
-- [ ] 11. Jira Integration: Import Action, Field Discovery, Pagination
+- [x] 11. Jira Integration: Import Action, Field Discovery, Pagination
 
   **What to do**:
   - Create `convex/jira.ts`:
@@ -1132,7 +1132,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Files: `convex/jira.ts, convex/__tests__/jira.test.ts`
   - Pre-commit: `npx vitest run`
 
-- [ ] 12. Home Page: Create Room + Join Room
+- [x] 12. Home Page: Create Room + Join Room
 
   **What to do**:
   - Create `src/pages/Home.tsx`:

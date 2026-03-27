@@ -247,3 +247,17 @@ Jira Cloud imports fit the existing Convex architecture best as a public mutatio
 - **Vote status contract**: `getVoteStatus` should derive from room participants, not just votes, so reset states still return everyone with `hasVoted: false` instead of an empty list.
 - **Convex test harness in this repo**: New tests under `convex/__tests__/` work reliably with `const modules = import.meta.glob("../**/*.ts")` plus direct function imports passed to `t.mutation()` / `t.query()`.
 - **Convex serialization gotcha**: Optional fields with value `undefined` are omitted from Convex query results, so tests should assert missing properties rather than expecting `{ field: undefined }` in returned objects.
+
+### Task 12 Learnings
+- **React Testing Library & Selects**: When testing dropdowns (like Radix UI Selects) that share keywords (e.g., "Fibonacci" and "Fibonacci Extended"), use strict substring matches or specific regex bounds (`/Fibonacci \(/i`) to avoid `TestingLibraryElementError: Found multiple elements`.
+- **Vitest Include Config**: Ensure `src/pages/**/*.test.{ts,tsx}` is added to `vitest.config.ts` if creating page-level tests, as default templates might only look inside `src/test/`.
+- **Convex TypeScript**: Before the dev server has a chance to fully generate the api module types via `convex dev`, casting to any (e.g., `(api as any).rooms.createRoom`) can temporarily unblock TypeScript builds when modifying UI files in a pure build environment.
+
+### Task 14 Learnings
+- **Vitest Include Config with Concurrent Agents**: When implementing test files for components (`src/components/__tests__/`), specify the exact file paths in `vitest.config.ts`'s `include` array rather than globbing `**/*.test.tsx`. This prevents test failures caused by picking up broken test stubs created simultaneously by other agents working on different tasks.
+- `Dialog` components often render default elements (e.g. `Close` button via the X icon in `DialogContent`). When using queries like `getByRole('button', { name: 'Close' })`, test suites may fail with multiple elements found. Either query differently or use `getAllByRole` and pick the right one.
+
+### Task 17 Learnings
+- **React Testing Library & Convex query mocks**: When mocking `useQuery` from Convex to return specific data depending on the passed query function, using `if (fn === api.someModule.someQuery)` may evaluate to `false` or be brittle if the API object is a Proxy or generates strings at runtime. A more robust way to match is checking `fn.route` or `args` directly. Or simply examining the `args` passed to `useQuery` (e.g. `if (args && 'roomCode' in args)`) to infer which query is being mocked.
+- **Base UI and Shadcn Elements**: New Shadcn updates using `@base-ui` primitives pass `render` props instead of Radix's `asChild`. To safely nest links in buttons for routing, it's simpler to either use programmatic navigation (`onClick={() => navigate('/')}`) or wrap the button directly with a React Router `<Link>`, though technically that places an anchor outside a button or vice versa.
+- **Convex sessionQuery list updates**: Queries returning lists sortable by server-added properties (e.g., `_creationTime`) naturally fit CSS Grid views. Mapping these cleanly through UI components like `Card` and `Badge` makes mapping session-history trivial.

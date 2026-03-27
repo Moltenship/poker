@@ -5,7 +5,18 @@
     "ses_2d079a063ffe0My9951sXTFNI7",
     "ses_2d0456654ffesMp9QuPacQu8XR",
     "ses_2d0423b03ffeppay29THgcZ6OQ",
-    "ses_2d03e8b5dffeWrXiB3cWmy9wC3"
+    "ses_2d03e8b5dffeWrXiB3cWmy9wC3",
+    "ses_2d0390e56ffeDca1u11IXmC737",
+    "ses_2d039ce2affeJsxnE5t4zbu5fA",
+    "ses_2d034be74ffedRHvzDuK1H7wYl",
+    "ses_2d02b0dcfffehx4arBcJqrxj6p",
+    "ses_2d02c24a8ffeC3NaI8XCc6Xahz",
+    "ses_2d02baeabffeqUQQcfzfsVQGD2",
+    "ses_2d01f2425ffe8MQQWrOdVgObAB",
+    "ses_2d02000e9ffetRpaS77oMZlfgS",
+    "ses_2d01635a5ffejr6qLAqw19Cfi4",
+    "ses_2d0107851ffeMnX0uLGT4jLOaB",
+    "ses_2d00fd182ffes9thcL4K2ph9ZH"
   ],
   "plan_name": "planning-poker",
   "task_sessions": {
@@ -35,6 +46,51 @@
       "agent": "Sisyphus-Junior",
       "category": "quick",
       "updated_at": "2026-03-27T14:49:11.336Z"
+    },
+    "todo:4": {
+      "task_key": "todo:4",
+      "task_label": "4",
+      "task_title": "Vitest + convex-test + React Testing Library Infrastructure",
+      "session_id": "ses_2d039ce2affeJsxnE5t4zbu5fA",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-27T14:54:12.671Z"
+    },
+    "todo:6": {
+      "task_key": "todo:6",
+      "task_label": "6",
+      "task_title": "Session Management with convex-helpers",
+      "session_id": "ses_2d034be74ffedRHvzDuK1H7wYl",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-03-27T15:03:56.117Z"
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "Room Service: Create, Get, List",
+      "session_id": "ses_2d02c24a8ffeC3NaI8XCc6Xahz",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-03-27T15:13:31.742Z"
+    },
+    "todo:10": {
+      "task_key": "todo:10",
+      "task_label": "10",
+      "task_title": "Voting Engine: Cast, Change, Reveal, Reset, Advance",
+      "session_id": "ses_2d02000e9ffetRpaS77oMZlfgS",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-03-27T15:26:16.184Z"
+    },
+    "todo:12": {
+      "task_key": "todo:12",
+      "task_label": "12",
+      "task_title": "Home Page: Create Room + Join Room",
+      "session_id": "ses_2d01635a5ffejr6qLAqw19Cfi4",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-03-27T15:33:47.971Z"
     }
   }
 }
