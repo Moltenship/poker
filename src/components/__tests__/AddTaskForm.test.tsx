@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AddTaskForm } from "../AddTaskForm";
 
-// Mock useSessionMutation
 const mockAddTask = vi.fn().mockResolvedValue("new-task-id");
 
 vi.mock("@/hooks/useSession", () => ({

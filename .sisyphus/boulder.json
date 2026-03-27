@@ -20,7 +20,8 @@
     "ses_2d00f7c93ffeFg2ze1vpo9UdDv",
     "ses_2d0102338ffeeyeB17CAVkHCzS",
     "ses_2d010ccefffeGFi7gdKFWQ8q2U",
-    "ses_2cffa27c8ffeimzzsI0NZLcqAp"
+    "ses_2cffa27c8ffeimzzsI0NZLcqAp",
+    "ses_2cfefce02ffeznwWy7t80PHnEZ"
   ],
   "plan_name": "planning-poker",
   "task_sessions": {
@@ -113,6 +114,15 @@
       "agent": "Sisyphus-Junior",
       "category": "deep",
       "updated_at": "2026-03-27T16:09:46.604Z"
+    },
+    "todo:19": {
+      "task_key": "todo:19",
+      "task_label": "19",
+      "task_title": "Connection Status Banner + Offline/Reconnect Handling",
+      "session_id": "ses_2cfefce02ffeznwWy7t80PHnEZ",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-27T16:13:13.205Z"
     }
   }
 }

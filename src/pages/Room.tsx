@@ -5,7 +5,7 @@ import { api } from "../../convex/_generated/api";
 import { useSessionMutation, useSessionId } from "@/hooks/useSession";
 import { useIdentity } from "@/hooks/useIdentity";
 
-import { TaskSidebar } from "@/components/TaskSidebar";
+import { TaskListManager } from "@/components/TaskListManager";
 import { ParticipantList } from "@/components/ParticipantList";
 import { IdentityFlow } from "@/components/IdentityFlow";
 import { SessionKickedBanner } from "@/components/SessionKickedBanner";
@@ -132,7 +132,7 @@ export default function Room() {
   return (
     <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-background">
       <aside className="w-full md:w-80 border-b md:border-b-0 md:border-r bg-muted/10 shrink-0 h-1/3 md:h-auto overflow-hidden">
-        <TaskSidebar tasks={tasks || []} currentTaskIndex={room.currentTaskIndex} />
+        <TaskListManager roomId={room._id} tasks={tasks || []} currentTaskIndex={room.currentTaskIndex} />
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 bg-background relative h-1/3 md:h-auto">

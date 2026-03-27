@@ -278,3 +278,39 @@ Jira Cloud imports fit the existing Convex architecture best as a public mutatio
 - `joinRoom` auto-rejoin in `Room.tsx` needs a one-shot guard because `useSessionMutation` closures are not guaranteed stable across renders; a ref keyed by `roomId + participantId + displayName` prevents accidental repeated idempotent joins.
 - Base UI `Select` expects string values and an `onValueChange(value, details)` callback that may pass `null`, so using plain string state for selected ids is simpler than carrying branded Convex `Id` types directly through the control.
 - In Vitest, generated Convex API references are proxy-like and brittle to compare directly; mocking `convex/_generated/api` with stable sentinel objects makes `useSessionMutation` tests deterministic for join vs. takeover flows.
+
+## [2026-03-27 20:13] Task: T19 — Connection Status Banner
+
+### Convex Connection State Hook
+- **Hook**: `useConvexConnectionState()` from `"convex/react"` returns a `ConnectionState` object
+- **Key property**: `isWebSocketConnected: boolean` — NOT `isConnected`
+- **Full ConnectionState type**: includes `hasInflightRequests`, `timeOfOldestInflightRequest`, `hasEverConnected`, `numConnections`
+- **Pattern**: Extract the object first, then access `isWebSocketConnected` property for cleaner code
+
+### ConnectionBanner Component Implementation
+- **States**: Hidden when connected → Yellow "Reconnecting..." when disconnected → Green "Back online!" on reconnect (auto-hides after 3s)
+- **Fixed positioning**: `fixed top-0 left-0 right-0 z-[100]` places banner above all content without affecting document flow
+- **State machine**: Track previous connection state in a ref to detect `false → true` transition (reconnect event)
+- **Timer management**: Use `useEffect` with cleanup function to cancel timeout if component unmounts or reconnect banner hidden before 3s expires
+
+### Testing ConnectionBanner with Vitest
+- **Module mocking pattern**: `vi.mock("convex/react", () => ({ useConvexConnectionState: () => ({ ... }) }))` using a module-level mutable mock state (`mockIsConnected`)
+- **Avoiding vi.spyOn ESM limitation**: Cannot spy on ESM module exports directly (throws "Cannot redefine property"). Use `vi.mock` factory function instead
+- **React act() wrapper**: State transitions in tests require `act(() => { ... })` to avoid "update not wrapped in act" warnings
+- **Fake timers with rerender**: Timer advancement also needs `act()` wrapper: `act(() => { vi.advanceTimersByTime(3001) })`
+- **Test cases**: (1) hidden when connected, (2) shows yellow banner when disconnected, (3) shows green banner on reconnect, (4) auto-hides after 3s
+
+### Integration into Layout
+- Import and render `<ConnectionBanner />` as first child in root `<div className="layout">` wrapper
+- No style changes needed — component is self-contained with Tailwind utilities
+
+### All Tests Passing
+- Full suite: 108 tests pass (4 new + 104 existing)
+- No regressions
+- Build succeeds (exit 0)
+- TypeScript clean
+
+## [$(date -Iseconds)] Task: T20
+- Successfully built `AddTaskForm` and `TaskListManager` components integrating Convex session mutations.
+- Leveraged `vi.mock` for `useSessionMutation` to mock different backend procedures cleanly without over-relying on `.name` properties since it might become obfuscated or unavailable.
+- Safely swapped `<TaskSidebar>` with `<TaskListManager>` in `Room.tsx` without deleting `TaskSidebar.tsx` and updated respective test files using `data-testid` correctly.

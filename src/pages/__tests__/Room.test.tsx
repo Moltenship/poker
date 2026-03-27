@@ -146,7 +146,7 @@ describe("Room Layout", () => {
     it("renders the 3-panel layout when joined", () => {
       renderWithRouter("/room/TESTCODE")
       
-      expect(screen.getByTestId("task-sidebar")).toBeInTheDocument()
+      expect(screen.getByTestId("task-list-manager")).toBeInTheDocument()
       expect(screen.getByText("Task 1")).toBeInTheDocument()
       
       expect(screen.getByTestId("room-lobby")).toBeInTheDocument()
