@@ -237,3 +237,13 @@ src/
 - **takeoverSession pattern**: Validates the participant exists (`db.get(participantId)`) then patches `sessionId` to the caller's `ctx.sessionId`. The old session effectively loses ownership. No separate claim-token needed since `ctx.sessionId` is injected by the session middleware and cannot be spoofed.
 - **Presence via isConnected flag**: Participants are never deleted. `leaveRoom` sets `isConnected: false`; `joinRoom` and `heartbeat` set it back to `true`. `listRoomParticipants` exposes all (for facilitators); `getParticipants` can filter to connected-only.
 - **stderr "Convex functions should not directly call other Convex functions"**: These are expected warnings from convex-test when using direct function references. They do not cause test failures and are a known limitation of the test harness — not a production concern.
+
+## [2026-03-27 19:26] Task: T11
+Jira Cloud imports fit the existing Convex architecture best as a public mutation that only flips room import state and schedules an internal action; the internal action can then do field discovery, cursor pagination, and call an internal task-upsert mutation without exposing third-party fetches to clients. In this repo, `convex-test` can cover the scheduled Jira flow reliably with mocked `fetch` plus `finishAllScheduledFunctions`, while direct function refs in tests still need explicit module wiring instead of depending on fresh generated API entries.
+
+## [2026-03-27 19:25:15 +04] Task: T10
+
+- **Voting lifecycle shape**: The core Convex flow for planning poker can stay small and explicit: `startVoting` gates lobby → voting, `castVote` upserts by `by_task_participant`, `revealVotes` flips room status, `resetVoting` clears only the current task’s votes, and `advanceToNextTask` increments `currentTaskIndex` then returns the room to `voting`.
+- **Vote status contract**: `getVoteStatus` should derive from room participants, not just votes, so reset states still return everyone with `hasVoted: false` instead of an empty list.
+- **Convex test harness in this repo**: New tests under `convex/__tests__/` work reliably with `const modules = import.meta.glob("../**/*.ts")` plus direct function imports passed to `t.mutation()` / `t.query()`.
+- **Convex serialization gotcha**: Optional fields with value `undefined` are omitted from Convex query results, so tests should assert missing properties rather than expecting `{ field: undefined }` in returned objects.

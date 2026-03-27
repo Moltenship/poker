@@ -1,0 +1,15 @@
+T10 Voting Engine evidence
+
+Modified files:
+- convex/voting.ts
+- convex/__tests__/voting.test.ts
+- convex/__tests__/jira.test.ts
+
+Verification:
+- `npm test -- convex/__tests__/voting.test.ts` ✅ 11/11 tests passed
+- `npm test` ✅ 64/64 tests passed
+- `npm run build` ✅ succeeded
+
+Notes:
+- Convex test harness for this repo required `const modules = import.meta.glob("../**/*.ts")`.
+- Convex query serialization omits optional fields whose values are `undefined`, so the existing Jira test was updated to assert missing `description` instead of explicit `undefined`.
