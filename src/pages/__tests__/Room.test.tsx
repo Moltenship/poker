@@ -1,10 +1,11 @@
-import React from "react"
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { useQuery } from "convex/react"
-import { useSessionMutation, useSessionId } from "@/hooks/useSession"
+import { useSessionId, useSessionMutation } from "@/hooks/useSession"
+import { useIdentity } from "@/hooks/useIdentity"
 import Room from "../Room"
+import type { Id } from "../../../convex/_generated/dataModel"
 
 vi.mock("convex/react", () => ({
   useQuery: vi.fn(),
@@ -15,6 +16,18 @@ vi.mock("@/hooks/useSession", () => ({
   useSessionMutation: vi.fn().mockReturnValue(vi.fn()),
   useSessionQuery: vi.fn().mockReturnValue(null),
   useSessionId: vi.fn().mockReturnValue("test-session-id"),
+}))
+
+vi.mock("@/hooks/useIdentity", () => ({
+  useIdentity: vi.fn(),
+}))
+
+vi.mock("@/components/IdentityFlow", () => ({
+  IdentityFlow: () => <div data-testid="identity-flow">Identity Flow</div>,
+}))
+
+vi.mock("@/components/SessionKickedBanner", () => ({
+  SessionKickedBanner: () => <div data-testid="session-kicked-banner">Session Kicked Banner</div>,
 }))
 
 const mockRoom = {
@@ -48,9 +61,36 @@ function renderWithRouter(initialEntry: string) {
 }
 
 describe("Room Layout", () => {
+  const mockJoinRoom = vi.fn().mockResolvedValue("p1")
+  const mockTakeoverSession = vi.fn().mockResolvedValue(undefined)
+  const mockStartVoting = vi.fn().mockResolvedValue(undefined)
+  let mutationCallCount = 0
+
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
+    mutationCallCount = 0
     vi.mocked(useSessionId).mockReturnValue("test-session-id")
+    mockJoinRoom.mockResolvedValue("p1")
+    vi.mocked(useSessionMutation).mockImplementation(() => {
+      mutationCallCount += 1
+      const slot = mutationCallCount % 3
+
+      if (slot === 1) {
+        return mockJoinRoom
+      }
+
+      if (slot === 2) {
+        return mockTakeoverSession
+      }
+
+      return mockStartVoting
+    })
+    vi.mocked(useIdentity).mockReturnValue({
+      participantId: "p1" as Id<"participants">,
+      displayName: "Alice",
+      setIdentity: vi.fn(),
+      clearIdentity: vi.fn(),
+    })
   })
 
   it("renders loading state when room data is undefined", () => {
@@ -73,32 +113,34 @@ describe("Room Layout", () => {
 
   describe("when room data is loaded", () => {
     beforeEach(() => {
-      let callCount = 0;
+      let taskQueryCount = 0;
       vi.mocked(useQuery).mockImplementation((...argsArray: any[]) => {
         const args = argsArray[1];
         if (args === "skip") return undefined;
-        if (typeof args === 'object' && args !== null && 'roomCode' in args) return mockRoom;
-        callCount++;
-        if (callCount % 2 === 1) return mockTasks;
-        return mockParticipants;
+        if (typeof args === 'object' && args !== null) {
+          if ('roomCode' in args) return mockRoom;
+          if ('taskId' in args) return [];
+          if ('roomId' in args) {
+            taskQueryCount++;
+            if (taskQueryCount % 2 === 1) return mockTasks;
+            return mockParticipants;
+          }
+        }
+        return undefined;
       });
     })
 
-    it("shows inline name prompt when no participant matches session", () => {
-      let callCount = 0;
-      vi.mocked(useQuery).mockImplementation((...argsArray: any[]) => {
-        const args = argsArray[1];
-        if (args === "skip") return undefined;
-        if (typeof args === 'object' && args !== null && 'roomCode' in args) return mockRoom;
-        callCount++;
-        if (callCount % 2 === 1) return mockTasks;
-        return [{ _id: "p2", roomId: "room123", sessionId: "other-session", displayName: "Bob", isConnected: true }];
-      });
+    it("shows identity flow overlay when there is no stored identity", () => {
+      vi.mocked(useIdentity).mockReturnValue({
+        participantId: null,
+        displayName: null,
+        setIdentity: vi.fn(),
+        clearIdentity: vi.fn(),
+      })
 
       renderWithRouter("/room/TESTCODE")
-      
-      expect(screen.getByText(/Enter your name/i)).toBeInTheDocument()
-      expect(screen.getByRole("button", { name: /Join/i })).toBeInTheDocument()
+
+      expect(screen.getByTestId("identity-flow")).toBeInTheDocument()
     })
 
     it("renders the 3-panel layout when joined", () => {
@@ -111,8 +153,20 @@ describe("Room Layout", () => {
       expect(screen.getByRole("button", { name: /Start Voting/i })).toBeInTheDocument()
       
       expect(screen.getByTestId("participant-list")).toBeInTheDocument()
+      expect(screen.getByTestId("session-kicked-banner")).toBeInTheDocument()
       expect(screen.getByText("Alice")).toBeInTheDocument()
       expect(screen.getByText("Bob")).toBeInTheDocument()
+    })
+
+    it("auto-rejoins when a stored identity exists", async () => {
+      renderWithRouter("/room/TESTCODE")
+
+      await waitFor(() => {
+        expect(mockJoinRoom).toHaveBeenCalledWith({
+          roomId: "room123",
+          displayName: "Alice",
+        })
+      })
     })
 
     it("Start Voting button is enabled when there are tasks and participants", () => {
@@ -122,14 +176,20 @@ describe("Room Layout", () => {
     })
 
     it("Start Voting button is disabled when no tasks", () => {
-      let callCount = 0;
+      let taskQueryCount = 0;
       vi.mocked(useQuery).mockImplementation((...argsArray: any[]) => {
         const args = argsArray[1];
         if (args === "skip") return undefined;
-        if (typeof args === 'object' && args !== null && 'roomCode' in args) return mockRoom;
-        callCount++;
-        if (callCount % 2 === 1) return []; // no tasks
-        return mockParticipants;
+        if (typeof args === 'object' && args !== null) {
+          if ('roomCode' in args) return mockRoom;
+          if ('taskId' in args) return [];
+          if ('roomId' in args) {
+            taskQueryCount++;
+            if (taskQueryCount % 2 === 1) return []; // no tasks
+            return mockParticipants;
+          }
+        }
+        return undefined;
       });
 
       renderWithRouter("/room/TESTCODE")
@@ -138,14 +198,20 @@ describe("Room Layout", () => {
     })
 
     it("renders voting placeholder when status is voting", () => {
-      let callCount = 0;
+      let taskQueryCount = 0;
       vi.mocked(useQuery).mockImplementation((...argsArray: any[]) => {
         const args = argsArray[1];
         if (args === "skip") return undefined;
-        if (typeof args === 'object' && args !== null && 'roomCode' in args) return { ...mockRoom, status: "voting" };
-        callCount++;
-        if (callCount % 2 === 1) return mockTasks;
-        return mockParticipants;
+        if (typeof args === 'object' && args !== null) {
+          if ('roomCode' in args) return { ...mockRoom, status: "voting" };
+          if ('taskId' in args) return [];
+          if ('roomId' in args) {
+            taskQueryCount++;
+            if (taskQueryCount % 2 === 1) return mockTasks;
+            return mockParticipants;
+          }
+        }
+        return undefined;
       });
 
       renderWithRouter("/room/TESTCODE")
@@ -153,14 +219,20 @@ describe("Room Layout", () => {
     })
 
     it("renders results placeholder when status is revealed", () => {
-      let callCount = 0;
+      let taskQueryCount = 0;
       vi.mocked(useQuery).mockImplementation((...argsArray: any[]) => {
         const args = argsArray[1];
         if (args === "skip") return undefined;
-        if (typeof args === 'object' && args !== null && 'roomCode' in args) return { ...mockRoom, status: "revealed" };
-        callCount++;
-        if (callCount % 2 === 1) return mockTasks;
-        return mockParticipants;
+        if (typeof args === 'object' && args !== null) {
+          if ('roomCode' in args) return { ...mockRoom, status: "revealed" };
+          if ('taskId' in args) return [];
+          if ('roomId' in args) {
+            taskQueryCount++;
+            if (taskQueryCount % 2 === 1) return mockTasks;
+            return mockParticipants;
+          }
+        }
+        return undefined;
       });
 
       renderWithRouter("/room/TESTCODE")

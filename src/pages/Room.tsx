@@ -1,23 +1,24 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useSessionMutation, useSessionId } from "@/hooks/useSession";
+import { useIdentity } from "@/hooks/useIdentity";
 
 import { TaskSidebar } from "@/components/TaskSidebar";
 import { ParticipantList } from "@/components/ParticipantList";
+import { IdentityFlow } from "@/components/IdentityFlow";
+import { SessionKickedBanner } from "@/components/SessionKickedBanner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Room() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const sessionId = useSessionId();
-  
-  const [participantId, setParticipantId] = useState<string | null>(null);
-  const [joinName, setJoinName] = useState("");
+  const { participantId, displayName, setIdentity } = useIdentity(roomCode ?? "");
   
   const joinRoom = useSessionMutation((api as any).participants.joinRoom);
+  const takeoverSession = useSessionMutation((api as any).participants.takeoverSession);
   const startVoting = useSessionMutation((api as any).voting.startVoting);
 
   const room = useQuery((api as any).rooms.getRoom, roomCode ? { roomCode } : "skip");
@@ -40,15 +41,32 @@ export default function Room() {
   
   const votedIds = voteStatus?.filter((v: any) => v.hasVoted).map((v: any) => v.participantId) || [];
   const showVoteStatus = room?.status === "voting";
+  const autoRejoinKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (participants && sessionId && !participantId) {
-      const me = participants.find((p: any) => p.sessionId === sessionId);
-      if (me) {
-        setParticipantId(me._id);
-      }
+    if (!room?._id || !participantId || !displayName) {
+      return;
     }
-  }, [participants, sessionId, participantId]);
+
+    const autoRejoinKey = `${room._id}:${participantId}:${displayName}`;
+    if (autoRejoinKeyRef.current === autoRejoinKey) {
+      return;
+    }
+
+    autoRejoinKeyRef.current = autoRejoinKey;
+
+    joinRoom({
+      roomId: room._id,
+      displayName,
+    })
+      .then((nextParticipantId) => {
+        setIdentity(nextParticipantId, displayName);
+      })
+      .catch((error) => {
+        autoRejoinKeyRef.current = null;
+        console.error("Failed to restore room identity:", error);
+      });
+  }, [displayName, joinRoom, participantId, room?._id, setIdentity]);
 
   if (room === undefined) {
     return (
@@ -76,21 +94,6 @@ export default function Room() {
     );
   }
 
-  const handleJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!joinName.trim() || !room._id) return;
-    
-    try {
-      const pid = await joinRoom({
-        roomId: room._id,
-        displayName: joinName.trim()
-      });
-      setParticipantId(pid);
-    } catch (err) {
-      console.error("Failed to join:", err);
-    }
-  };
-
   const handleStartVoting = async () => {
     if (!room._id) return;
     try {
@@ -100,36 +103,30 @@ export default function Room() {
     }
   };
 
-  const isJoined = !!participantId;
   const hasTasks = tasks && tasks.length > 0;
   const hasParticipants = participants && participants.length > 0;
   const canStartVoting = hasTasks && hasParticipants;
 
-  if (!isJoined) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <Card className="w-[400px]">
-          <CardHeader>
-            <CardTitle>Join {room.name}</CardTitle>
-            <CardDescription>Enter your name to join the estimation session.</CardDescription>
-          </CardHeader>
-          <form onSubmit={handleJoin}>
-            <CardContent className="space-y-4">
-              <Input
-                placeholder="Your Name"
-                value={joinName}
-                onChange={(e) => setJoinName(e.target.value)}
-                autoFocus
-                maxLength={30}
-              />
-              <Button type="submit" className="w-full" disabled={!joinName.trim()}>
-                Join Room
-              </Button>
-            </CardContent>
-          </form>
-        </Card>
-      </div>
-    );
+  const handleReclaim = async () => {
+    if (!room._id || !participantId) {
+      return;
+    }
+
+    try {
+      await takeoverSession({
+        roomId: room._id,
+        targetParticipantId: participantId,
+      });
+
+      const participant = participants?.find((entry: any) => entry._id === participantId);
+      setIdentity(participantId, participant?.displayName ?? displayName ?? "");
+    } catch (error) {
+      console.error("Failed to reclaim session:", error);
+    }
+  };
+
+  if (!participantId && roomCode) {
+    return <IdentityFlow roomId={room._id} roomCode={roomCode} onIdentitySet={setIdentity} />;
   }
 
   return (
@@ -139,6 +136,15 @@ export default function Room() {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 bg-background relative h-1/3 md:h-auto">
+        {participantId && (
+          <SessionKickedBanner
+            roomId={room._id}
+            participantId={participantId}
+            currentSessionId={sessionId}
+            onReclaim={handleReclaim}
+          />
+        )}
+
         <header className="h-14 border-b flex items-center px-6 shrink-0 bg-card">
           <h1 className="text-lg font-semibold truncate">{room.name}</h1>
           <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">
