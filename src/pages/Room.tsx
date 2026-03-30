@@ -334,6 +334,11 @@ export default function Room() {
                       "absolute -bottom-0.5 -right-0.5 size-2 rounded-full border border-[var(--sidebar)]",
                       p.isConnected ? "bg-emerald-500" : "bg-muted-foreground/40"
                     )} />
+                    {showVoteStatus && votedIds.includes(p._id) && (
+                      <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-primary border border-[var(--sidebar)] flex items-center justify-center">
+                        <Check className="size-1.5 text-primary-foreground" strokeWidth={3} />
+                      </span>
+                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="left">{p.displayName}</TooltipContent>
