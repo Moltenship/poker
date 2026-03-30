@@ -34,7 +34,7 @@ export function VoteDistribution({ votes, cardSet }: VoteDistributionProps) {
           return (
             <div key={value} className="flex items-center gap-2">
               <span className="w-6 text-right text-[13px] font-medium text-foreground/70">{value}</span>
-              <div className="flex-1 max-w-[140px]">
+              <div className="flex-1">
                 <div
                   className="h-2.5 bg-primary/60 rounded-sm transition-all duration-500"
                   style={{ width: `${percentage}%`, minWidth: percentage > 0 ? '3px' : '0' }}

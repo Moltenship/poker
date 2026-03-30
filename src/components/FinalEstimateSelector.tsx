@@ -54,7 +54,7 @@ export function FinalEstimateSelector({
       <div className="flex gap-2">
         {!isCustom ? (
           <Select value={displayValue} onValueChange={handleSelect}>
-            <SelectTrigger className="w-full max-w-[200px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select estimate..." />
             </SelectTrigger>
             <SelectContent>

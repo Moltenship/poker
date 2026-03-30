@@ -43,7 +43,7 @@ export function HoursInput({ taskId, currentHours }: HoursInputProps) {
         placeholder="e.g. 4.5"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-full max-w-[200px]"
+        className="w-full"
       />
     </div>
   );
