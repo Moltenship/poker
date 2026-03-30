@@ -230,7 +230,18 @@ export default function Room() {
             <div data-testid="voting-area" className="flex-1 flex flex-col items-center justify-center gap-6">
               {currentTask && !currentTask.isQuickVote && (
                 <div className="w-full max-w-xl text-center">
-                  <h2 className="text-sm font-semibold mb-0.5">{currentTask.title}</h2>
+                  <h2 className="text-sm font-semibold mb-0.5">
+                    {(currentTask as any).jiraUrl ? (
+                      <a
+                        href={(currentTask as any).jiraUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline underline-offset-2"
+                      >
+                        {currentTask.title}
+                      </a>
+                    ) : currentTask.title}
+                  </h2>
                   {currentTask.description && (
                     <div className="mt-1">
                       <button
