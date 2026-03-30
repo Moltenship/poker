@@ -15,6 +15,7 @@ import { ResultsPanel } from "@/components/ResultsPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft, Users, Link as LinkIcon, ChevronDown, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Streamdown } from "streamdown";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -314,9 +315,32 @@ export default function Room() {
       <aside className={cn(
         "shrink-0 overflow-hidden bg-[var(--sidebar)] transition-[width] duration-200 ease-in-out",
         "w-full h-[20vh] md:h-auto",
-        participantsOpen ? "md:w-56" : "md:w-0"
+        participantsOpen ? "md:w-56" : "md:w-10"
       )}>
-        <ParticipantList participants={participants || []} votedIds={votedIds} showVoteStatus={showVoteStatus} />
+        {participantsOpen ? (
+          <ParticipantList participants={participants || []} votedIds={votedIds} showVoteStatus={showVoteStatus} />
+        ) : (
+          <div className="hidden md:flex flex-col items-center gap-2 pt-3">
+            {(participants || []).map((p: any) => (
+              <Tooltip key={p._id}>
+                <TooltipTrigger asChild>
+                  <div className="relative">
+                    <Avatar className="size-7">
+                      <AvatarFallback className="text-[10px] font-medium">
+                        {p.displayName.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className={cn(
+                      "absolute -bottom-0.5 -right-0.5 size-2 rounded-full border border-[var(--sidebar)]",
+                      p.isConnected ? "bg-emerald-500" : "bg-muted-foreground/40"
+                    )} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left">{p.displayName}</TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        )}
       </aside>
     </div>
   );
