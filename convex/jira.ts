@@ -66,7 +66,7 @@ export const importFromJira = mutation({
       throw new Error("Room not found");
     }
 
-    if (!room.jiraProjectKey || !room.jiraBaseUrl) {
+    if (!room.jiraProjectKey) {
       throw new Error("Room has no Jira configuration");
     }
 
@@ -77,7 +77,6 @@ export const importFromJira = mutation({
 
     await ctx.scheduler.runAfter(0, internalJira.jira._importFromJiraInternal, {
       roomId: args.roomId,
-      jiraBaseUrl: room.jiraBaseUrl,
       jiraProjectKey: room.jiraProjectKey,
       jql: args.jql,
     });
@@ -87,24 +86,24 @@ export const importFromJira = mutation({
 export const _importFromJiraInternal = internalAction({
   args: {
     roomId: v.id("rooms"),
-    jiraBaseUrl: v.string(),
     jiraProjectKey: v.string(),
     jql: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const apiToken = jiraGlobals.process?.env.JIRA_API_TOKEN;
     const jiraEmail = jiraGlobals.process?.env.JIRA_EMAIL;
+    const jiraBaseUrl = jiraGlobals.process?.env.JIRA_BASE_URL;
 
-    if (!apiToken || !jiraEmail) {
+    if (!apiToken || !jiraEmail || !jiraBaseUrl) {
       await ctx.runMutation(internalJira.jira._setImportError, {
         roomId: args.roomId,
-        error: "JIRA_API_TOKEN and JIRA_EMAIL environment variables are required",
+        error: "JIRA_API_TOKEN, JIRA_EMAIL and JIRA_BASE_URL environment variables are required",
       });
       return;
     }
 
     const authHeader = `Basic ${jiraGlobals.btoa(`${jiraEmail}:${apiToken}`)}`;
-    const baseUrl = args.jiraBaseUrl.replace(/\/$/, "");
+    const baseUrl = jiraBaseUrl.replace(/\/$/, "");
 
     try {
       const fieldsResponse = await jiraGlobals.fetch(`${baseUrl}/rest/api/3/field`, {

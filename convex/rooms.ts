@@ -8,7 +8,6 @@ export const createRoom = sessionMutation({
     name: v.string(),
     cardSet: v.array(v.string()),
     jiraProjectKey: v.optional(v.string()),
-    jiraBaseUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const roomCode = nanoid(8);
@@ -17,7 +16,6 @@ export const createRoom = sessionMutation({
       roomCode,
       cardSet: args.cardSet,
       jiraProjectKey: args.jiraProjectKey,
-      jiraBaseUrl: args.jiraBaseUrl,
       status: "lobby",
       currentTaskIndex: 0,
       createdBy: ctx.sessionId,

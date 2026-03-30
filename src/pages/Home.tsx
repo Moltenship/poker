@@ -35,7 +35,6 @@ export default function Home() {
   const [cardSetType, setCardSetType] = useState<"fibonacci" | "extended" | "custom">("fibonacci");
   const [customCards, setCustomCards] = useState("");
   const [jiraProjectKey, setJiraProjectKey] = useState("");
-  const [jiraBaseUrl, setJiraBaseUrl] = useState("");
   const [createError, setCreateError] = useState("");
   const [joinInput, setJoinInput] = useState("");
   const [recentRooms, setRecentRooms] = useState<RecentRoom[]>([]);
@@ -71,7 +70,6 @@ export default function Home() {
     try {
       const args: any = { name: roomName.trim(), cardSet };
       if (jiraProjectKey.trim()) args.jiraProjectKey = jiraProjectKey.trim();
-      if (jiraBaseUrl.trim()) args.jiraBaseUrl = jiraBaseUrl.trim();
 
       const { roomCode } = await createRoom(args);
       const newRoom = { roomCode, name: args.name, visitedAt: Date.now() };
@@ -192,14 +190,10 @@ export default function Home() {
               <ChevronRight className="h-3 w-3 transition-transform group-open:rotate-90" />
               Jira integration
             </summary>
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="mt-3">
               <div className="space-y-1.5">
                 <label htmlFor="jira-project" className="text-[13px] font-medium">Project Key</label>
                 <Input id="jira-project" placeholder="PROJ" value={jiraProjectKey} onChange={(e) => setJiraProjectKey(e.target.value)} className="h-8 text-[13px]" />
-              </div>
-              <div className="space-y-1.5">
-                <label htmlFor="jira-url" className="text-[13px] font-medium">Base URL</label>
-                <Input id="jira-url" placeholder="https://..." value={jiraBaseUrl} onChange={(e) => setJiraBaseUrl(e.target.value)} className="h-8 text-[13px]" />
               </div>
             </div>
           </details>

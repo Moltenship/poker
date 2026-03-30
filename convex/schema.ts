@@ -7,7 +7,6 @@ export default defineSchema({
     roomCode: v.string(),
     cardSet: v.array(v.string()),
     jiraProjectKey: v.optional(v.string()),
-    jiraBaseUrl: v.optional(v.string()),
     importStatus: v.optional(
       v.union(
         v.literal("idle"),
