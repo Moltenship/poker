@@ -80,7 +80,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraProjectKe
             No tasks yet.
           </div>
         ) : (
-          <div className="py-0.5">
+          <div className="w-full py-0.5">
             {tasks.filter(t => !t.isQuickVote).map((task) => {
               const realIndex = tasks.indexOf(task);
               const isCurrent = realIndex === currentTaskIndex;
