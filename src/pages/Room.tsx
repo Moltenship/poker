@@ -14,9 +14,11 @@ import { CardDeck } from "@/components/CardDeck";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowLeft, Users, Link as LinkIcon, ChevronDown } from "lucide-react";
+import { Check, ArrowLeft, Users, Link as LinkIcon, ChevronDown, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Streamdown } from "streamdown";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 export default function Room() {
@@ -43,6 +45,14 @@ export default function Room() {
   const autoRejoinKeyRef = useRef<string | null>(null);
   const [currentVote, setCurrentVote] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [participantsOpen, setParticipantsOpen] = useState(() => {
+    try { return localStorage.getItem("participants_sidebar_open") !== "false"; } catch { return true; }
+  });
+
+  const toggleParticipants = (value: boolean) => {
+    setParticipantsOpen(value);
+    try { localStorage.setItem("participants_sidebar_open", String(value)); } catch { /* ignore */ }
+  };
   const [descriptionOpen, setDescriptionOpen] = useState(false);
 
   useEffect(() => { setDescriptionOpen(false); }, [currentTask?._id]);
@@ -204,6 +214,19 @@ export default function Room() {
             <div className="w-px h-4 bg-border mx-0.5" />
             <ConnectionDot />
             <ThemeToggle />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="hidden md:flex text-muted-foreground"
+                  onClick={() => toggleParticipants(!participantsOpen)}
+                >
+                  {participantsOpen ? <PanelRightClose /> : <PanelRightOpen />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{participantsOpen ? "Hide participants" : "Show participants"}</TooltipContent>
+            </Tooltip>
           </div>
         </header>
 
@@ -289,8 +312,40 @@ export default function Room() {
       </main>
 
       {/* Participants */}
-      <aside className="w-full md:w-56 shrink-0 h-[20vh] md:h-auto overflow-hidden bg-[var(--sidebar)]">
-        <ParticipantList participants={participants || []} votedIds={votedIds} showVoteStatus={showVoteStatus} />
+      <aside className={cn(
+        "shrink-0 overflow-hidden bg-[var(--sidebar)] transition-[width] duration-200 ease-in-out",
+        "w-full h-[20vh] md:h-auto",
+        participantsOpen ? "md:w-56" : "md:w-14"
+      )}>
+        {participantsOpen ? (
+          <ParticipantList participants={participants || []} votedIds={votedIds} showVoteStatus={showVoteStatus} />
+        ) : (
+          <div className="hidden md:flex flex-col items-center gap-2 pt-3">
+            {(participants || []).map((p: any) => (
+              <Tooltip key={p._id}>
+                <TooltipTrigger asChild>
+                  <div className="relative">
+                    <Avatar className="size-10">
+                      <AvatarFallback className="text-sm font-medium">
+                        {p.displayName.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className={cn(
+                      "absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-[var(--sidebar)]",
+                      p.isConnected ? "bg-emerald-500" : "bg-muted-foreground/40"
+                    )} />
+                    {showVoteStatus && votedIds.includes(p._id) && (
+                      <span className="absolute -top-1 -right-1 size-4 rounded-full bg-primary border-2 border-[var(--sidebar)] flex items-center justify-center">
+                        <Check className="size-2.5 text-primary-foreground" strokeWidth={3} />
+                      </span>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left">{p.displayName}</TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        )}
       </aside>
     </div>
   );
