@@ -134,7 +134,7 @@ export default function Room() {
   return (
     <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-background">
       {/* Tasks */}
-      <aside className="w-full md:w-72 shrink-0 h-[30vh] md:h-auto overflow-hidden bg-[var(--sidebar)]">
+      <aside className="w-full md:w-72 shrink-0 h-[30vh] md:h-full overflow-hidden bg-[var(--sidebar)]">
         <TaskListManager
           roomId={room._id}
           tasks={tasks || []}

@@ -74,7 +74,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraProjectKe
         )}
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         {tasks.filter(t => !t.isQuickVote).length === 0 ? (
           <div className="p-4 text-center text-[12px] text-muted-foreground">
             No tasks yet.
@@ -95,12 +95,12 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraProjectKe
                     ${isCurrent ? "bg-accent" : "hover:bg-accent/50"}
                   `}
                 >
-                  <div className="flex items-start justify-between gap-2 pr-5">
-                    <div className="flex flex-col min-w-0">
-                      <span className={`text-[13px] leading-snug truncate ${isCurrent ? "text-foreground font-medium" : "text-foreground/70"}`}>
+                  <div className="flex items-start justify-between gap-2 pr-5 overflow-hidden">
+                    <div className="flex flex-col min-w-0 overflow-hidden">
+                      <p className={`text-[13px] leading-snug truncate ${isCurrent ? "text-foreground font-medium" : "text-foreground/70"}`}>
                         <span className="text-muted-foreground/50 mr-1 text-[11px]">{realIndex + 1}</span>
                         {task.title}
-                      </span>
+                      </p>
                       {task.jiraKey && (
                         <span className="text-[11px] text-muted-foreground/50">{task.jiraKey}</span>
                       )}
