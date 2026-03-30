@@ -34,7 +34,7 @@ export default function Home() {
   const [roomName, setRoomName] = useState("");
   const [cardSetType, setCardSetType] = useState<"fibonacci" | "extended" | "custom">("fibonacci");
   const [customCards, setCustomCards] = useState("");
-  const [jiraProjectKey, setJiraProjectKey] = useState("");
+  const [jiraEnabled, setJiraEnabled] = useState(false);
   const [createError, setCreateError] = useState("");
   const [joinInput, setJoinInput] = useState("");
   const [recentRooms, setRecentRooms] = useState<RecentRoom[]>([]);
@@ -68,11 +68,8 @@ export default function Home() {
     }
 
     try {
-      const args: any = { name: roomName.trim(), cardSet };
-      if (jiraProjectKey.trim()) args.jiraProjectKey = jiraProjectKey.trim();
-
-      const { roomCode } = await createRoom(args);
-      const newRoom = { roomCode, name: args.name, visitedAt: Date.now() };
+      const { roomCode } = await createRoom({ name: roomName.trim(), cardSet, jiraEnabled: jiraEnabled || undefined });
+      const newRoom = { roomCode, name: roomName.trim(), visitedAt: Date.now() };
       const updatedRooms = [newRoom, ...recentRooms.filter(r => r.roomCode !== roomCode)].slice(0, 5);
       localStorage.setItem("poker_recent_rooms", JSON.stringify(updatedRooms));
       navigate(`/room/${roomCode}`);
@@ -185,18 +182,18 @@ export default function Home() {
             </div>
           )}
 
-          <details className="group">
-            <summary className="cursor-pointer text-[13px] text-muted-foreground hover:text-foreground transition-colors select-none list-none flex items-center gap-1">
-              <ChevronRight className="h-3 w-3 transition-transform group-open:rotate-90" />
-              Jira integration
-            </summary>
-            <div className="mt-3">
-              <div className="space-y-1.5">
-                <label htmlFor="jira-project" className="text-[13px] font-medium">Project Key</label>
-                <Input id="jira-project" placeholder="PROJ" value={jiraProjectKey} onChange={(e) => setJiraProjectKey(e.target.value)} className="h-8 text-[13px]" />
-              </div>
+          <label className="flex items-center justify-between gap-3 cursor-pointer">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[13px] font-medium">Jira integration</span>
+              <span className="text-[12px] text-muted-foreground">Auto-sync tasks from BRV backlog</span>
             </div>
-          </details>
+            <input
+              type="checkbox"
+              checked={jiraEnabled}
+              onChange={e => setJiraEnabled(e.target.checked)}
+              className="size-4 accent-primary"
+            />
+          </label>
 
           <Button type="submit" className="w-full h-8 text-[13px]">
             Create Room

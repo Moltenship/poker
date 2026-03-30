@@ -139,7 +139,8 @@ export default function Room() {
           roomId={room._id}
           tasks={tasks || []}
           currentTaskIndex={room.currentTaskIndex}
-          jiraProjectKey={room.jiraProjectKey}
+          jiraEnabled={(room as any).jiraEnabled ?? false}
+          sprintFilter={(room as any).jiraSprintFilter ?? []}
         />
       </aside>
 

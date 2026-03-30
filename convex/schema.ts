@@ -7,6 +7,8 @@ export default defineSchema({
     roomCode: v.string(),
     cardSet: v.array(v.string()),
     jiraProjectKey: v.optional(v.string()),
+    jiraEnabled: v.optional(v.boolean()),
+    jiraSprintFilter: v.optional(v.array(v.number())),
     importStatus: v.optional(
       v.union(
         v.literal("idle"),
@@ -43,6 +45,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     jiraUrl: v.optional(v.string()),
+    jiraStatus: v.optional(v.string()),
     order: v.number(),
     finalEstimate: v.optional(v.string()),
     hoursEstimate: v.optional(v.number()),

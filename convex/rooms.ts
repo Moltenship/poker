@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { sessionMutation, sessionQuery } from "./lib/sessions";
 import { nanoid } from "nanoid";
 
@@ -8,6 +8,7 @@ export const createRoom = sessionMutation({
     name: v.string(),
     cardSet: v.array(v.string()),
     jiraProjectKey: v.optional(v.string()),
+    jiraEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const roomCode = nanoid(8);
@@ -16,6 +17,7 @@ export const createRoom = sessionMutation({
       roomCode,
       cardSet: args.cardSet,
       jiraProjectKey: args.jiraProjectKey,
+      jiraEnabled: args.jiraEnabled,
       status: "lobby",
       currentTaskIndex: 0,
       createdBy: ctx.sessionId,
@@ -40,6 +42,16 @@ export const getRoomById = query({
   args: { roomId: v.id("rooms") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.roomId);
+  },
+});
+
+export const setSprintFilter = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    sprintIds: v.array(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.roomId, { jiraSprintFilter: args.sprintIds });
   },
 });
 

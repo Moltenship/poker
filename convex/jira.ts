@@ -39,6 +39,12 @@ function getJiraEnv() {
   };
 }
 
+export type JiraSprint = {
+  id: number;
+  name: string;
+  state: "active" | "future" | "closed";
+};
+
 export type JiraIssue = {
   key: string;
   title: string;
@@ -48,17 +54,56 @@ export type JiraIssue = {
   description: string;
 };
 
+export const fetchJiraSprints = action({
+  args: {},
+  handler: async (_ctx): Promise<JiraSprint[]> => {
+    const { authHeader, baseUrl } = getJiraEnv();
+
+    const boardRes = await jiraGlobals.fetch(
+      `${baseUrl}/rest/agile/1.0/board?projectKeyOrId=BRV&type=scrum&maxResults=1`,
+      { headers: { Authorization: authHeader, Accept: "application/json" } }
+    );
+    if (!boardRes.ok) throw new Error(`Failed to fetch board: ${boardRes.status}`);
+
+    const boardData: { values: Array<{ id: number }> } = await boardRes.json();
+    if (!boardData.values.length) return [];
+
+    const boardId = boardData.values[0].id;
+
+    const sprintRes = await jiraGlobals.fetch(
+      `${baseUrl}/rest/agile/1.0/board/${boardId}/sprint?state=active,future&maxResults=20`,
+      { headers: { Authorization: authHeader, Accept: "application/json" } }
+    );
+    if (!sprintRes.ok) throw new Error(`Failed to fetch sprints: ${sprintRes.status}`);
+
+    const sprintData: { values: Array<{ id: number; name: string; state: string }> } =
+      await sprintRes.json();
+
+    return sprintData.values.map(s => ({
+      id: s.id,
+      name: s.name,
+      state: s.state as JiraSprint["state"],
+    }));
+  },
+});
+
 export const fetchJiraBacklog = action({
   args: {
     jiraProjectKey: v.string(),
     jql: v.optional(v.string()),
+    sprintIds: v.optional(v.array(v.number())),
   },
   handler: async (_ctx, args): Promise<JiraIssue[]> => {
     const { authHeader, baseUrl } = getJiraEnv();
 
+    const sprintClause =
+      args.sprintIds && args.sprintIds.length > 0
+        ? `sprint in (${args.sprintIds.join(", ")})`
+        : "sprint is EMPTY";
+
     const effectiveJql =
       args.jql ||
-      `project = "${args.jiraProjectKey}" AND sprint is EMPTY AND statusCategory != Done ORDER BY created DESC`;
+      `project = "${args.jiraProjectKey}" AND issuetype != Design AND originalEstimate is EMPTY AND status in ("To Do", "Backlog", "Open", "Pending") AND ${sprintClause} ORDER BY "cf[10139]" ASC, priority DESC, Rank DESC`;
 
     const allIssues: JiraIssue[] = [];
     let nextPageToken: string | undefined;
@@ -117,8 +162,10 @@ export const importSelectedTasks = mutation({
         title: v.string(),
         description: v.optional(v.string()),
         url: v.string(),
+        status: v.optional(v.string()),
       })
     ),
+    fetchedKeys: v.array(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -130,6 +177,15 @@ export const importSelectedTasks = mutation({
       existing.filter((t) => t.jiraKey).map((t) => [t.jiraKey!, t])
     );
 
+    // Remove Jira tasks that were fetched (in scope) but not selected
+    const selectedKeys = new Set(args.tasks.map((t) => t.key));
+    for (const key of args.fetchedKeys) {
+      if (!selectedKeys.has(key)) {
+        const toDelete = existingByKey.get(key);
+        if (toDelete) await ctx.db.delete(toDelete._id);
+      }
+    }
+
     const maxOrder = existing.reduce((m, t) => Math.max(m, t.order), -1);
     let nextOrder = maxOrder + 1;
 
@@ -140,6 +196,7 @@ export const importSelectedTasks = mutation({
           title: task.title,
           description: task.description ?? undefined,
           jiraUrl: task.url,
+          jiraStatus: task.status ?? undefined,
         });
       } else {
         await ctx.db.insert("tasks", {
@@ -148,6 +205,7 @@ export const importSelectedTasks = mutation({
           title: task.title,
           description: task.description ?? undefined,
           jiraUrl: task.url,
+          jiraStatus: task.status ?? undefined,
           order: nextOrder++,
           isManual: false,
           isQuickVote: false,

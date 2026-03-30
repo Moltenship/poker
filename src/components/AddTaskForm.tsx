@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 
 interface AddTaskFormProps {
@@ -60,25 +61,24 @@ export function AddTaskForm({ roomId, onSuccess }: AddTaskFormProps) {
         maxLength={200}
         disabled={isPending}
         className="text-[13px]"
+        aria-invalid={error ? true : undefined}
       />
       {error && <p className="text-[12px] text-destructive">{error}</p>}
 
-      <textarea
+      <Textarea
         id="task-description"
         rows={2}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Description (optional)"
         disabled={isPending}
-        className="w-full rounded-md bg-muted/80 px-2.5 py-1.5 text-[13px] outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring/50 disabled:opacity-50 resize-none"
+        className="text-[13px] min-h-0 resize-none"
       />
 
-      <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={isPending} className="flex-1 text-[13px]">
-          {isPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
-          Add Task
-        </Button>
-      </div>
+      <Button type="submit" size="sm" disabled={isPending} className="w-full text-[13px]">
+        {isPending && <Loader2 className="animate-spin" data-icon="inline-start" />}
+        Add Task
+      </Button>
     </form>
   );
 }

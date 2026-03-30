@@ -218,6 +218,20 @@ export const reorderTask = sessionMutation({
   },
 });
 
+export const clearTasks = sessionMutation({
+  args: { roomId: v.id("rooms") },
+  handler: async (ctx, args) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    for (const task of tasks) {
+      await ctx.db.delete(task._id);
+    }
+    await ctx.db.patch(args.roomId, { currentTaskIndex: 0, status: "lobby" });
+  },
+});
+
 export const deleteTask = sessionMutation({
   args: {
     taskId: v.id("tasks"),
