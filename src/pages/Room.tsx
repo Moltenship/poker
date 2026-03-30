@@ -14,7 +14,9 @@ import { CardDeck } from "@/components/CardDeck";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowLeft, Users, Link as LinkIcon } from "lucide-react";
+import { Check, ArrowLeft, Users, Link as LinkIcon, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Streamdown } from "streamdown";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 export default function Room() {
@@ -41,6 +43,9 @@ export default function Room() {
   const autoRejoinKeyRef = useRef<string | null>(null);
   const [currentVote, setCurrentVote] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
+
+  useEffect(() => { setDescriptionOpen(false); }, [currentTask?._id]);
 
   useEffect(() => {
     if (!room?._id || !participantId || !displayName) return;
@@ -227,7 +232,20 @@ export default function Room() {
                 <div className="w-full max-w-xl text-center">
                   <h2 className="text-sm font-semibold mb-0.5">{currentTask.title}</h2>
                   {currentTask.description && (
-                    <p className="text-[13px] text-muted-foreground">{currentTask.description}</p>
+                    <div className="mt-1">
+                      <button
+                        onClick={() => setDescriptionOpen(o => !o)}
+                        className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ChevronDown className={cn("size-3.5 transition-transform duration-200", descriptionOpen && "rotate-180")} />
+                        {descriptionOpen ? "Hide description" : "Show description"}
+                      </button>
+                      {descriptionOpen && (
+                        <div className="mt-2 text-left text-[13px]">
+                          <Streamdown mode="static">{currentTask.description}</Streamdown>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

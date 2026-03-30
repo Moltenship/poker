@@ -12,18 +12,91 @@ const jiraGlobals = globalThis as typeof globalThis & {
   process?: { env: Record<string, string | undefined> };
 };
 
-type AdfNode = { type: string; text?: string; content?: AdfNode[] };
+type AdfMark = { type: string; attrs?: Record<string, string> };
+type AdfNode = {
+  type: string;
+  text?: string;
+  content?: AdfNode[];
+  attrs?: Record<string, unknown>;
+  marks?: AdfMark[];
+};
 
-function adfToPlainText(adf: unknown): string {
-  if (!adf || typeof adf !== "object") return "";
-  const parts: string[] = [];
-  function extract(node: AdfNode): void {
-    if (node.type === "text" && node.text) parts.push(node.text);
-    else if (node.type === "hardBreak") parts.push("\n");
-    else if (node.content) node.content.forEach(extract);
+function applyMarks(text: string, marks: AdfMark[]): string {
+  let out = text;
+  for (const mark of marks) {
+    if (mark.type === "strong") out = `**${out}**`;
+    else if (mark.type === "em") out = `_${out}_`;
+    else if (mark.type === "code") out = `\`${out}\``;
+    else if (mark.type === "strike") out = `~~${out}~~`;
+    else if (mark.type === "link") out = `[${out}](${mark.attrs?.href ?? ""})`;
   }
-  extract(adf as AdfNode);
-  return parts.join("").trim();
+  return out;
+}
+
+function convertInline(nodes: AdfNode[]): string {
+  return nodes.map(n => {
+    if (n.type === "text") return applyMarks(n.text ?? "", n.marks ?? []);
+    if (n.type === "hardBreak") return "  \n";
+    return convertAdfNode(n, 0);
+  }).join("");
+}
+
+function convertListItem(item: AdfNode, depth: number): string {
+  const parts: string[] = [];
+  for (const child of item.content ?? []) {
+    if (child.type === "paragraph") parts.push(convertInline(child.content ?? []));
+    else if (child.type === "bulletList" || child.type === "orderedList") {
+      parts.push("\n" + convertAdfNode(child, depth + 1));
+    } else parts.push(convertAdfNode(child, depth));
+  }
+  return parts.join("");
+}
+
+function convertAdfNode(node: AdfNode, depth: number): string {
+  const indent = "  ".repeat(depth);
+  switch (node.type) {
+    case "doc":
+      return (node.content ?? []).map(n => convertAdfNode(n, 0)).join("\n\n");
+    case "paragraph":
+      return convertInline(node.content ?? []);
+    case "heading": {
+      const level = Math.min(Number(node.attrs?.level ?? 1), 6);
+      return `${"#".repeat(level)} ${convertInline(node.content ?? [])}`;
+    }
+    case "bulletList":
+      return (node.content ?? []).map(item =>
+        `${indent}- ${convertListItem(item, depth)}`
+      ).join("\n");
+    case "orderedList":
+      return (node.content ?? []).map((item, i) =>
+        `${indent}${i + 1}. ${convertListItem(item, depth)}`
+      ).join("\n");
+    case "blockquote":
+      return (node.content ?? []).map(n =>
+        convertAdfNode(n, 0).split("\n").map(l => `> ${l}`).join("\n")
+      ).join("\n>\n");
+    case "codeBlock": {
+      const lang = String(node.attrs?.language ?? "");
+      const code = (node.content ?? []).map(n => n.text ?? "").join("");
+      return `\`\`\`${lang}\n${code}\n\`\`\``;
+    }
+    case "rule":
+      return "---";
+    case "hardBreak":
+      return "  \n";
+    case "text":
+      return applyMarks(node.text ?? "", node.marks ?? []);
+    case "mention":
+      return String(node.attrs?.text ?? "");
+    default:
+      if (node.content) return convertInline(node.content);
+      return "";
+  }
+}
+
+function adfToMarkdown(adf: unknown): string {
+  if (!adf || typeof adf !== "object") return "";
+  return convertAdfNode(adf as AdfNode, 0).trim();
 }
 
 function getJiraEnv() {
@@ -142,7 +215,7 @@ export const fetchJiraBacklog = action({
           status: String(issue.fields.status?.name ?? ""),
           type: String(issue.fields.issuetype?.name ?? ""),
           url: `${baseUrl}/browse/${issue.key}`,
-          description: adfToPlainText(issue.fields.description),
+          description: adfToMarkdown(issue.fields.description),
         });
       }
 
