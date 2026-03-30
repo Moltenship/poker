@@ -19,6 +19,7 @@ export type Task = {
   title: string;
   jiraKey?: string;
   jiraStatus?: string;
+  jiraSprintName?: string;
   finalEstimate?: string;
   hoursEstimate?: number;
   isManual: boolean;
@@ -75,6 +76,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
           description: i.description || undefined,
           url: i.url,
           status: i.status || undefined,
+          sprintName: i.sprintName || undefined,
         })),
         fetchedKeys: issues.map(i => i.key),
       });
@@ -303,13 +305,13 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                         "text-[13px] leading-snug truncate",
                         isCurrent ? "text-foreground font-medium" : "text-foreground/70"
                       )}>
-                        <span className="text-muted-foreground/50 mr-1 text-[11px]">{realIndex + 1}</span>
                         {task.title}
                       </p>
                       {task.jiraKey && (
-                        <span className="text-[11px] text-muted-foreground/50">
+                        <span className="text-[11px] text-muted-foreground/50 truncate">
                           {task.jiraKey}
                           {task.jiraStatus && <> · {task.jiraStatus}</>}
+                          {task.jiraSprintName && <> · {task.jiraSprintName}</>}
                         </span>
                       )}
                     </div>

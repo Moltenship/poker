@@ -107,6 +107,7 @@ export function JiraImportModal({ roomId, isOpen, onClose, sprintFilter }: JiraI
           description: i.description || undefined,
           url: i.url,
           status: i.status || undefined,
+          sprintName: i.sprintName || undefined,
         }))
       await importTasks({
         roomId,

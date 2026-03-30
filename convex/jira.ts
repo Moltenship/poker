@@ -125,6 +125,7 @@ export type JiraIssue = {
   type: string;
   url: string;
   description: string;
+  sprintName?: string;
 };
 
 export const fetchJiraSprints = action({
@@ -185,7 +186,7 @@ export const fetchJiraBacklog = action({
       const body: Record<string, unknown> = {
         jql: effectiveJql,
         maxResults: 50,
-        fields: ["summary", "status", "issuetype", "description"],
+        fields: ["summary", "status", "issuetype", "description", "customfield_10020"],
       };
       if (nextPageToken) body.nextPageToken = nextPageToken;
 
@@ -216,6 +217,12 @@ export const fetchJiraBacklog = action({
           type: String(issue.fields.issuetype?.name ?? ""),
           url: `${baseUrl}/browse/${issue.key}`,
           description: adfToMarkdown(issue.fields.description),
+          sprintName: (() => {
+            const sprints = issue.fields.customfield_10020;
+            if (!Array.isArray(sprints) || sprints.length === 0) return undefined;
+            const active = sprints.find((s: any) => s.state === "active") ?? sprints[sprints.length - 1];
+            return String(active.name ?? "");
+          })(),
         });
       }
 
@@ -236,6 +243,7 @@ export const importSelectedTasks = mutation({
         description: v.optional(v.string()),
         url: v.string(),
         status: v.optional(v.string()),
+        sprintName: v.optional(v.string()),
       })
     ),
     fetchedKeys: v.array(v.string()),
@@ -270,6 +278,7 @@ export const importSelectedTasks = mutation({
           description: task.description ?? undefined,
           jiraUrl: task.url,
           jiraStatus: task.status ?? undefined,
+          jiraSprintName: task.sprintName ?? undefined,
         });
       } else {
         await ctx.db.insert("tasks", {
@@ -279,6 +288,7 @@ export const importSelectedTasks = mutation({
           description: task.description ?? undefined,
           jiraUrl: task.url,
           jiraStatus: task.status ?? undefined,
+          jiraSprintName: task.sprintName ?? undefined,
           order: nextOrder++,
           isManual: false,
           isQuickVote: false,
