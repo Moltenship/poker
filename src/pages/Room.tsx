@@ -315,7 +315,7 @@ export default function Room() {
       <aside className={cn(
         "shrink-0 overflow-hidden bg-[var(--sidebar)] transition-[width] duration-200 ease-in-out",
         "w-full h-[20vh] md:h-auto",
-        participantsOpen ? "md:w-56" : "md:w-10"
+        participantsOpen ? "md:w-56" : "md:w-14"
       )}>
         {participantsOpen ? (
           <ParticipantList participants={participants || []} votedIds={votedIds} showVoteStatus={showVoteStatus} />
@@ -325,8 +325,8 @@ export default function Room() {
               <Tooltip key={p._id}>
                 <TooltipTrigger asChild>
                   <div className="relative">
-                    <Avatar className="size-7">
-                      <AvatarFallback className="text-[10px] font-medium">
+                    <Avatar className="size-10">
+                      <AvatarFallback className="text-[11px] font-medium">
                         {p.displayName.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
