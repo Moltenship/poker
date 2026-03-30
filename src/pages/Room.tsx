@@ -238,6 +238,9 @@ export default function Room() {
                         rel="noopener noreferrer"
                         className="hover:underline underline-offset-2"
                       >
+                        {(currentTask as any).jiraKey && (
+                          <span className="text-muted-foreground font-normal">{(currentTask as any).jiraKey}: </span>
+                        )}
                         {currentTask.title}
                       </a>
                     ) : currentTask.title}
