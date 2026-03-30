@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { X, Plus, Trash2, RotateCw, SlidersHorizontal } from "lucide-react";
+import { X, Trash2, RotateCw, SlidersHorizontal } from "lucide-react";
 import { JiraImportModal } from "./JiraImportModal";
-import { AddTaskForm } from "./AddTaskForm";
 import { useSessionMutation } from "@/hooks/useSession";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -37,7 +36,6 @@ interface TaskListManagerProps {
 
 export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, sprintFilter }: TaskListManagerProps) {
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
-  const [isAddingTask, setIsAddingTask] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
   // Jira mode state
@@ -252,28 +250,6 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
       </div>
 
       <Separator />
-
-      {/* Add task */}
-      <div className="px-3 py-2 shrink-0">
-        {isAddingTask ? (
-          <div className="flex flex-col gap-2">
-            <AddTaskForm roomId={roomId} onSuccess={() => setIsAddingTask(false)} />
-            <Button variant="ghost" size="sm" className="w-full h-6 text-[12px]" onClick={() => setIsAddingTask(false)}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-muted-foreground h-8 px-1"
-            onClick={() => setIsAddingTask(true)}
-          >
-            <Plus data-icon="inline-start" />
-            Add task
-          </Button>
-        )}
-      </div>
 
       <Separator />
 
