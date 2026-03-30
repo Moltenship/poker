@@ -326,7 +326,7 @@ export default function Room() {
                 <TooltipTrigger asChild>
                   <div className="relative">
                     <Avatar className="size-10">
-                      <AvatarFallback className="text-[11px] font-medium">
+                      <AvatarFallback className="text-sm font-medium">
                         {p.displayName.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
