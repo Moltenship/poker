@@ -23,6 +23,8 @@ export default function Room() {
   const { participantId, displayName, setIdentity } = useIdentity(roomCode ?? "");
 
   const joinRoom = useSessionMutation((api as any).participants.joinRoom);
+  const leaveRoom = useSessionMutation((api as any).participants.leaveRoom);
+  const heartbeat = useSessionMutation((api as any).participants.heartbeat);
   const takeoverSession = useSessionMutation((api as any).participants.takeoverSession);
   const startVoting = useSessionMutation((api as any).voting.startVoting);
   const ensureQuickVote = useSessionMutation((api as any).tasks.ensureQuickVoteTask);
@@ -53,6 +55,21 @@ export default function Room() {
         console.error("Failed to restore room identity:", error);
       });
   }, [displayName, joinRoom, participantId, room?._id, setIdentity]);
+
+  // Heartbeat: keep isConnected alive; leave on unmount / tab close
+  useEffect(() => {
+    if (!room?._id) return;
+    const send = () => heartbeat({ roomId: room._id }).catch(() => {});
+    send();
+    const interval = setInterval(send, 25_000);
+    const onUnload = () => leaveRoom({ roomId: room._id }).catch(() => {});
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("beforeunload", onUnload);
+      onUnload();
+    };
+  }, [room?._id, heartbeat, leaveRoom]);
 
   // Auto-create quick vote task when room is voting but has no current task
   const ensureQuickVoteRef = useRef(false);

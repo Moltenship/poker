@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
 
 export const joinRoom = sessionMutation({
@@ -116,7 +116,24 @@ export const heartbeat = sessionMutation({
       .unique();
 
     if (participant) {
-      await ctx.db.patch(participant._id, { isConnected: true });
+      await ctx.db.patch(participant._id, { isConnected: true, lastHeartbeatAt: Date.now() });
     }
+  },
+});
+
+export const markStaleOffline = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 60_000;
+    const stale = await ctx.db
+      .query("participants")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("isConnected"), true),
+          q.lt(q.field("lastHeartbeatAt"), cutoff)
+        )
+      )
+      .collect();
+    await Promise.all(stale.map((p) => ctx.db.patch(p._id, { isConnected: false })));
   },
 });

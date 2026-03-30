@@ -33,6 +33,7 @@ export default defineSchema({
     sessionId: v.string(),
     displayName: v.string(),
     isConnected: v.boolean(),
+    lastHeartbeatAt: v.optional(v.number()),
     joinedAt: v.number(),
   })
     .index("by_room", ["roomId"])
