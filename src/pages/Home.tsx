@@ -34,7 +34,6 @@ export default function Home() {
   const [roomName, setRoomName] = useState("");
   const [cardSetType, setCardSetType] = useState<"fibonacci" | "extended" | "custom">("fibonacci");
   const [customCards, setCustomCards] = useState("");
-  const [jiraEnabled, setJiraEnabled] = useState(false);
   const [createError, setCreateError] = useState("");
   const [joinInput, setJoinInput] = useState("");
   const [recentRooms, setRecentRooms] = useState<RecentRoom[]>([]);
@@ -68,7 +67,7 @@ export default function Home() {
     }
 
     try {
-      const { roomCode } = await createRoom({ name: roomName.trim(), cardSet, jiraEnabled: jiraEnabled || undefined });
+      const { roomCode } = await createRoom({ name: roomName.trim(), cardSet, jiraEnabled: true });
       const newRoom = { roomCode, name: roomName.trim(), visitedAt: Date.now() };
       const updatedRooms = [newRoom, ...recentRooms.filter(r => r.roomCode !== roomCode)].slice(0, 5);
       localStorage.setItem("poker_recent_rooms", JSON.stringify(updatedRooms));
@@ -181,19 +180,6 @@ export default function Home() {
               />
             </div>
           )}
-
-          <label className="flex items-center justify-between gap-3 cursor-pointer">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[13px] font-medium">Jira integration</span>
-              <span className="text-[12px] text-muted-foreground">Auto-sync tasks from BRV backlog</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={jiraEnabled}
-              onChange={e => setJiraEnabled(e.target.checked)}
-              className="size-4 accent-primary"
-            />
-          </label>
 
           <Button type="submit" className="w-full h-8 text-[13px]">
             Create Room
