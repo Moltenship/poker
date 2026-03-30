@@ -17,6 +17,7 @@ interface JiraImportModalProps {
   isOpen: boolean
   onClose: () => void
   hasExistingTasks: boolean
+  defaultProjectKey?: string
   importStatus?: "idle" | "loading" | "success" | "error"
   importError?: string
 }
@@ -26,10 +27,11 @@ export function JiraImportModal({
   isOpen,
   onClose,
   hasExistingTasks,
+  defaultProjectKey,
   importStatus,
   importError,
 }: JiraImportModalProps) {
-  const [projectKey, setProjectKey] = useState("")
+  const [projectKey, setProjectKey] = useState(defaultProjectKey ?? "")
   const [jqlFilter, setJqlFilter] = useState("")
   const [localStatus, setLocalStatus] = useState<"idle" | "loading" | "error" | "success">("idle")
 
@@ -43,11 +45,11 @@ export function JiraImportModal({
 
   useEffect(() => {
     if (!isOpen) {
-      setProjectKey("")
+      setProjectKey(defaultProjectKey ?? "")
       setJqlFilter("")
       setLocalStatus("idle")
     }
-  }, [isOpen])
+  }, [isOpen, defaultProjectKey])
 
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +57,7 @@ export function JiraImportModal({
     try {
       await triggerImport({
         roomId,
+        jiraProjectKey: projectKey.trim() || undefined,
         jql: jqlFilter.trim() || undefined,
       })
     } catch (err: any) {

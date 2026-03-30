@@ -57,6 +57,7 @@ function adfToPlainText(adf: unknown): string {
 export const importFromJira = mutation({
   args: {
     roomId: v.id("rooms"),
+    jiraProjectKey: v.optional(v.string()),
     jql: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -66,8 +67,10 @@ export const importFromJira = mutation({
       throw new Error("Room not found");
     }
 
-    if (!room.jiraProjectKey) {
-      throw new Error("Room has no Jira configuration");
+    const jiraProjectKey = args.jiraProjectKey ?? room.jiraProjectKey;
+
+    if (!jiraProjectKey && !args.jql) {
+      throw new Error("Provide a project key or a JQL filter");
     }
 
     await ctx.db.patch(args.roomId, {
@@ -77,7 +80,7 @@ export const importFromJira = mutation({
 
     await ctx.scheduler.runAfter(0, internalJira.jira._importFromJiraInternal, {
       roomId: args.roomId,
-      jiraProjectKey: room.jiraProjectKey,
+      jiraProjectKey: jiraProjectKey ?? "",
       jql: args.jql,
     });
   },

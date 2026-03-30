@@ -24,11 +24,12 @@ interface TaskListManagerProps {
   roomId: Id<"rooms">;
   tasks: Task[];
   currentTaskIndex: number;
+  jiraProjectKey?: string;
   importStatus?: "idle" | "loading" | "success" | "error";
   importError?: string;
 }
 
-export function TaskListManager({ roomId, tasks, currentTaskIndex, importStatus, importError }: TaskListManagerProps) {
+export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraProjectKey, importStatus, importError }: TaskListManagerProps) {
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [isAddingTask, setIsAddingTask] = useState(false);
 
@@ -134,6 +135,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, importStatus,
         isOpen={isJiraModalOpen}
         onClose={() => setIsJiraModalOpen(false)}
         hasExistingTasks={tasks.length > 0}
+        defaultProjectKey={jiraProjectKey}
         importStatus={importStatus}
         importError={importError}
       />

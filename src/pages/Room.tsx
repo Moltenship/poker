@@ -139,6 +139,7 @@ export default function Room() {
           roomId={room._id}
           tasks={tasks || []}
           currentTaskIndex={room.currentTaskIndex}
+          jiraProjectKey={room.jiraProjectKey}
           importStatus={room.importStatus}
           importError={room.importError}
         />
