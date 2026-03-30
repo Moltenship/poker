@@ -14,9 +14,10 @@ import { CardDeck } from "@/components/CardDeck";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowLeft, Users, Link as LinkIcon, ChevronDown } from "lucide-react";
+import { Check, ArrowLeft, Users, Link as LinkIcon, ChevronDown, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Streamdown } from "streamdown";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 export default function Room() {
@@ -43,6 +44,7 @@ export default function Room() {
   const autoRejoinKeyRef = useRef<string | null>(null);
   const [currentVote, setCurrentVote] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [participantsOpen, setParticipantsOpen] = useState(true);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
 
   useEffect(() => { setDescriptionOpen(false); }, [currentTask?._id]);
@@ -204,6 +206,19 @@ export default function Room() {
             <div className="w-px h-4 bg-border mx-0.5" />
             <ConnectionDot />
             <ThemeToggle />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="hidden md:flex text-muted-foreground"
+                  onClick={() => setParticipantsOpen(o => !o)}
+                >
+                  {participantsOpen ? <PanelRightClose /> : <PanelRightOpen />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{participantsOpen ? "Hide participants" : "Show participants"}</TooltipContent>
+            </Tooltip>
           </div>
         </header>
 
@@ -289,7 +304,11 @@ export default function Room() {
       </main>
 
       {/* Participants */}
-      <aside className="w-full md:w-56 shrink-0 h-[20vh] md:h-auto overflow-hidden bg-[var(--sidebar)]">
+      <aside className={cn(
+        "shrink-0 overflow-hidden bg-[var(--sidebar)] transition-[width] duration-200 ease-in-out",
+        "w-full h-[20vh] md:h-auto",
+        participantsOpen ? "md:w-56" : "md:w-0"
+      )}>
         <ParticipantList participants={participants || []} votedIds={votedIds} showVoteStatus={showVoteStatus} />
       </aside>
     </div>
