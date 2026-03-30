@@ -331,12 +331,12 @@ export default function Room() {
                       </AvatarFallback>
                     </Avatar>
                     <span className={cn(
-                      "absolute -bottom-0.5 -right-0.5 size-2 rounded-full border border-[var(--sidebar)]",
+                      "absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-[var(--sidebar)]",
                       p.isConnected ? "bg-emerald-500" : "bg-muted-foreground/40"
                     )} />
                     {showVoteStatus && votedIds.includes(p._id) && (
-                      <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-primary border border-[var(--sidebar)] flex items-center justify-center">
-                        <Check className="size-1.5 text-primary-foreground" strokeWidth={3} />
+                      <span className="absolute -top-1 -right-1 size-4 rounded-full bg-primary border-2 border-[var(--sidebar)] flex items-center justify-center">
+                        <Check className="size-2.5 text-primary-foreground" strokeWidth={3} />
                       </span>
                     )}
                   </div>
