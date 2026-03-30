@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react"
-import { useMutation } from "convex/react"
+import { useState } from "react"
+import { useAction, useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
-import { Id } from "../../convex/_generated/dataModel"
+import type { Id } from "../../convex/_generated/dataModel"
+import type { JiraIssue } from "../../convex/jira"
 import {
   Dialog,
   DialogContent,
@@ -10,141 +11,265 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Loader2, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react"
 
 interface JiraImportModalProps {
   roomId: Id<"rooms">
   isOpen: boolean
   onClose: () => void
-  hasExistingTasks: boolean
   defaultProjectKey?: string
-  importStatus?: "idle" | "loading" | "success" | "error"
-  importError?: string
 }
+
+type Step = "form" | "fetching" | "select" | "saving" | "success" | "error"
 
 export function JiraImportModal({
   roomId,
   isOpen,
   onClose,
-  hasExistingTasks,
   defaultProjectKey,
-  importStatus,
-  importError,
 }: JiraImportModalProps) {
+  const [step, setStep] = useState<Step>("form")
   const [projectKey, setProjectKey] = useState(defaultProjectKey ?? "")
-  const [jqlFilter, setJqlFilter] = useState("")
-  const [localStatus, setLocalStatus] = useState<"idle" | "loading" | "error" | "success">("idle")
+  const [jql, setJql] = useState("")
+  const [issues, setIssues] = useState<JiraIssue[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [error, setError] = useState("")
 
-  const triggerImport = useMutation(api.jira.importFromJira)
+  const fetchBacklog = useAction(api.jira.fetchJiraBacklog)
+  const importTasks = useMutation(api.jira.importSelectedTasks)
 
-  useEffect(() => {
-    if (importStatus && importStatus !== "idle") {
-      setLocalStatus(importStatus)
-    }
-  }, [importStatus])
-
-  useEffect(() => {
-    if (!isOpen) {
+  const handleClose = () => {
+    onClose()
+    // reset after animation
+    setTimeout(() => {
+      setStep("form")
       setProjectKey(defaultProjectKey ?? "")
-      setJqlFilter("")
-      setLocalStatus("idle")
-    }
-  }, [isOpen, defaultProjectKey])
+      setJql("")
+      setIssues([])
+      setSelected(new Set())
+      setError("")
+    }, 200)
+  }
 
-  const handleImport = async (e: React.FormEvent) => {
+  const handleFetch = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLocalStatus("loading")
+    if (!projectKey.trim() && !jql.trim()) return
+    setStep("fetching")
     try {
-      await triggerImport({
-        roomId,
-        jiraProjectKey: projectKey.trim() || undefined,
-        jql: jqlFilter.trim() || undefined,
+      const result = await fetchBacklog({
+        jiraProjectKey: projectKey.trim(),
+        jql: jql.trim() || undefined,
       })
+      setIssues(result)
+      setSelected(new Set(result.map((i) => i.key)))
+      setStep("select")
     } catch (err: any) {
-      setLocalStatus("error")
+      setError(err.message ?? "Failed to fetch backlog")
+      setStep("error")
     }
   }
 
-  const handleTryAgain = () => {
-    setLocalStatus("idle")
+  const handleImport = async () => {
+    setStep("saving")
+    try {
+      const toImport = issues
+        .filter((i) => selected.has(i.key))
+        .map((i) => ({
+          key: i.key,
+          title: i.title,
+          description: i.description || undefined,
+          url: i.url,
+        }))
+      await importTasks({ roomId, tasks: toImport })
+      setStep("success")
+    } catch (err: any) {
+      setError(err.message ?? "Failed to import tasks")
+      setStep("error")
+    }
+  }
+
+  const toggleAll = () => {
+    if (selected.size === issues.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(issues.map((i) => i.key)))
+    }
+  }
+
+  const toggle = (key: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Import from Jira</DialogTitle>
         </DialogHeader>
 
-        {localStatus === "idle" && (
-          <form onSubmit={handleImport} className="grid gap-4 py-4">
-            {hasExistingTasks && (
-              <div className="flex items-start gap-2 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
-                <AlertTriangle className="h-5 w-5 shrink-0" />
-                <p>Re-import will update existing tasks. New tasks will be added.</p>
-              </div>
-            )}
-            
-            <div className="grid gap-2">
+        {/* Step: form */}
+        {step === "form" && (
+          <form onSubmit={handleFetch} className="space-y-4">
+            <div className="space-y-1.5">
               <label htmlFor="projectKey" className="text-sm font-medium">
                 Project Key
               </label>
               <Input
                 id="projectKey"
-                placeholder="e.g. PROJ"
-                required
+                placeholder="BRV"
                 value={projectKey}
                 onChange={(e) => setProjectKey(e.target.value)}
               />
             </div>
-            <div className="grid gap-2">
-              <label htmlFor="jqlFilter" className="text-sm font-medium">
-                JQL Filter (optional)
+            <div className="space-y-1.5">
+              <label htmlFor="jql" className="text-sm font-medium">
+                JQL Filter <span className="text-muted-foreground font-normal">(optional)</span>
               </label>
               <textarea
-                id="jqlFilter"
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="sprint is EMPTY AND statusCategory != Done"
-                value={jqlFilter}
-                onChange={(e) => setJqlFilter(e.target.value)}
+                id="jql"
+                rows={2}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                placeholder={`project = "${projectKey || "BRV"}" AND sprint is EMPTY AND statusCategory != Done`}
+                value={jql}
+                onChange={(e) => setJql(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Leave empty to fetch all backlog items for the project.
+              </p>
             </div>
-            <div className="mt-4 flex justify-end">
-              <Button type="submit">Import</Button>
+            <div className="flex justify-end">
+              <Button type="submit" disabled={!projectKey.trim() && !jql.trim()}>
+                Fetch Backlog
+              </Button>
             </div>
           </form>
         )}
 
-        {localStatus === "loading" && (
-          <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-            <Loader2 data-testid="loading-spinner" className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Importing tasks from Jira...</p>
+        {/* Step: fetching */}
+        {step === "fetching" && (
+          <div className="flex flex-col items-center gap-3 py-10">
+            <Loader2 className="size-7 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Fetching backlog from Jira…</p>
           </div>
         )}
 
-        {localStatus === "success" && (
-          <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
-            <div className="space-y-1">
-                <h3 className="font-semibold text-lg">Import complete!</h3>
-                <p className="text-sm text-muted-foreground">
-                  Imported successfully.
-                </p>
-              </div>
-              <Button onClick={onClose} className="mt-4 w-full">Close</Button>
-          </div>
-        )}
-
-        {localStatus === "error" && (
-          <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-            <AlertTriangle className="h-12 w-12 text-destructive" />
-            <div className="space-y-1">
-              <h3 className="font-semibold text-lg text-destructive">Import Failed</h3>
-              <p className="text-sm text-muted-foreground">
-                {importError || "An unknown error occurred"}
+        {/* Step: select */}
+        {step === "select" && (
+          <div className="space-y-3">
+            {issues.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No backlog items found.
               </p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={toggleAll}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Checkbox
+                      checked={selected.size === issues.length}
+                      onCheckedChange={toggleAll}
+                    />
+                    {selected.size === issues.length ? "Deselect all" : "Select all"}
+                  </button>
+                  <span className="text-xs text-muted-foreground">
+                    {selected.size} / {issues.length} selected
+                  </span>
+                </div>
+                <Separator />
+                <ScrollArea className="h-72">
+                  <div className="space-y-px pr-3">
+                    {issues.map((issue) => (
+                      <div
+                        key={issue.key}
+                        onClick={() => toggle(issue.key)}
+                        className="flex items-start gap-3 rounded-md px-2 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <Checkbox
+                          checked={selected.has(issue.key)}
+                          onCheckedChange={() => toggle(issue.key)}
+                          className="mt-0.5 shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <a
+                              href={issue.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs font-mono text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                            >
+                              {issue.key}
+                              <ExternalLink className="size-2.5" />
+                            </a>
+                            <Badge variant="secondary" className="text-[10px] h-4 px-1">
+                              {issue.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm truncate mt-0.5">{issue.title}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </>
+            )}
+            <Separator />
+            <div className="flex items-center justify-between">
+              <Button variant="ghost" size="sm" onClick={() => setStep("form")}>
+                Back
+              </Button>
+              <Button
+                size="sm"
+                disabled={selected.size === 0}
+                onClick={handleImport}
+              >
+                Add {selected.size > 0 ? `${selected.size} ` : ""}task{selected.size !== 1 ? "s" : ""} to room
+              </Button>
             </div>
-            <Button onClick={handleTryAgain} variant="outline" className="mt-4 w-full">
+          </div>
+        )}
+
+        {/* Step: saving */}
+        {step === "saving" && (
+          <div className="flex flex-col items-center gap-3 py-10">
+            <Loader2 className="size-7 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Adding tasks to room…</p>
+          </div>
+        )}
+
+        {/* Step: success */}
+        {step === "success" && (
+          <div className="flex flex-col items-center gap-4 py-8 text-center">
+            <CheckCircle2 className="size-12 text-green-500" />
+            <div className="space-y-1">
+              <p className="font-semibold">{selected.size} task{selected.size !== 1 ? "s" : ""} added</p>
+              <p className="text-sm text-muted-foreground">Ready to estimate.</p>
+            </div>
+            <Button className="w-full" onClick={handleClose}>Close</Button>
+          </div>
+        )}
+
+        {/* Step: error */}
+        {step === "error" && (
+          <div className="flex flex-col items-center gap-4 py-8 text-center">
+            <AlertTriangle className="size-12 text-destructive" />
+            <div className="space-y-1">
+              <p className="font-semibold text-destructive">Something went wrong</p>
+              <p className="text-sm text-muted-foreground">{error}</p>
+            </div>
+            <Button variant="outline" className="w-full" onClick={() => setStep("form")}>
               Try Again
             </Button>
           </div>
