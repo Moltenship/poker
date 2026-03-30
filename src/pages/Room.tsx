@@ -44,7 +44,14 @@ export default function Room() {
   const autoRejoinKeyRef = useRef<string | null>(null);
   const [currentVote, setCurrentVote] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [participantsOpen, setParticipantsOpen] = useState(true);
+  const [participantsOpen, setParticipantsOpen] = useState(() => {
+    try { return localStorage.getItem("participants_sidebar_open") !== "false"; } catch { return true; }
+  });
+
+  const toggleParticipants = (value: boolean) => {
+    setParticipantsOpen(value);
+    try { localStorage.setItem("participants_sidebar_open", String(value)); } catch { /* ignore */ }
+  };
   const [descriptionOpen, setDescriptionOpen] = useState(false);
 
   useEffect(() => { setDescriptionOpen(false); }, [currentTask?._id]);
@@ -212,7 +219,7 @@ export default function Room() {
                   variant="ghost"
                   size="icon-xs"
                   className="hidden md:flex text-muted-foreground"
-                  onClick={() => setParticipantsOpen(o => !o)}
+                  onClick={() => toggleParticipants(!participantsOpen)}
                 >
                   {participantsOpen ? <PanelRightClose /> : <PanelRightOpen />}
                 </Button>
