@@ -74,7 +74,7 @@ export default function Home() {
       localStorage.setItem("poker_recent_rooms", JSON.stringify(updatedRooms));
       navigate(`/room/${roomCode}`);
     } catch {
-      setCreateError("Failed to create room. Please try again.");
+      setCreateError("ERROR! Failed to create room. Please try again. ");
     }
   };
 
