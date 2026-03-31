@@ -30,6 +30,7 @@ export function JiraSprintSelector({
 }: JiraSprintSelectorProps) {
   const [sprints, setSprints] = useState<JiraSprint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const fetchSprints = useAction(api.jira.fetchJiraSprints);
   const moveToSprint = useAction(api.jira.moveIssueToSprint);
 
@@ -47,18 +48,25 @@ export function JiraSprintSelector({
     return () => { cancelled = true; };
   }, [projectKey, fetchSprints]);
 
+  // Sync from prop when sprints are loaded and no local selection yet
+  useEffect(() => {
+    if (!selectedId && currentSprintName && sprints.length > 0) {
+      const match = sprints.find((s) => s.name === currentSprintName);
+      if (match) setSelectedId(String(match.id));
+    }
+  }, [currentSprintName, sprints, selectedId]);
+
   const handleChange = (sprintId: string) => {
+    setSelectedId(sprintId);
     moveToSprint({ taskId, sprintId: Number(sprintId) }).catch(() => {});
   };
-
-  const currentSprint = sprints.find((s) => s.name === currentSprintName);
 
   return (
     <div className="flex flex-col gap-2">
       <label className="text-sm font-medium">Sprint (Jira)</label>
       <div className="flex items-center gap-2">
         <Select
-          value={currentSprint ? String(currentSprint.id) : undefined}
+          value={selectedId}
           onValueChange={handleChange}
           disabled={loading || syncStatus === "syncing"}
         >
