@@ -39,11 +39,18 @@ export default function Room() {
 
   const currentTask = tasks && room ? tasks[room.currentTaskIndex] : null;
   const voteStatus = useQuery((api as any).voting.getVoteStatus, currentTask?._id ? { taskId: currentTask._id } : "skip");
+  const myVote = useQuery((api as any).voting.getMyVote,
+    currentTask?._id && participantId ? { taskId: currentTask._id, participantId } : "skip"
+  );
 
   const votedIds = voteStatus?.filter((v: any) => v.hasVoted).map((v: any) => v.participantId) || [];
   const showVoteStatus = room?.status === "voting";
   const autoRejoinKeyRef = useRef<string | null>(null);
   const [currentVote, setCurrentVote] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (myVote !== undefined) setCurrentVote(myVote);
+  }, [myVote]);
   const [copied, setCopied] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(() => {
     try { return localStorage.getItem("participants_sidebar_open") !== "false"; } catch { return true; }
@@ -55,7 +62,7 @@ export default function Room() {
   };
   const [descriptionOpen, setDescriptionOpen] = useState(false);
 
-  useEffect(() => { setDescriptionOpen(false); setCurrentVote(null); }, [currentTask?._id]);
+  useEffect(() => { setDescriptionOpen(false); }, [currentTask?._id]);
 
   useEffect(() => {
     if (!room?._id || !participantId || !displayName) return;

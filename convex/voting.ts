@@ -141,6 +141,19 @@ export const removeVote = sessionMutation({
   },
 });
 
+export const getMyVote = query({
+  args: { taskId: v.id("tasks"), participantId: v.id("participants") },
+  handler: async (ctx, args) => {
+    const vote = await ctx.db
+      .query("votes")
+      .withIndex("by_task_participant", (q) =>
+        q.eq("taskId", args.taskId).eq("participantId", args.participantId),
+      )
+      .unique();
+    return vote?.value ?? null;
+  },
+});
+
 export const getVoteStatus = query({
   args: { taskId: v.id("tasks") },
   handler: async (ctx, args) => {
