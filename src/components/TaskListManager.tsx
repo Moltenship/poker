@@ -237,16 +237,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                 </Popover>
               </>
             )}
-            {jiraEnabled && (
-              <Button
-                variant="ghost"
-                size="xs"
-                className="text-muted-foreground"
-                onClick={() => setIsJiraModalOpen(true)}
-              >
-                Import
-              </Button>
-            )}
+            {/* Import button hidden — modal kept for future use */}
           </div>
         )}
       </div>
