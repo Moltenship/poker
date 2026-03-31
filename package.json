@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
     "dev:frontend": "vite",
     "dev:backend": "convex dev --typecheck=disable",
-    "build": "tsc -b && vite build",
+    "build": "convex codegen && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },
