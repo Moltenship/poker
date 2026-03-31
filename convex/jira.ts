@@ -346,6 +346,69 @@ export const setJiraEstimateSyncStatus = internalMutation({
   },
 });
 
+export const setJiraSprintSyncStatus = internalMutation({
+  args: {
+    taskId: v.id("tasks"),
+    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
+    error: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.taskId, {
+      jiraSprintSyncStatus: args.status,
+      jiraSprintSyncError: args.error,
+    });
+  },
+});
+
+export const moveIssueToSprint = action({
+  args: {
+    taskId: v.id("tasks"),
+    sprintId: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.runQuery(api.tasks.getTask, { taskId: args.taskId });
+    if (!task || !task.jiraKey) return;
+
+    await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
+      taskId: args.taskId,
+      status: "syncing",
+    });
+
+    try {
+      const { authHeader, baseUrl } = getJiraEnv();
+      const res = await jiraGlobals.fetch(
+        `${baseUrl}/rest/agile/1.0/sprint/${args.sprintId}/issue`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: authHeader,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ issues: [task.jiraKey] }),
+        },
+      );
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Jira API error: ${res.status} ${text}`);
+      }
+
+      await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
+        taskId: args.taskId,
+        status: "synced",
+      });
+    } catch (err: any) {
+      await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
+        taskId: args.taskId,
+        status: "error",
+        error: err?.message ?? "Failed to move issue to sprint",
+      });
+      throw err;
+    }
+  },
+});
+
 export const updateJiraEstimate = action({
   args: {
     taskId: v.id("tasks"),

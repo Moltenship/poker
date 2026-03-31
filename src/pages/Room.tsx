@@ -330,6 +330,8 @@ export default function Room() {
                   cardSet={room.cardSet}
                   participantCount={participants?.length ?? 0}
                   votedCount={votedIds.length}
+                  projectKey={(room as any).jiraProjectKey}
+                  currentSprintName={currentEnriched?.sprintName}
                 />
               )}
             </div>
