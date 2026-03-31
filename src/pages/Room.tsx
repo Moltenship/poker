@@ -55,7 +55,7 @@ export default function Room() {
   };
   const [descriptionOpen, setDescriptionOpen] = useState(false);
 
-  useEffect(() => { setDescriptionOpen(false); }, [currentTask?._id]);
+  useEffect(() => { setDescriptionOpen(false); setCurrentVote(null); }, [currentTask?._id]);
 
   useEffect(() => {
     if (!room?._id || !participantId || !displayName) return;

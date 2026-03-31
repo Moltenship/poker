@@ -10,18 +10,24 @@ interface CardDeckProps {
   roomStatus: "lobby" | "voting" | "revealed";
   taskId: Id<"tasks">;
   participantId: Id<"participants">;
-  onVoteChange?: (value: string) => void;
+  onVoteChange?: (value: string | null) => void;
 }
 
 export function CardDeck({ cardSet, currentVote, roomStatus, taskId, participantId, onVoteChange }: CardDeckProps) {
   const castVote = useSessionMutation((api as any).voting.castVote);
+  const removeVote = useSessionMutation((api as any).voting.removeVote);
 
   const handleVote = useCallback(
     (value: string) => {
-      castVote({ taskId, participantId, value }).catch(console.error);
-      onVoteChange?.(value);
+      if (value === currentVote) {
+        removeVote({ taskId, participantId }).catch(console.error);
+        onVoteChange?.(null);
+      } else {
+        castVote({ taskId, participantId, value }).catch(console.error);
+        onVoteChange?.(value);
+      }
     },
-    [castVote, taskId, participantId, onVoteChange]
+    [castVote, removeVote, taskId, participantId, currentVote, onVoteChange]
   );
 
   return (
