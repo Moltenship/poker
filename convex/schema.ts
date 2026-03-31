@@ -9,6 +9,7 @@ export default defineSchema({
     jiraProjectKey: v.optional(v.string()),
     jiraEnabled: v.optional(v.boolean()),
     jiraSprintFilter: v.optional(v.array(v.number())),
+    jiraTypeFilter: v.optional(v.array(v.string())),
     importStatus: v.optional(
       v.union(
         v.literal("idle"),

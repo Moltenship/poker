@@ -55,6 +55,16 @@ export const setSprintFilter = mutation({
   },
 });
 
+export const setTypeFilter = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    types: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.roomId, { jiraTypeFilter: args.types });
+  },
+});
+
 export const listMyRooms = sessionQuery({
   args: {},
   handler: async (ctx) => {

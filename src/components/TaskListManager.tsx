@@ -32,9 +32,10 @@ interface TaskListManagerProps {
   currentTaskIndex: number;
   jiraEnabled: boolean;
   sprintFilter: number[];
+  typeFilter: string[];
 }
 
-export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, sprintFilter }: TaskListManagerProps) {
+export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, sprintFilter, typeFilter }: TaskListManagerProps) {
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
@@ -52,11 +53,21 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
   const fetchJiraBacklog = useAction(api.jira.fetchJiraBacklog);
   const importSelectedTasks = useMutation(api.jira.importSelectedTasks);
   const saveSprintFilter = useMutation(api.rooms.setSprintFilter);
+  const saveTypeFilter = useMutation(api.rooms.setTypeFilter);
 
-  // Keep local filter in sync when DB value changes (e.g. from another session)
+  const [localTypeFilter, setLocalTypeFilter] = useState<string[]>(typeFilter);
+
+  // Keep local filters in sync when DB value changes (e.g. from another session)
   useEffect(() => {
     setLocalSprintFilter(sprintFilter);
   }, [JSON.stringify(sprintFilter)]);
+
+  useEffect(() => {
+    setLocalTypeFilter(typeFilter);
+  }, [JSON.stringify(typeFilter)]);
+
+  // Derive unique types from tasks
+  const availableTypes = [...new Set(tasks.map(t => t.jiraType).filter((t): t is string => !!t))].sort();
 
   const doSync = async (ids: number[]) => {
     setSyncing(true);
@@ -109,6 +120,19 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
     updateSprintFilter(newIds);
   };
 
+  const toggleType = (type: string) => {
+    const newTypes = localTypeFilter.includes(type)
+      ? localTypeFilter.filter(t => t !== type)
+      : [...localTypeFilter, type];
+    setLocalTypeFilter(newTypes);
+    saveTypeFilter({ roomId, types: newTypes });
+  };
+
+  const clearTypeFilter = () => {
+    setLocalTypeFilter([]);
+    saveTypeFilter({ roomId, types: [] });
+  };
+
   const handleClearTasks = async () => {
     try { await clearTasks({ roomId }); } catch (err) { console.error(err); }
     setConfirmClear(false);
@@ -124,7 +148,11 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
     try { await deleteTask({ taskId }); } catch (err) { console.error(err); }
   };
 
-  const visibleTasks = tasks.filter(t => !t.isQuickVote);
+  const visibleTasks = tasks.filter(t => {
+    if (t.isQuickVote) return false;
+    if (localTypeFilter.length > 0 && t.jiraType && !localTypeFilter.includes(t.jiraType)) return false;
+    return true;
+  });
 
   return (
     <div className="flex flex-col h-full" data-testid="task-list-manager">
@@ -180,14 +208,14 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                           size="icon-xs"
                           className={cn(
                             "text-muted-foreground",
-                            localSprintFilter.length > 0 && "text-primary"
+                            (localSprintFilter.length > 0 || localTypeFilter.length > 0) && "text-primary"
                           )}
                         >
                           <SlidersHorizontal />
                         </Button>
                       </PopoverTrigger>
                     </TooltipTrigger>
-                    <TooltipContent>Filter by sprint</TooltipContent>
+                    <TooltipContent>Filters</TooltipContent>
                   </Tooltip>
                   <PopoverContent className="w-72 p-3" align="end">
                     <div className="flex flex-col gap-2">
@@ -232,6 +260,41 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                       )}
                       {syncError && (
                         <p className="text-xs text-destructive truncate">{syncError}</p>
+                      )}
+                      {availableTypes.length > 0 && (
+                        <>
+                          <Separator className="my-1" />
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Type</span>
+                            {localTypeFilter.length > 0 && (
+                              <button
+                                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={clearTypeFilter}
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {availableTypes.map(type => (
+                              <button
+                                key={type}
+                                onClick={() => toggleType(type)}
+                                className={cn(
+                                  "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
+                                  localTypeFilter.includes(type)
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                                )}
+                              >
+                                {type}
+                              </button>
+                            ))}
+                          </div>
+                          {localTypeFilter.length === 0 && (
+                            <p className="text-xs text-muted-foreground">Showing all types</p>
+                          )}
+                        </>
                       )}
                     </div>
                   </PopoverContent>

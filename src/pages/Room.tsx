@@ -180,6 +180,7 @@ export default function Room() {
           currentTaskIndex={room.currentTaskIndex}
           jiraEnabled={(room as any).jiraEnabled ?? false}
           sprintFilter={(room as any).jiraSprintFilter ?? []}
+          typeFilter={(room as any).jiraTypeFilter ?? []}
         />
       </aside>
 
