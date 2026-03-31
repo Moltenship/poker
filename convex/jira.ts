@@ -244,6 +244,7 @@ export const importSelectedTasks = mutation({
         description: v.optional(v.string()),
         url: v.string(),
         status: v.optional(v.string()),
+        type: v.optional(v.string()),
         sprintName: v.optional(v.string()),
       })
     ),
@@ -279,6 +280,7 @@ export const importSelectedTasks = mutation({
           description: task.description ?? undefined,
           jiraUrl: task.url,
           jiraStatus: task.status ?? undefined,
+          jiraType: task.type ?? undefined,
           jiraSprintName: task.sprintName ?? undefined,
         });
       } else {
@@ -289,6 +291,7 @@ export const importSelectedTasks = mutation({
           description: task.description ?? undefined,
           jiraUrl: task.url,
           jiraStatus: task.status ?? undefined,
+          jiraType: task.type ?? undefined,
           jiraSprintName: task.sprintName ?? undefined,
           order: nextOrder++,
           isManual: false,
