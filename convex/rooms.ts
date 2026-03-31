@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { sessionMutation, sessionQuery } from "./lib/sessions";
 import { nanoid } from "nanoid";
 
@@ -52,6 +52,21 @@ export const setSprintFilter = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.roomId, { jiraSprintFilter: args.sprintIds });
+  },
+});
+
+export const enableJiraOnAllRooms = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rooms = await ctx.db.query("rooms").collect();
+    let count = 0;
+    for (const room of rooms) {
+      if (!room.jiraEnabled) {
+        await ctx.db.patch(room._id, { jiraEnabled: true });
+        count++;
+      }
+    }
+    return { updated: count, total: rooms.length };
   },
 });
 
