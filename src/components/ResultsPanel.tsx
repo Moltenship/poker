@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { VoteDistribution } from "./VoteDistribution";
-import { HoursInput } from "./HoursInput";
+import { JiraEstimateInput } from "./JiraEstimateInput";
 import { FinalEstimateSelector } from "./FinalEstimateSelector";
 import { findNearestCard } from "@/lib/average";
 import { Progress } from "./ui/progress";
@@ -117,7 +117,13 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
                   cardSet={cardSet}
                   currentEstimate={currentTask?.finalEstimate}
                 />
-                <HoursInput taskId={taskId} currentHours={currentTask?.hoursEstimate} />
+                {(currentTask as any)?.jiraKey && (
+                  <JiraEstimateInput
+                    taskId={taskId}
+                    syncStatus={(currentTask as any)?.jiraEstimateSyncStatus}
+                    syncError={(currentTask as any)?.jiraEstimateSyncError}
+                  />
+                )}
               </>
             )}
           </div>

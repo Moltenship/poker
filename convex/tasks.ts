@@ -152,6 +152,11 @@ export const getTasksForRoom = query({
   },
 });
 
+export const getTask = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => ctx.db.get(args.taskId),
+});
+
 export const getCurrentTask = query({
   args: { roomId: v.id("rooms") },
   handler: async (ctx, args) => {

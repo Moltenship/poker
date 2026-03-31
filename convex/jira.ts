@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { action, mutation } from "./_generated/server";
+import { action, internalMutation, mutation } from "./_generated/server";
+import { api, internal } from "./_generated/api";
 
 const jiraGlobals = globalThis as typeof globalThis & {
   fetch: (input: string, init?: Record<string, unknown>) => Promise<{
@@ -294,6 +295,73 @@ export const importSelectedTasks = mutation({
           isQuickVote: false,
         });
       }
+    }
+  },
+});
+
+export const setJiraEstimateSyncStatus = internalMutation({
+  args: {
+    taskId: v.id("tasks"),
+    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
+    error: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.taskId, {
+      jiraEstimateSyncStatus: args.status,
+      jiraEstimateSyncError: args.error,
+    });
+  },
+});
+
+export const updateJiraEstimate = action({
+  args: {
+    taskId: v.id("tasks"),
+    estimate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.runQuery(api.tasks.getTask, { taskId: args.taskId });
+    if (!task || !task.jiraKey) return;
+
+    await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
+      taskId: args.taskId,
+      status: "syncing",
+    });
+
+    try {
+      const { authHeader, baseUrl } = getJiraEnv();
+      const res = await jiraGlobals.fetch(
+        `${baseUrl}/rest/api/3/issue/${task.jiraKey}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: authHeader,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            fields: {
+              timetracking: { originalEstimate: args.estimate },
+            },
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Jira API error: ${res.status} ${text}`);
+      }
+
+      await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
+        taskId: args.taskId,
+        status: "synced",
+      });
+    } catch (err: any) {
+      await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
+        taskId: args.taskId,
+        status: "error",
+        error: err?.message ?? "Failed to sync estimate",
+      });
+      throw err;
     }
   },
 });
