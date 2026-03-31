@@ -11,11 +11,6 @@ type SessionKickedBannerProps = {
   onReclaim: () => void;
 };
 
-type RoomParticipant = {
-  _id: Id<"participants">;
-  sessionId: string;
-};
-
 export function SessionKickedBanner({
   roomId,
   participantId,
@@ -23,12 +18,10 @@ export function SessionKickedBanner({
   onReclaim,
 }: SessionKickedBannerProps) {
   const navigate = useNavigate();
-  const participants = useQuery((api as any).participants.getParticipants, { roomId }) as
-    | RoomParticipant[]
-    | undefined;
+  const participants = useQuery(api.participants.getParticipants, { roomId });
 
   const participant = participants?.find(
-    (entry: RoomParticipant) => entry._id === participantId,
+    (entry) => entry._id === participantId,
   );
 
   if (!participant || participant.sessionId === currentSessionId) {

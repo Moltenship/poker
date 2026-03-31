@@ -112,20 +112,20 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
           {/* Right: distribution + estimate controls */}
           <div className="flex flex-col gap-4 border-t pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-6">
             <VoteDistribution votes={formattedVotes} cardSet={cardSet} />
-            {!isQuickVote && (currentTask as any)?.jiraKey && (
+            {!isQuickVote && currentTask?.jiraKey && (
               <>
                 <JiraEstimateInput
                   taskId={taskId}
-                  syncStatus={(currentTask as any)?.jiraEstimateSyncStatus}
-                  syncError={(currentTask as any)?.jiraEstimateSyncError}
+                  syncStatus={currentTask?.jiraEstimateSyncStatus}
+                  syncError={currentTask?.jiraEstimateSyncError}
                 />
                 {projectKey && (
                   <JiraSprintSelector
                     taskId={taskId}
                     projectKey={projectKey}
                     currentSprintName={currentSprintName}
-                    syncStatus={(currentTask as any)?.jiraSprintSyncStatus}
-                    syncError={(currentTask as any)?.jiraSprintSyncError}
+                    syncStatus={currentTask?.jiraSprintSyncStatus}
+                    syncError={currentTask?.jiraSprintSyncError}
                   />
                 )}
               </>

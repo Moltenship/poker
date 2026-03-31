@@ -39,7 +39,8 @@ export default defineSchema({
   })
     .index("by_room", ["roomId"])
     .index("by_room_session", ["roomId", "sessionId"])
-    .index("by_session", ["sessionId"]),
+    .index("by_session", ["sessionId"])
+    .index("by_isConnected_lastHeartbeatAt", ["isConnected", "lastHeartbeatAt"]),
 
   tasks: defineTable({
     roomId: v.id("rooms"),

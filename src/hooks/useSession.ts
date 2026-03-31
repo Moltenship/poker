@@ -9,16 +9,6 @@ import type { OptionalRestArgsOrSkip } from "convex/react";
 
 const SESSION_KEY = "poker_session_id";
 
-type SessionFunction<Type extends "query" | "mutation"> = FunctionReference<
-  Type,
-  "public",
-  { sessionId: string } & Record<string, unknown>
->;
-
-type WithoutSessionId<T> = T extends { sessionId: string }
-  ? Omit<T, "sessionId">
-  : T;
-
 function createSessionId() {
   if (typeof crypto?.randomUUID === "function") {
     return crypto.randomUUID();
@@ -43,29 +33,31 @@ export function useSessionId(): string {
   return getSessionId();
 }
 
-export function useSessionMutation<Mutation extends SessionFunction<"mutation">>(
-  mutationRef: Mutation,
+export function useSessionMutation<
+  Ref extends FunctionReference<"mutation", "public">
+>(
+  mutationRef: FunctionArgs<Ref> extends { sessionId: string } ? Ref : never,
 ) {
-  const mutate = useMutation(mutationRef);
+  const mutate = useMutation(mutationRef as Ref);
   const sessionId = useSessionId();
 
-  return (args: WithoutSessionId<FunctionArgs<Mutation>>) => {
-    const nextArgs = [
-      { ...args, sessionId } as FunctionArgs<Mutation>,
-    ] as OptionalRestArgs<Mutation>;
-
-    return mutate(...nextArgs);
+  return (args: Omit<FunctionArgs<Ref>, "sessionId">) => {
+    const fullArgs = [
+      { ...args, sessionId } as FunctionArgs<Ref>,
+    ] as OptionalRestArgs<Ref>;
+    return mutate(...fullArgs);
   };
 }
 
-export function useSessionQuery<Query extends SessionFunction<"query">>(
-  queryRef: Query,
-  args: WithoutSessionId<FunctionArgs<Query>>,
-): FunctionReturnType<Query> | undefined {
+export function useSessionQuery<
+  Ref extends FunctionReference<"query", "public">
+>(
+  queryRef: FunctionArgs<Ref> extends { sessionId: string } ? Ref : never,
+  args: Omit<FunctionArgs<Ref>, "sessionId">,
+): FunctionReturnType<Ref> | undefined {
   const sessionId = useSessionId();
-  const nextArgs = [
-    { ...args, sessionId } as FunctionArgs<Query>,
-  ] as OptionalRestArgsOrSkip<Query>;
-
-  return useQuery(queryRef, ...nextArgs);
+  const fullArgs = [
+    { ...args, sessionId } as FunctionArgs<Ref>,
+  ] as OptionalRestArgsOrSkip<Ref>;
+  return useQuery(queryRef as Ref, ...fullArgs);
 }

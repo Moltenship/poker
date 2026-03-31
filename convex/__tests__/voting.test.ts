@@ -1,22 +1,15 @@
+/// <reference types="vite/client" />
 import { convexTest } from "convex-test";
+import type { TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
+import type { Id } from "../_generated/dataModel";
+import { api } from "../_generated/api";
 import schema from "../schema";
-import {
-  advanceToNextTask,
-  castVote,
-  getVoteResults,
-  getVoteStatus,
-  resetVoting,
-  revealVotes,
-  startVoting,
-} from "../voting";
-import { addTask } from "../tasks";
-import { joinRoom } from "../participants";
 
-const modules: any = (import.meta as any).glob("../**/*.ts");
+const modules = import.meta.glob("../**/*.ts");
 
-async function createTestRoom(t: any, status: "lobby" | "voting" | "revealed" = "voting") {
-  return await t.run(async (ctx: any) => {
+async function createTestRoom(t: TestConvex<typeof schema>, status: "lobby" | "voting" | "revealed" = "voting") {
+  return await t.run(async (ctx) => {
     return await ctx.db.insert("rooms", {
       name: "Test Room",
       roomCode: "TESTCODE",
@@ -29,12 +22,12 @@ async function createTestRoom(t: any, status: "lobby" | "voting" | "revealed" = 
   });
 }
 
-async function createParticipant(t: any, roomId: any, sessionId: string, displayName: string) {
-  return await t.mutation(joinRoom as any, { sessionId, roomId, displayName });
+async function createParticipant(t: TestConvex<typeof schema>, roomId: Id<"rooms">, sessionId: string, displayName: string) {
+  return await t.mutation(api.participants.joinRoom, { sessionId, roomId, displayName });
 }
 
-async function createTask(t: any, roomId: any, title = "Story 1") {
-  return await t.mutation(addTask as any, { sessionId: "session-1", roomId, title });
+async function createTask(t: TestConvex<typeof schema>, roomId: Id<"rooms">, title = "Story 1") {
+  return await t.mutation(api.tasks.addTask, { sessionId: "session-1", roomId, title });
 }
 
 describe("voting", () => {
@@ -44,10 +37,10 @@ describe("voting", () => {
     const participantId = await createParticipant(t, roomId, "session-1", "Tim");
     const taskId = await createTask(t, roomId);
 
-    await t.mutation(castVote as any, { sessionId: "session-1", taskId, participantId, value: "5" });
+    await t.mutation(api.voting.castVote, { sessionId: "session-1", taskId, participantId, value: "5" });
 
-    const status = await t.query(getVoteStatus as any, { taskId });
-    const timsStatus = status.find((entry: any) => entry.participantId === participantId);
+    const status = await t.query(api.voting.getVoteStatus, { taskId });
+    const timsStatus = status.find((entry) => entry.participantId === participantId);
     expect(timsStatus?.hasVoted).toBe(true);
   });
 
@@ -57,11 +50,11 @@ describe("voting", () => {
     const participantId = await createParticipant(t, roomId, "session-1", "Tim");
     const taskId = await createTask(t, roomId);
 
-    await t.mutation(castVote as any, { sessionId: "session-1", taskId, participantId, value: "5" });
-    await t.mutation(castVote as any, { sessionId: "session-1", taskId, participantId, value: "8" });
+    await t.mutation(api.voting.castVote, { sessionId: "session-1", taskId, participantId, value: "5" });
+    await t.mutation(api.voting.castVote, { sessionId: "session-1", taskId, participantId, value: "8" });
 
-    const status = await t.query(getVoteStatus as any, { taskId });
-    expect(status.filter((entry: any) => entry.participantId === participantId)).toHaveLength(1);
+    const status = await t.query(api.voting.getVoteStatus, { taskId });
+    expect(status.filter((entry) => entry.participantId === participantId)).toHaveLength(1);
   });
 
   test("getVoteStatus does not reveal vote values before reveal", async () => {
@@ -70,10 +63,10 @@ describe("voting", () => {
     const participantId = await createParticipant(t, roomId, "session-1", "Tim");
     const taskId = await createTask(t, roomId);
 
-    await t.mutation(castVote as any, { sessionId: "session-1", taskId, participantId, value: "5" });
+    await t.mutation(api.voting.castVote, { sessionId: "session-1", taskId, participantId, value: "5" });
 
-    const status = await t.query(getVoteStatus as any, { taskId });
-    const timsStatus = status.find((entry: any) => entry.participantId === participantId);
+    const status = await t.query(api.voting.getVoteStatus, { taskId });
+    const timsStatus = status.find((entry) => entry.participantId === participantId);
     expect(timsStatus?.hasVoted).toBe(true);
     expect(timsStatus).not.toHaveProperty("value");
   });
@@ -82,9 +75,9 @@ describe("voting", () => {
     const t = convexTest(schema, modules);
     const roomId = await createTestRoom(t);
 
-    await t.mutation(revealVotes as any, { sessionId: "session-1", roomId });
+    await t.mutation(api.voting.revealVotes, { sessionId: "session-1", roomId });
 
-    const room: any = await t.run(async (ctx: any) => ctx.db.get(roomId));
+    const room = await t.run(async (ctx) => ctx.db.get(roomId));
     expect(room?.status).toBe("revealed");
   });
 
@@ -95,11 +88,11 @@ describe("voting", () => {
     const p2 = await createParticipant(t, roomId, "session-2", "Alice");
     const taskId = await createTask(t, roomId);
 
-    await t.mutation(castVote as any, { sessionId: "session-1", taskId, participantId: p1, value: "5" });
-    await t.mutation(castVote as any, { sessionId: "session-2", taskId, participantId: p2, value: "8" });
-    await t.mutation(revealVotes as any, { sessionId: "session-1", roomId });
+    await t.mutation(api.voting.castVote, { sessionId: "session-1", taskId, participantId: p1, value: "5" });
+    await t.mutation(api.voting.castVote, { sessionId: "session-2", taskId, participantId: p2, value: "8" });
+    await t.mutation(api.voting.revealVotes, { sessionId: "session-1", roomId });
 
-    const results = await t.query(getVoteResults as any, { taskId, roomId });
+    const results = await t.query(api.voting.getVoteResults, { taskId, roomId });
     expect(results).not.toBeNull();
     expect(results?.average).toBeCloseTo(6.5, 1);
     expect(results?.votes).toHaveLength(2);
@@ -110,7 +103,7 @@ describe("voting", () => {
     const roomId = await createTestRoom(t);
     const taskId = await createTask(t, roomId);
 
-    const results = await t.query(getVoteResults as any, { taskId, roomId });
+    const results = await t.query(api.voting.getVoteResults, { taskId, roomId });
     expect(results).toBeNull();
   });
 
@@ -120,15 +113,15 @@ describe("voting", () => {
     const participantId = await createParticipant(t, roomId, "session-1", "Tim");
     const taskId = await createTask(t, roomId);
 
-    await t.mutation(castVote as any, { sessionId: "session-1", taskId, participantId, value: "5" });
-    await t.mutation(revealVotes as any, { sessionId: "session-1", roomId });
-    await t.mutation(resetVoting as any, { sessionId: "session-1", roomId });
+    await t.mutation(api.voting.castVote, { sessionId: "session-1", taskId, participantId, value: "5" });
+    await t.mutation(api.voting.revealVotes, { sessionId: "session-1", roomId });
+    await t.mutation(api.voting.resetVoting, { sessionId: "session-1", roomId });
 
-    const room: any = await t.run(async (ctx: any) => ctx.db.get(roomId));
+    const room = await t.run(async (ctx) => ctx.db.get(roomId));
     expect(room?.status).toBe("voting");
 
-    const status = await t.query(getVoteStatus as any, { taskId });
-    expect(status.every((entry: any) => !entry.hasVoted)).toBe(true);
+    const status = await t.query(api.voting.getVoteStatus, { taskId });
+    expect(status.every((entry) => !entry.hasVoted)).toBe(true);
   });
 
   test("castVote is rejected when room is in lobby status", async () => {
@@ -138,7 +131,7 @@ describe("voting", () => {
     const taskId = await createTask(t, roomId);
 
     await expect(
-      t.mutation(castVote as any, { sessionId: "session-1", taskId, participantId, value: "5" }),
+      t.mutation(api.voting.castVote, { sessionId: "session-1", taskId, participantId, value: "5" }),
     ).rejects.toThrow();
   });
 
@@ -149,11 +142,11 @@ describe("voting", () => {
     const p2 = await createParticipant(t, roomId, "session-2", "Alice");
     const taskId = await createTask(t, roomId);
 
-    await t.mutation(castVote as any, { sessionId: "session-1", taskId, participantId: p1, value: "?" });
-    await t.mutation(castVote as any, { sessionId: "session-2", taskId, participantId: p2, value: "☕" });
-    await t.mutation(revealVotes as any, { sessionId: "session-1", roomId });
+    await t.mutation(api.voting.castVote, { sessionId: "session-1", taskId, participantId: p1, value: "?" });
+    await t.mutation(api.voting.castVote, { sessionId: "session-2", taskId, participantId: p2, value: "☕" });
+    await t.mutation(api.voting.revealVotes, { sessionId: "session-1", roomId });
 
-    const results = await t.query(getVoteResults as any, { taskId, roomId });
+    const results = await t.query(api.voting.getVoteResults, { taskId, roomId });
     expect(results?.average).toBeNull();
   });
 
@@ -161,9 +154,9 @@ describe("voting", () => {
     const t = convexTest(schema, modules);
     const roomId = await createTestRoom(t, "lobby");
 
-    await t.mutation(startVoting as any, { sessionId: "session-1", roomId });
+    await t.mutation(api.voting.startVoting, { sessionId: "session-1", roomId });
 
-    const room: any = await t.run(async (ctx: any) => ctx.db.get(roomId));
+    const room = await t.run(async (ctx) => ctx.db.get(roomId));
     expect(room?.status).toBe("voting");
   });
 
@@ -173,9 +166,9 @@ describe("voting", () => {
     await createTask(t, roomId, "Story 1");
     await createTask(t, roomId, "Story 2");
 
-    await t.mutation(advanceToNextTask as any, { sessionId: "session-1", roomId });
+    await t.mutation(api.voting.advanceToNextTask, { sessionId: "session-1", roomId });
 
-    const room: any = await t.run(async (ctx: any) => ctx.db.get(roomId));
+    const room = await t.run(async (ctx) => ctx.db.get(roomId));
     expect(room?.currentTaskIndex).toBe(1);
     expect(room?.status).toBe("voting");
   });

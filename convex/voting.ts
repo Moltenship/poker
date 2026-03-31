@@ -1,4 +1,6 @@
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 import { query } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
 
@@ -25,14 +27,14 @@ function calculateAverage(votes: string[]) {
 }
 
 async function getSortedTasksForRoom(
-  ctx: { db: { query: Function } },
-  roomId: string,
+  ctx: MutationCtx,
+  roomId: Id<"rooms">,
 ) {
   const tasks = await ctx.db
     .query("tasks")
-    .withIndex("by_room", (q: { eq: (field: string, value: unknown) => unknown }) => q.eq("roomId", roomId))
+    .withIndex("by_room", (q) => q.eq("roomId", roomId))
     .collect();
-  return tasks.sort((a: { order: number }, b: { order: number }) => a.order - b.order);
+  return tasks.sort((a, b) => a.order - b.order);
 }
 
 export const startVoting = sessionMutation({

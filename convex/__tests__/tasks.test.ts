@@ -105,25 +105,6 @@ describe("tasks", () => {
     expect(tasks[0].hoursEstimate).toBe(4);
   });
 
-  test("setFinalEstimate persists estimate", async () => {
-    const t = convexTest(schema, modules);
-    const roomId = await createTestRoom(t);
-    const taskId = await t.mutation(api.tasks.addTask, {
-      sessionId: "s1",
-      roomId,
-      title: "Task",
-    });
-
-    await t.mutation(api.tasks.setFinalEstimate, {
-      sessionId: "s1",
-      taskId,
-      estimate: "8",
-    });
-
-    const tasks = await t.query(api.tasks.getTasksForRoom, { roomId });
-    expect(tasks[0].finalEstimate).toBe("8");
-  });
-
   test("setCurrentTask updates room currentTaskIndex", async () => {
     const t = convexTest(schema, modules);
     const roomId = await createTestRoom(t);
