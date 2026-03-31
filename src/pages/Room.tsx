@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Streamdown } from "streamdown";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useJiraDetails } from "@/hooks/useJiraDetails";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 export default function Room() {
@@ -37,7 +38,11 @@ export default function Room() {
   const tasks = useQuery((api as any).tasks.getTasksForRoom, room?._id ? { roomId: room._id } : "skip");
   const participants = useQuery((api as any).participants.getParticipants, room?._id ? { roomId: room._id } : "skip");
 
+  const jiraKeys = (tasks || []).filter((t: any) => t.jiraKey).map((t: any) => t.jiraKey!);
+  const { details: jiraDetails } = useJiraDetails(jiraKeys);
+
   const currentTask = tasks && room ? tasks[room.currentTaskIndex] : null;
+  const currentEnriched = currentTask?.jiraKey ? jiraDetails[currentTask.jiraKey] : undefined;
   const voteStatus = useQuery((api as any).voting.getVoteStatus, currentTask?._id ? { taskId: currentTask._id } : "skip");
   const myVote = useQuery((api as any).voting.getMyVote,
     currentTask?._id && participantId ? { taskId: currentTask._id, participantId } : "skip"
@@ -262,9 +267,9 @@ export default function Room() {
               {currentTask && !currentTask.isQuickVote && (
                 <div className="w-full max-w-xl text-center">
                   <h2 className="text-sm font-semibold mb-0.5">
-                    {(currentTask as any).jiraUrl ? (
+                    {currentEnriched?.url ? (
                       <a
-                        href={(currentTask as any).jiraUrl}
+                        href={currentEnriched.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hover:underline underline-offset-2"
@@ -272,11 +277,11 @@ export default function Room() {
                         {(currentTask as any).jiraKey && (
                           <span className="text-muted-foreground font-normal">{(currentTask as any).jiraKey}: </span>
                         )}
-                        {currentTask.title}
+                        {currentEnriched?.title ?? currentTask.title ?? (currentTask as any).jiraKey}
                       </a>
-                    ) : currentTask.title}
+                    ) : (currentEnriched?.title ?? currentTask.title ?? (currentTask as any).jiraKey ?? "Untitled")}
                   </h2>
-                  {currentTask.description && (
+                  {currentEnriched?.description && (
                     <div className="mt-1">
                       <button
                         onClick={() => setDescriptionOpen(o => !o)}
@@ -287,7 +292,7 @@ export default function Room() {
                       </button>
                       {descriptionOpen && (
                         <div className="mt-2 text-left text-[13px]">
-                          <Streamdown mode="static">{currentTask.description}</Streamdown>
+                          <Streamdown mode="static">{currentEnriched.description}</Streamdown>
                         </div>
                       )}
                     </div>

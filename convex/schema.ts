@@ -44,11 +44,16 @@ export default defineSchema({
   tasks: defineTable({
     roomId: v.id("rooms"),
     jiraKey: v.optional(v.string()),
-    title: v.string(),
+    title: v.optional(v.string()),
+    /** @deprecated Kept for existing documents only */
     description: v.optional(v.string()),
+    /** @deprecated Kept for existing documents only */
     jiraUrl: v.optional(v.string()),
+    /** @deprecated Kept for existing documents only */
     jiraStatus: v.optional(v.string()),
+    /** @deprecated Kept for existing documents only */
     jiraType: v.optional(v.string()),
+    /** @deprecated Kept for existing documents only */
     jiraSprintName: v.optional(v.string()),
     order: v.number(),
     /** @deprecated Kept for existing documents. Use Jira originalEstimate via API instead. */

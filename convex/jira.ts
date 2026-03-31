@@ -162,6 +162,62 @@ export const fetchJiraSprints = action({
   },
 });
 
+export type JiraTaskDetails = {
+  title: string;
+  description: string;
+  status: string;
+  type: string;
+  sprintName?: string;
+  url: string;
+};
+
+export const fetchTaskDetails = action({
+  args: { jiraKeys: v.array(v.string()) },
+  handler: async (_ctx, args): Promise<Record<string, JiraTaskDetails>> => {
+    if (args.jiraKeys.length === 0) return {};
+    const { authHeader, baseUrl } = getJiraEnv();
+    const result: Record<string, JiraTaskDetails> = {};
+
+    // Batch in chunks of 50 (Jira maxResults)
+    for (let i = 0; i < args.jiraKeys.length; i += 50) {
+      const chunk = args.jiraKeys.slice(i, i + 50);
+      const jql = `key in (${chunk.join(", ")})`;
+      const res = await jiraGlobals.fetch(`${baseUrl}/rest/api/3/search/jql`, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          jql,
+          maxResults: 50,
+          fields: ["summary", "status", "issuetype", "description", "customfield_10020"],
+        }),
+      });
+      if (!res.ok) continue;
+      const data: { issues: Array<{ key: string; fields: Record<string, any> }> } = await res.json();
+      for (const issue of data.issues) {
+        const sprints = issue.fields.customfield_10020;
+        let sprintName: string | undefined;
+        if (Array.isArray(sprints) && sprints.length > 0) {
+          const active = sprints.find((s: any) => s.state === "active") ?? sprints[sprints.length - 1];
+          sprintName = String(active.name ?? "");
+        }
+        result[issue.key] = {
+          title: String(issue.fields.summary || issue.key),
+          description: adfToMarkdown(issue.fields.description),
+          status: String(issue.fields.status?.name ?? ""),
+          type: String(issue.fields.issuetype?.name ?? ""),
+          sprintName,
+          url: `${baseUrl}/browse/${issue.key}`,
+        };
+      }
+    }
+    return result;
+  },
+});
+
 export const fetchJiraBacklog = action({
   args: {
     jiraProjectKey: v.string(),
@@ -237,17 +293,7 @@ export const fetchJiraBacklog = action({
 export const importSelectedTasks = mutation({
   args: {
     roomId: v.id("rooms"),
-    tasks: v.array(
-      v.object({
-        key: v.string(),
-        title: v.string(),
-        description: v.optional(v.string()),
-        url: v.string(),
-        status: v.optional(v.string()),
-        type: v.optional(v.string()),
-        sprintName: v.optional(v.string()),
-      })
-    ),
+    keys: v.array(v.string()),
     fetchedKeys: v.array(v.string()),
   },
   handler: async (ctx, args) => {
@@ -261,7 +307,7 @@ export const importSelectedTasks = mutation({
     );
 
     // Remove Jira tasks that were fetched (in scope) but not selected
-    const selectedKeys = new Set(args.tasks.map((t) => t.key));
+    const selectedKeys = new Set(args.keys);
     for (const key of args.fetchedKeys) {
       if (!selectedKeys.has(key)) {
         const toDelete = existingByKey.get(key);
@@ -272,68 +318,17 @@ export const importSelectedTasks = mutation({
     const maxOrder = existing.reduce((m, t) => Math.max(m, t.order), -1);
     let nextOrder = maxOrder + 1;
 
-    for (const task of args.tasks) {
-      const existingTask = existingByKey.get(task.key);
-      if (existingTask) {
-        await ctx.db.patch(existingTask._id, {
-          title: task.title,
-          description: task.description ?? undefined,
-          jiraUrl: task.url,
-          jiraStatus: task.status ?? undefined,
-          jiraType: task.type ?? undefined,
-          jiraSprintName: task.sprintName ?? undefined,
-        });
-      } else {
+    for (const key of args.keys) {
+      if (!existingByKey.has(key)) {
         await ctx.db.insert("tasks", {
           roomId: args.roomId,
-          jiraKey: task.key,
-          title: task.title,
-          description: task.description ?? undefined,
-          jiraUrl: task.url,
-          jiraStatus: task.status ?? undefined,
-          jiraType: task.type ?? undefined,
-          jiraSprintName: task.sprintName ?? undefined,
+          jiraKey: key,
           order: nextOrder++,
           isManual: false,
           isQuickVote: false,
         });
       }
     }
-  },
-});
-
-/** Backfill jiraType for tasks missing it by fetching from Jira API */
-export const backfillJiraTypes = action({
-  args: { roomId: v.id("rooms") },
-  handler: async (ctx, args) => {
-    const tasks: any[] = await ctx.runQuery(api.tasks.getTasksForRoom, { roomId: args.roomId });
-    const missing = tasks.filter((t: any) => t.jiraKey && !t.jiraType);
-    if (missing.length === 0) return { updated: 0 };
-
-    const { authHeader, baseUrl } = getJiraEnv();
-    let updated = 0;
-
-    for (const task of missing) {
-      const res = await jiraGlobals.fetch(
-        `${baseUrl}/rest/api/3/issue/${task.jiraKey}?fields=issuetype`,
-        { method: "GET", headers: { Authorization: authHeader, Accept: "application/json" } },
-      );
-      if (!res.ok) continue;
-      const data: any = await res.json();
-      const typeName = data?.fields?.issuetype?.name;
-      if (typeName) {
-        await ctx.runMutation(internal.jira.patchTaskType, { taskId: task._id, jiraType: typeName });
-        updated++;
-      }
-    }
-    return { updated, total: missing.length };
-  },
-});
-
-export const patchTaskType = internalMutation({
-  args: { taskId: v.id("tasks"), jiraType: v.string() },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.taskId, { jiraType: args.jiraType });
   },
 });
 

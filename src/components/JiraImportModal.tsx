@@ -99,20 +99,9 @@ export function JiraImportModal({ roomId, isOpen, onClose, sprintFilter }: JiraI
   const handleImport = async () => {
     setStep("saving")
     try {
-      const toImport = issues
-        .filter(i => selected.has(i.key))
-        .map(i => ({
-          key: i.key,
-          title: i.title,
-          description: i.description || undefined,
-          url: i.url,
-          status: i.status || undefined,
-          type: i.type || undefined,
-          sprintName: i.sprintName || undefined,
-        }))
       await importTasks({
         roomId,
-        tasks: toImport,
+        keys: issues.filter(i => selected.has(i.key)).map(i => i.key),
         fetchedKeys: issues.map(i => i.key),
       })
       setStep("success")

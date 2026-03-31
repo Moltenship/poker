@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { X, Trash2, RotateCw, SlidersHorizontal } from "lucide-react";
 import { JiraImportModal } from "./JiraImportModal";
 import { useSessionMutation } from "@/hooks/useSession";
+import { useJiraDetails } from "@/hooks/useJiraDetails";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { JiraSprint } from "../../convex/jira";
@@ -15,11 +16,8 @@ import { cn } from "@/lib/utils";
 
 export type Task = {
   _id: Id<"tasks">;
-  title: string;
+  title?: string;
   jiraKey?: string;
-  jiraStatus?: string;
-  jiraType?: string;
-  jiraSprintName?: string;
   hoursEstimate?: number;
   isManual: boolean;
   isQuickVote?: boolean;
@@ -57,6 +55,10 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
 
   const [localTypeFilter, setLocalTypeFilter] = useState<string[]>(typeFilter);
 
+  // Fetch Jira details for all tasks with jiraKey
+  const jiraKeys = tasks.filter(t => t.jiraKey).map(t => t.jiraKey!);
+  const { details: jiraDetails } = useJiraDetails(jiraKeys);
+
   // Keep local filters in sync when DB value changes (e.g. from another session)
   useEffect(() => {
     setLocalSprintFilter(sprintFilter);
@@ -66,8 +68,8 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
     setLocalTypeFilter(typeFilter);
   }, [JSON.stringify(typeFilter)]);
 
-  // Derive unique types from tasks
-  const availableTypes = [...new Set(tasks.map(t => t.jiraType).filter((t): t is string => !!t))].sort();
+  // Derive unique types from enriched Jira details
+  const availableTypes = [...new Set(Object.values(jiraDetails).map(d => d.type).filter(Boolean))].sort();
 
   const doSync = async (ids: number[]) => {
     setSyncing(true);
@@ -79,15 +81,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
       });
       await importSelectedTasks({
         roomId,
-        tasks: issues.map(i => ({
-          key: i.key,
-          title: i.title,
-          description: i.description || undefined,
-          url: i.url,
-          status: i.status || undefined,
-          type: i.type || undefined,
-          sprintName: i.sprintName || undefined,
-        })),
+        keys: issues.map(i => i.key),
         fetchedKeys: issues.map(i => i.key),
       });
     } catch (err: any) {
@@ -150,7 +144,10 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
 
   const visibleTasks = tasks.filter(t => {
     if (t.isQuickVote) return false;
-    if (localTypeFilter.length > 0 && t.jiraType && !localTypeFilter.includes(t.jiraType)) return false;
+    if (localTypeFilter.length > 0 && t.jiraKey) {
+      const type = jiraDetails[t.jiraKey]?.type;
+      if (type && !localTypeFilter.includes(type)) return false;
+    }
     return true;
   });
 
@@ -334,20 +331,28 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                 >
                   <div className="flex items-start justify-between gap-2 pr-5 overflow-hidden">
                     <div className="flex flex-col min-w-0 overflow-hidden">
-                      <p className={cn(
-                        "text-[13px] leading-snug truncate",
-                        isCurrent ? "text-foreground font-medium" : "text-foreground/70"
-                      )}>
-                        {task.title}
-                      </p>
-                      {task.jiraKey && (
-                        <span className="text-[11px] text-muted-foreground/50 truncate">
-                          {task.jiraKey}
-                          {task.jiraType && <> · {task.jiraType}</>}
-                          {task.jiraStatus && <> · {task.jiraStatus}</>}
-                          {task.jiraSprintName && <> · {task.jiraSprintName}</>}
-                        </span>
-                      )}
+                      {(() => {
+                        const enriched = task.jiraKey ? jiraDetails[task.jiraKey] : undefined;
+                        const displayTitle = enriched?.title ?? task.title ?? task.jiraKey ?? "Untitled";
+                        return (
+                          <>
+                            <p className={cn(
+                              "text-[13px] leading-snug truncate",
+                              isCurrent ? "text-foreground font-medium" : "text-foreground/70"
+                            )}>
+                              {displayTitle}
+                            </p>
+                            {task.jiraKey && (
+                              <span className="text-[11px] text-muted-foreground/50 truncate">
+                                {task.jiraKey}
+                                {enriched?.type && <> · {enriched.type}</>}
+                                {enriched?.status && <> · {enriched.status}</>}
+                                {enriched?.sprintName && <> · {enriched.sprintName}</>}
+                              </span>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     {estimateText && (
                       <Badge variant="secondary" className="shrink-0 font-mono text-[10px] h-4 px-1 rounded">
