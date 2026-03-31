@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { VoteDistribution } from "./VoteDistribution";
 import { JiraEstimateInput } from "./JiraEstimateInput";
-import { FinalEstimateSelector } from "./FinalEstimateSelector";
 import { findNearestCard } from "@/lib/average";
 import { Progress } from "./ui/progress";
 
@@ -112,11 +111,6 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
             <VoteDistribution votes={formattedVotes} cardSet={cardSet} />
             {!isQuickVote && (
               <>
-                <FinalEstimateSelector
-                  taskId={taskId}
-                  cardSet={cardSet}
-                  currentEstimate={currentTask?.finalEstimate}
-                />
                 {(currentTask as any)?.jiraKey && (
                   <JiraEstimateInput
                     taskId={taskId}

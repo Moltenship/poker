@@ -181,16 +181,6 @@ export const setHoursEstimate = sessionMutation({
   },
 });
 
-export const setFinalEstimate = sessionMutation({
-  args: {
-    taskId: v.id("tasks"),
-    estimate: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.taskId, { finalEstimate: args.estimate });
-  },
-});
-
 export const setCurrentTask = sessionMutation({
   args: {
     roomId: v.id("rooms"),

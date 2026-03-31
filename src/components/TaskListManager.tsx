@@ -19,7 +19,6 @@ export type Task = {
   jiraKey?: string;
   jiraStatus?: string;
   jiraSprintName?: string;
-  finalEstimate?: string;
   hoursEstimate?: number;
   isManual: boolean;
   isQuickVote?: boolean;
@@ -257,7 +256,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
             {visibleTasks.map((task) => {
               const realIndex = tasks.indexOf(task);
               const isCurrent = realIndex === currentTaskIndex;
-              const estimateText = task.hoursEstimate ? `${task.hoursEstimate}h` : task.finalEstimate;
+              const estimateText = task.hoursEstimate ? `${task.hoursEstimate}h` : undefined;
 
               return (
                 <div
