@@ -56,6 +56,13 @@ export default function Room() {
   useEffect(() => {
     if (myVote !== undefined) setCurrentVote(myVote);
   }, [myVote]);
+
+  useEffect(() => {
+    if (room?.name) {
+      document.title = `${room.name} — Planning Poker`;
+    }
+    return () => { document.title = "Planning Poker"; };
+  }, [room?.name]);
   const [copied, setCopied] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(() => {
     try { return localStorage.getItem("participants_sidebar_open") !== "false"; } catch { return true; }
