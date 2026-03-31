@@ -16,10 +16,9 @@ import { Separator } from "@/components/ui/separator"
 import { Loader2, AlertTriangle, CheckCircle2, ExternalLink, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const PROJECT_KEY = "BRV"
-
 interface JiraImportModalProps {
   roomId: Id<"rooms">
+  projectKey: string
   isOpen: boolean
   onClose: () => void
   sprintFilter: number[]
@@ -27,7 +26,7 @@ interface JiraImportModalProps {
 
 type Step = "loading" | "select" | "saving" | "success" | "error"
 
-export function JiraImportModal({ roomId, isOpen, onClose, sprintFilter }: JiraImportModalProps) {
+export function JiraImportModal({ roomId, projectKey, isOpen, onClose, sprintFilter }: JiraImportModalProps) {
   const [step, setStep] = useState<Step>("loading")
   const [sprints, setSprints] = useState<JiraSprint[]>([])
   const [selectedSprintIds, setSelectedSprintIds] = useState<number[]>([])
@@ -42,7 +41,7 @@ export function JiraImportModal({ roomId, isOpen, onClose, sprintFilter }: JiraI
   const saveSprintFilter = useMutation(api.rooms.setSprintFilter)
 
   const loadIssues = (ids: number[]) =>
-    fetchBacklog({ jiraProjectKey: PROJECT_KEY, sprintIds: ids.length > 0 ? ids : undefined })
+    fetchBacklog({ jiraProjectKey: projectKey, sprintIds: ids.length > 0 ? ids : undefined })
 
   useEffect(() => {
     if (!isOpen) return
@@ -53,7 +52,7 @@ export function JiraImportModal({ roomId, isOpen, onClose, sprintFilter }: JiraI
     setSelected(new Set())
     setError("")
 
-    Promise.all([fetchSprints({}), loadIssues(ids)])
+    Promise.all([fetchSprints({ projectKey }), loadIssues(ids)])
       .then(([sprintsResult, issuesResult]) => {
         setSprints(sprintsResult)
         setIssues(issuesResult)
@@ -132,7 +131,7 @@ export function JiraImportModal({ roomId, isOpen, onClose, sprintFilter }: JiraI
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg overflow-hidden">
         <DialogHeader>
-          <DialogTitle>Import from Jira · {PROJECT_KEY}</DialogTitle>
+          <DialogTitle>Import from Jira · {projectKey}</DialogTitle>
         </DialogHeader>
 
         {/* Loading */}
@@ -297,7 +296,7 @@ export function JiraImportModal({ roomId, isOpen, onClose, sprintFilter }: JiraI
             </div>
             <Button variant="outline" className="w-full" onClick={() => {
               setStep("loading")
-              Promise.all([fetchSprints({}), loadIssues(selectedSprintIds)])
+              Promise.all([fetchSprints({ projectKey }), loadIssues(selectedSprintIds)])
                 .then(([s, i]) => { setSprints(s); setIssues(i); setSelected(new Set(i.map(x => x.key))); setStep("select") })
                 .catch(err => { setError(err?.message ?? "Failed to load"); setStep("error") })
             }}>

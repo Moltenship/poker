@@ -130,12 +130,12 @@ export type JiraIssue = {
 };
 
 export const fetchJiraSprints = action({
-  args: {},
-  handler: async (_ctx): Promise<JiraSprint[]> => {
+  args: { projectKey: v.string() },
+  handler: async (_ctx, args): Promise<JiraSprint[]> => {
     const { authHeader, baseUrl } = getJiraEnv();
 
     const boardRes = await jiraGlobals.fetch(
-      `${baseUrl}/rest/agile/1.0/board?projectKeyOrId=BRV&type=scrum&maxResults=1`,
+      `${baseUrl}/rest/agile/1.0/board?projectKeyOrId=${encodeURIComponent(args.projectKey)}&type=scrum&maxResults=1`,
       { headers: { Authorization: authHeader, Accept: "application/json" } }
     );
     if (!boardRes.ok) throw new Error(`Failed to fetch board: ${boardRes.status}`);

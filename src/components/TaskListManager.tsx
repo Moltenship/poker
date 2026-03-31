@@ -95,7 +95,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
   // On mount: fetch sprints + auto-sync (once)
   useEffect(() => {
     if (!jiraEnabled) return;
-    fetchJiraSprints({}).then(setJiraSprints).catch(console.error);
+    fetchJiraSprints({ projectKey }).then(setJiraSprints).catch(console.error);
     if (!hasSyncedRef.current) {
       hasSyncedRef.current = true;
       doSync(sprintFilter);
@@ -387,6 +387,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
 
       <JiraImportModal
         roomId={roomId}
+        projectKey={projectKey}
         isOpen={isJiraModalOpen}
         onClose={() => setIsJiraModalOpen(false)}
         sprintFilter={localSprintFilter}
