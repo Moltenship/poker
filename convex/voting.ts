@@ -259,6 +259,18 @@ export const advanceToNextTask = sessionMutation({
     }
 
     const tasks = await getSortedTasksForRoom(ctx, args.roomId);
+    const currentTask = tasks[room.currentTaskIndex] ?? null;
+
+    if (currentTask) {
+      const votes = await ctx.db
+        .query("votes")
+        .withIndex("by_task", (q) => q.eq("taskId", currentTask._id))
+        .collect();
+      for (const vote of votes) {
+        await ctx.db.delete(vote._id);
+      }
+    }
+
     const nextTaskIndex = room.currentTaskIndex + 1;
     if (nextTaskIndex >= tasks.length) {
       throw new Error("No more tasks");
