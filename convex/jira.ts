@@ -302,6 +302,41 @@ export const importSelectedTasks = mutation({
   },
 });
 
+/** Backfill jiraType for tasks missing it by fetching from Jira API */
+export const backfillJiraTypes = action({
+  args: { roomId: v.id("rooms") },
+  handler: async (ctx, args) => {
+    const tasks: any[] = await ctx.runQuery(api.tasks.getTasksForRoom, { roomId: args.roomId });
+    const missing = tasks.filter((t: any) => t.jiraKey && !t.jiraType);
+    if (missing.length === 0) return { updated: 0 };
+
+    const { authHeader, baseUrl } = getJiraEnv();
+    let updated = 0;
+
+    for (const task of missing) {
+      const res = await jiraGlobals.fetch(
+        `${baseUrl}/rest/api/3/issue/${task.jiraKey}?fields=issuetype`,
+        { method: "GET", headers: { Authorization: authHeader, Accept: "application/json" } },
+      );
+      if (!res.ok) continue;
+      const data: any = await res.json();
+      const typeName = data?.fields?.issuetype?.name;
+      if (typeName) {
+        await ctx.runMutation(internal.jira.patchTaskType, { taskId: task._id, jiraType: typeName });
+        updated++;
+      }
+    }
+    return { updated, total: missing.length };
+  },
+});
+
+export const patchTaskType = internalMutation({
+  args: { taskId: v.id("tasks"), jiraType: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.taskId, { jiraType: args.jiraType });
+  },
+});
+
 export const setJiraEstimateSyncStatus = internalMutation({
   args: {
     taskId: v.id("tasks"),
