@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { VoteDistribution } from "./VoteDistribution";
 import { JiraEstimateInput } from "./JiraEstimateInput";
+import { JiraSprintSelector } from "./JiraSprintSelector";
 import { findNearestCard } from "@/lib/average";
 import { Progress } from "./ui/progress";
 
@@ -17,9 +18,11 @@ export interface ResultsPanelProps {
   cardSet: string[];
   participantCount: number;
   votedCount: number;
+  projectKey?: string;
+  currentSprintName?: string;
 }
 
-export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantCount, votedCount }: ResultsPanelProps) {
+export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantCount, votedCount, projectKey, currentSprintName }: ResultsPanelProps) {
   const revealVotes = useSessionMutation(api.voting.revealVotes);
   const resetVoting = useSessionMutation(api.voting.resetVoting);
   const advanceToNextTask = useSessionMutation(api.voting.advanceToNextTask);
@@ -109,13 +112,20 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
           {/* Right: distribution + estimate controls */}
           <div className="flex flex-col gap-4 border-t pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-6">
             <VoteDistribution votes={formattedVotes} cardSet={cardSet} />
-            {!isQuickVote && (
+            {!isQuickVote && (currentTask as any)?.jiraKey && (
               <>
-                {(currentTask as any)?.jiraKey && (
-                  <JiraEstimateInput
+                <JiraEstimateInput
+                  taskId={taskId}
+                  syncStatus={(currentTask as any)?.jiraEstimateSyncStatus}
+                  syncError={(currentTask as any)?.jiraEstimateSyncError}
+                />
+                {projectKey && (
+                  <JiraSprintSelector
                     taskId={taskId}
-                    syncStatus={(currentTask as any)?.jiraEstimateSyncStatus}
-                    syncError={(currentTask as any)?.jiraEstimateSyncError}
+                    projectKey={projectKey}
+                    currentSprintName={currentSprintName}
+                    syncStatus={(currentTask as any)?.jiraSprintSyncStatus}
+                    syncError={(currentTask as any)?.jiraSprintSyncError}
                   />
                 )}
               </>
