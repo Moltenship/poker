@@ -5,3 +5,4 @@ convex/_generated
 .vscode
 .DS_Store
 *.log
+.env.*
