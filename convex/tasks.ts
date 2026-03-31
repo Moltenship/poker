@@ -192,13 +192,29 @@ export const setCurrentTask = sessionMutation({
     taskIndex: v.number(),
   },
   handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error("Room not found");
+
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
       .collect();
+    const sorted = tasks.sort((a, b) => a.order - b.order);
 
-    if (args.taskIndex < 0 || args.taskIndex >= tasks.length) {
-      throw new Error(`Task index ${args.taskIndex} out of range (${tasks.length} tasks)`);
+    if (args.taskIndex < 0 || args.taskIndex >= sorted.length) {
+      throw new Error(`Task index ${args.taskIndex} out of range (${sorted.length} tasks)`);
+    }
+
+    // Clear votes for the task we're leaving
+    const currentTask = sorted[room.currentTaskIndex];
+    if (currentTask && args.taskIndex !== room.currentTaskIndex) {
+      const votes = await ctx.db
+        .query("votes")
+        .withIndex("by_task", (q) => q.eq("taskId", currentTask._id))
+        .collect();
+      for (const vote of votes) {
+        await ctx.db.delete(vote._id);
+      }
     }
 
     await ctx.db.patch(args.roomId, {
