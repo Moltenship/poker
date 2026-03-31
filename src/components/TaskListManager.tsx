@@ -237,14 +237,16 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                 </Popover>
               </>
             )}
-            <Button
-              variant="ghost"
-              size="xs"
-              className="text-muted-foreground"
-              onClick={() => setIsJiraModalOpen(true)}
-            >
-              Import
-            </Button>
+            {jiraEnabled && (
+              <Button
+                variant="ghost"
+                size="xs"
+                className="text-muted-foreground"
+                onClick={() => setIsJiraModalOpen(true)}
+              >
+                Import
+              </Button>
+            )}
           </div>
         )}
       </div>

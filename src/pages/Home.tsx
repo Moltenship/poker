@@ -67,7 +67,7 @@ export default function Home() {
     }
 
     try {
-      const { roomCode } = await createRoom({ name: roomName.trim(), cardSet, jiraEnabled: true });
+      const { roomCode } = await createRoom({ name: roomName.trim(), cardSet });
       const newRoom = { roomCode, name: roomName.trim(), visitedAt: Date.now() };
       const updatedRooms = [newRoom, ...recentRooms.filter(r => r.roomCode !== roomCode)].slice(0, 5);
       localStorage.setItem("poker_recent_rooms", JSON.stringify(updatedRooms));
