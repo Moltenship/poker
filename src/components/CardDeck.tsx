@@ -14,8 +14,8 @@ interface CardDeckProps {
 }
 
 export function CardDeck({ cardSet, currentVote, roomStatus, taskId, participantId, onVoteChange }: CardDeckProps) {
-  const castVote = useSessionMutation((api as any).voting.castVote);
-  const removeVote = useSessionMutation((api as any).voting.removeVote);
+  const castVote = useSessionMutation(api.voting.castVote);
+  const removeVote = useSessionMutation(api.voting.removeVote);
 
   const handleVote = useCallback(
     (value: string) => {

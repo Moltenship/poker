@@ -61,16 +61,6 @@ export const getParticipants = query({
   },
 });
 
-export const listRoomParticipants = query({
-  args: { roomId: v.id("rooms") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("participants")
-      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
-      .collect();
-  },
-});
-
 export const takeoverSession = sessionMutation({
   args: {
     roomId: v.id("rooms"),
@@ -127,11 +117,8 @@ export const markStaleOffline = internalMutation({
     const cutoff = Date.now() - 60_000;
     const stale = await ctx.db
       .query("participants")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("isConnected"), true),
-          q.lt(q.field("lastHeartbeatAt"), cutoff)
-        )
+      .withIndex("by_isConnected_lastHeartbeatAt", (q) =>
+        q.eq("isConnected", true).lt("lastHeartbeatAt", cutoff)
       )
       .collect();
     await Promise.all(stale.map((p) => ctx.db.patch(p._id, { isConnected: false })));

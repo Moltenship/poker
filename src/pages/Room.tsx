@@ -20,35 +20,34 @@ import { cn } from "@/lib/utils";
 import { Streamdown } from "streamdown";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useJiraDetails } from "@/hooks/useJiraDetails";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 export default function Room() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const sessionId = useSessionId();
   const { participantId, displayName, setIdentity } = useIdentity(roomCode ?? "");
 
-  const joinRoom = useSessionMutation((api as any).participants.joinRoom);
-  const leaveRoom = useSessionMutation((api as any).participants.leaveRoom);
-  const heartbeat = useSessionMutation((api as any).participants.heartbeat);
-  const takeoverSession = useSessionMutation((api as any).participants.takeoverSession);
-  const startVoting = useSessionMutation((api as any).voting.startVoting);
-  const ensureQuickVote = useSessionMutation((api as any).tasks.ensureQuickVoteTask);
+  const joinRoom = useSessionMutation(api.participants.joinRoom);
+  const leaveRoom = useSessionMutation(api.participants.leaveRoom);
+  const heartbeat = useSessionMutation(api.participants.heartbeat);
+  const takeoverSession = useSessionMutation(api.participants.takeoverSession);
+  const startVoting = useSessionMutation(api.voting.startVoting);
+  const ensureQuickVote = useSessionMutation(api.tasks.ensureQuickVoteTask);
 
-  const room = useQuery((api as any).rooms.getRoom, roomCode ? { roomCode } : "skip");
-  const tasks = useQuery((api as any).tasks.getTasksForRoom, room?._id ? { roomId: room._id } : "skip");
-  const participants = useQuery((api as any).participants.getParticipants, room?._id ? { roomId: room._id } : "skip");
+  const room = useQuery(api.rooms.getRoom, roomCode ? { roomCode } : "skip");
+  const tasks = useQuery(api.tasks.getTasksForRoom, room?._id ? { roomId: room._id } : "skip");
+  const participants = useQuery(api.participants.getParticipants, room?._id ? { roomId: room._id } : "skip");
 
-  const jiraKeys = (tasks || []).filter((t: any) => t.jiraKey).map((t: any) => t.jiraKey!);
+  const jiraKeys = (tasks || []).filter((t) => t.jiraKey).map((t) => t.jiraKey!);
   const { details: jiraDetails } = useJiraDetails(jiraKeys);
 
   const currentTask = tasks && room ? tasks[room.currentTaskIndex] : null;
   const currentEnriched = currentTask?.jiraKey ? jiraDetails[currentTask.jiraKey] : undefined;
-  const voteStatus = useQuery((api as any).voting.getVoteStatus, currentTask?._id ? { taskId: currentTask._id } : "skip");
-  const myVote = useQuery((api as any).voting.getMyVote,
+  const voteStatus = useQuery(api.voting.getVoteStatus, currentTask?._id ? { taskId: currentTask._id } : "skip");
+  const myVote = useQuery(api.voting.getMyVote,
     currentTask?._id && participantId ? { taskId: currentTask._id, participantId } : "skip"
   );
 
-  const votedIds = voteStatus?.filter((v: any) => v.hasVoted).map((v: any) => v.participantId) || [];
+  const votedIds = voteStatus?.filter((v) => v.hasVoted).map((v) => v.participantId) || [];
   const showVoteStatus = room?.status === "voting";
   const autoRejoinKeyRef = useRef<string | null>(null);
   const [currentVote, setCurrentVote] = useState<string | null>(null);
@@ -173,7 +172,7 @@ export default function Room() {
     if (!room._id || !participantId) return;
     try {
       await takeoverSession({ roomId: room._id, targetParticipantId: participantId });
-      const p = participants?.find((entry: any) => entry._id === participantId);
+      const p = participants?.find((entry) => entry._id === participantId);
       setIdentity(participantId, p?.displayName ?? displayName ?? "");
     } catch (error) { console.error(error); }
   };
@@ -190,10 +189,10 @@ export default function Room() {
           roomId={room._id}
           tasks={tasks || []}
           currentTaskIndex={room.currentTaskIndex}
-          jiraEnabled={(room as any).jiraEnabled ?? false}
-          projectKey={(room as any).jiraProjectKey ?? "BRV"}
-          sprintFilter={(room as any).jiraSprintFilter ?? []}
-          typeFilter={(room as any).jiraTypeFilter ?? []}
+          jiraEnabled={room.jiraEnabled ?? false}
+          projectKey={room.jiraProjectKey ?? "BRV"}
+          sprintFilter={room.jiraSprintFilter ?? []}
+          typeFilter={room.jiraTypeFilter ?? []}
         />
       </aside>
 
@@ -213,9 +212,9 @@ export default function Room() {
             <ArrowLeft className="h-3.5 w-3.5" />
           </Link>
           <span className="text-[13px] font-medium truncate">{room.name}</span>
-          {(room as any).jiraProjectKey && (
+          {room.jiraProjectKey && (
             <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
-              {(room as any).jiraProjectKey}
+              {room.jiraProjectKey}
             </code>
           )}
           <div className="ml-auto flex items-center gap-1.5">
@@ -287,12 +286,12 @@ export default function Room() {
                         rel="noopener noreferrer"
                         className="hover:underline underline-offset-2"
                       >
-                        {(currentTask as any).jiraKey && (
-                          <span className="text-muted-foreground font-normal">{(currentTask as any).jiraKey}: </span>
+                        {currentTask.jiraKey && (
+                          <span className="text-muted-foreground font-normal">{currentTask.jiraKey}: </span>
                         )}
-                        {currentEnriched?.title ?? currentTask.title ?? (currentTask as any).jiraKey}
+                        {currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey}
                       </a>
-                    ) : (currentEnriched?.title ?? currentTask.title ?? (currentTask as any).jiraKey ?? "Untitled")}
+                    ) : (currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey ?? "Untitled")}
                   </h2>
                   {currentEnriched?.description && (
                     <div className="mt-1">
@@ -330,7 +329,7 @@ export default function Room() {
                   cardSet={room.cardSet}
                   participantCount={participants?.length ?? 0}
                   votedCount={votedIds.length}
-                  projectKey={(room as any).jiraProjectKey}
+                  projectKey={room.jiraProjectKey}
                   currentSprintName={currentEnriched?.sprintName}
                 />
               )}
@@ -349,7 +348,7 @@ export default function Room() {
           <ParticipantList participants={participants || []} votedIds={votedIds} showVoteStatus={showVoteStatus} />
         ) : (
           <div className="hidden md:flex flex-col items-center gap-2 pt-3">
-            {(participants || []).map((p: any) => (
+            {(participants || []).map((p) => (
               <Tooltip key={p._id}>
                 <TooltipTrigger asChild>
                   <div className="relative">

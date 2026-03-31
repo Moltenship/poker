@@ -29,7 +29,7 @@ function extractRoomCode(input: string): string | null {
 
 export default function Home() {
   const navigate = useNavigate();
-  const createRoom = useSessionMutation((api as any).rooms.createRoom);
+  const createRoom = useSessionMutation(api.rooms.createRoom);
 
   const [roomName, setRoomName] = useState("");
   const [projectKey, setProjectKey] = useState("BRV");
@@ -168,7 +168,7 @@ export default function Home() {
 
           <div className="space-y-1.5">
             <label htmlFor="card-set" className="text-[13px] font-medium">Card Set</label>
-            <Select value={cardSetType} onValueChange={(val: any) => setCardSetType(val)}>
+            <Select value={cardSetType} onValueChange={(val) => setCardSetType(val as "fibonacci" | "extended" | "custom")}>
               <SelectTrigger id="card-set" aria-label="Card Set" className="h-8 text-[13px]">
                 <SelectValue placeholder="Select card set" />
               </SelectTrigger>

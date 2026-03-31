@@ -59,8 +59,8 @@ export function JiraImportModal({ roomId, projectKey, isOpen, onClose, sprintFil
         setSelected(new Set(issuesResult.map(i => i.key)))
         setStep("select")
       })
-      .catch(err => {
-        setError(err?.message ?? "Failed to load")
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : "Failed to load")
         setStep("error")
       })
   }, [isOpen])
@@ -104,8 +104,8 @@ export function JiraImportModal({ roomId, projectKey, isOpen, onClose, sprintFil
         fetchedKeys: issues.map(i => i.key),
       })
       setStep("success")
-    } catch (err: any) {
-      setError(err.message ?? "Failed to import tasks")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to import tasks")
       setStep("error")
     }
   }
@@ -298,7 +298,7 @@ export function JiraImportModal({ roomId, projectKey, isOpen, onClose, sprintFil
               setStep("loading")
               Promise.all([fetchSprints({ projectKey }), loadIssues(selectedSprintIds)])
                 .then(([s, i]) => { setSprints(s); setIssues(i); setSelected(new Set(i.map(x => x.key))); setStep("select") })
-                .catch(err => { setError(err?.message ?? "Failed to load"); setStep("error") })
+                .catch((err: unknown) => { setError(err instanceof Error ? err.message : "Failed to load"); setStep("error") })
             }}>
               Try Again
             </Button>

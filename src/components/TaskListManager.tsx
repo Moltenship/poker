@@ -85,8 +85,8 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
         keys: issues.map(i => i.key),
         fetchedKeys: issues.map(i => i.key),
       });
-    } catch (err: any) {
-      setSyncError(err?.message ?? "Sync failed");
+    } catch (err: unknown) {
+      setSyncError(err instanceof Error ? err.message : "Sync failed");
     } finally {
       setSyncing(false);
     }
@@ -306,8 +306,6 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
 
       <Separator />
 
-      <Separator />
-
       {/* Task list */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {visibleTasks.length === 0 ? (
@@ -320,6 +318,8 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
               const realIndex = tasks.indexOf(task);
               const isCurrent = realIndex === currentTaskIndex;
               const estimateText = task.hoursEstimate ? `${task.hoursEstimate}h` : undefined;
+              const enriched = task.jiraKey ? jiraDetails[task.jiraKey] : undefined;
+              const displayTitle = enriched?.title ?? task.title ?? task.jiraKey ?? "Untitled";
 
               return (
                 <div
@@ -332,28 +332,20 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                 >
                   <div className="flex items-start justify-between gap-2 pr-5 overflow-hidden">
                     <div className="flex flex-col min-w-0 overflow-hidden">
-                      {(() => {
-                        const enriched = task.jiraKey ? jiraDetails[task.jiraKey] : undefined;
-                        const displayTitle = enriched?.title ?? task.title ?? task.jiraKey ?? "Untitled";
-                        return (
-                          <>
-                            <p className={cn(
-                              "text-[13px] leading-snug truncate",
-                              isCurrent ? "text-foreground font-medium" : "text-foreground/70"
-                            )}>
-                              {displayTitle}
-                            </p>
-                            {task.jiraKey && (
-                              <span className="text-[11px] text-muted-foreground/50 truncate">
-                                {task.jiraKey}
-                                {enriched?.type && <> · {enriched.type}</>}
-                                {enriched?.status && <> · {enriched.status}</>}
-                                {enriched?.sprintName && <> · {enriched.sprintName}</>}
-                              </span>
-                            )}
-                          </>
-                        );
-                      })()}
+                      <p className={cn(
+                        "text-[13px] leading-snug truncate",
+                        isCurrent ? "text-foreground font-medium" : "text-foreground/70"
+                      )}>
+                        {displayTitle}
+                      </p>
+                      {task.jiraKey && (
+                        <span className="text-[11px] text-muted-foreground/50 truncate">
+                          {task.jiraKey}
+                          {enriched?.type && <> · {enriched.type}</>}
+                          {enriched?.status && <> · {enriched.status}</>}
+                          {enriched?.sprintName && <> · {enriched.sprintName}</>}
+                        </span>
+                      )}
                     </div>
                     {estimateText && (
                       <Badge variant="secondary" className="shrink-0 font-mono text-[10px] h-4 px-1 rounded">

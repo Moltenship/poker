@@ -6,12 +6,25 @@ const jiraGlobals = globalThis as typeof globalThis & {
   fetch: (input: string, init?: Record<string, unknown>) => Promise<{
     ok: boolean;
     status: number;
-    json: () => Promise<any>;
+    json: () => Promise<unknown>;
     text: () => Promise<string>;
   }>;
   btoa: (value: string) => string;
   process?: { env: Record<string, string | undefined> };
 };
+
+interface JiraIssueFields {
+  summary?: string;
+  status?: { name?: string };
+  issuetype?: { name?: string };
+  description?: unknown;
+  customfield_10020?: Array<{ name?: string; state?: string }>;
+}
+
+interface JiraSearchResponse {
+  issues: Array<{ key: string; fields: JiraIssueFields }>;
+  nextPageToken?: string;
+}
 
 type AdfMark = { type: string; attrs?: Record<string, string> };
 type AdfNode = {
@@ -140,7 +153,7 @@ export const fetchJiraSprints = action({
     );
     if (!boardRes.ok) throw new Error(`Failed to fetch board: ${boardRes.status}`);
 
-    const boardData: { values: Array<{ id: number }> } = await boardRes.json();
+    const boardData = await boardRes.json() as { values: Array<{ id: number }> };
     if (!boardData.values.length) return [];
 
     const boardId = boardData.values[0].id;
@@ -151,8 +164,7 @@ export const fetchJiraSprints = action({
     );
     if (!sprintRes.ok) throw new Error(`Failed to fetch sprints: ${sprintRes.status}`);
 
-    const sprintData: { values: Array<{ id: number; name: string; state: string }> } =
-      await sprintRes.json();
+    const sprintData = await sprintRes.json() as { values: Array<{ id: number; name: string; state: string }> };
 
     return sprintData.values.map(s => ({
       id: s.id,
@@ -196,12 +208,12 @@ export const fetchTaskDetails = action({
         }),
       });
       if (!res.ok) continue;
-      const data: { issues: Array<{ key: string; fields: Record<string, any> }> } = await res.json();
+      const data = await res.json() as JiraSearchResponse;
       for (const issue of data.issues) {
         const sprints = issue.fields.customfield_10020;
         let sprintName: string | undefined;
         if (Array.isArray(sprints) && sprints.length > 0) {
-          const active = sprints.find((s: any) => s.state === "active") ?? sprints[sprints.length - 1];
+          const active = sprints.find((s) => s.state === "active") ?? sprints[sprints.length - 1];
           sprintName = String(active.name ?? "");
         }
         result[issue.key] = {
@@ -261,12 +273,16 @@ export const fetchJiraBacklog = action({
         throw new Error(`Jira API error: ${res.status} ${await res.text()}`);
       }
 
-      const data: {
-        issues: Array<{ key: string; fields: Record<string, any> }>;
-        nextPageToken?: string;
-      } = await res.json();
+      const data = await res.json() as JiraSearchResponse;
 
       for (const issue of data.issues) {
+        const sprints = issue.fields.customfield_10020;
+        let sprintName: string | undefined;
+        if (Array.isArray(sprints) && sprints.length > 0) {
+          const active = sprints.find((s) => s.state === "active") ?? sprints[sprints.length - 1];
+          sprintName = String(active.name ?? "");
+        }
+
         allIssues.push({
           key: issue.key,
           title: String(issue.fields.summary || issue.key),
@@ -274,12 +290,7 @@ export const fetchJiraBacklog = action({
           type: String(issue.fields.issuetype?.name ?? ""),
           url: `${baseUrl}/browse/${issue.key}`,
           description: adfToMarkdown(issue.fields.description),
-          sprintName: (() => {
-            const sprints = issue.fields.customfield_10020;
-            if (!Array.isArray(sprints) || sprints.length === 0) return undefined;
-            const active = sprints.find((s: any) => s.state === "active") ?? sprints[sprints.length - 1];
-            return String(active.name ?? "");
-          })(),
+          sprintName,
         });
       }
 
@@ -398,11 +409,11 @@ export const moveIssueToSprint = action({
         taskId: args.taskId,
         status: "synced",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
         taskId: args.taskId,
         status: "error",
-        error: err?.message ?? "Failed to move issue to sprint",
+        error: err instanceof Error ? err.message : "Failed to move issue to sprint",
       });
       throw err;
     }
@@ -451,11 +462,11 @@ export const updateJiraEstimate = action({
         taskId: args.taskId,
         status: "synced",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
         taskId: args.taskId,
         status: "error",
-        error: err?.message ?? "Failed to sync estimate",
+        error: err instanceof Error ? err.message : "Failed to sync estimate",
       });
       throw err;
     }

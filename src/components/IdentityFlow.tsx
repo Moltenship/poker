@@ -28,19 +28,14 @@ type IdentityFlowProps = {
   onIdentitySet: (participantId: Id<"participants">, displayName: string) => void;
 };
 
-type RoomParticipantOption = {
-  _id: Id<"participants">;
-  displayName: string;
-};
-
 export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowProps) {
   const { participantId, displayName } = useIdentity(roomCode);
-  const joinRoom = useSessionMutation((api as any).participants.joinRoom);
-  const takeoverSession = useSessionMutation((api as any).participants.takeoverSession);
+  const joinRoom = useSessionMutation(api.participants.joinRoom);
+  const takeoverSession = useSessionMutation(api.participants.takeoverSession);
   const roomParticipants = useQuery(
-    (api as any).participants.listRoomParticipants,
+    api.participants.getParticipants,
     { roomId },
-  ) as RoomParticipantOption[] | undefined;
+  );
 
   const [joinName, setJoinName] = useState(displayName ?? "");
   const [isReturningUser, setIsReturningUser] = useState(false);
@@ -53,7 +48,7 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
   }, [displayName]);
 
   const selectedParticipant = useMemo(
-    () => roomParticipants?.find((p: RoomParticipantOption) => p._id === selectedParticipantId) ?? null,
+    () => roomParticipants?.find((p) => p._id === selectedParticipantId) ?? null,
     [roomParticipants, selectedParticipantId],
   );
 
@@ -133,7 +128,7 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
                     <SelectValue placeholder="Select identity" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(roomParticipants ?? []).map((p: RoomParticipantOption) => (
+                    {(roomParticipants ?? []).map((p) => (
                       <SelectItem key={p._id} value={p._id as string}>{p.displayName}</SelectItem>
                     ))}
                   </SelectContent>
