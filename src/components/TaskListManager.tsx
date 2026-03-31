@@ -29,11 +29,12 @@ interface TaskListManagerProps {
   tasks: Task[];
   currentTaskIndex: number;
   jiraEnabled: boolean;
+  projectKey: string;
   sprintFilter: number[];
   typeFilter: string[];
 }
 
-export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, sprintFilter, typeFilter }: TaskListManagerProps) {
+export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, projectKey, sprintFilter, typeFilter }: TaskListManagerProps) {
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
@@ -76,7 +77,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
     setSyncError(null);
     try {
       const issues = await fetchJiraBacklog({
-        jiraProjectKey: "BRV",
+        jiraProjectKey: projectKey,
         sprintIds: ids.length > 0 ? ids : undefined,
       });
       await importSelectedTasks({

@@ -32,6 +32,7 @@ export default function Home() {
   const createRoom = useSessionMutation((api as any).rooms.createRoom);
 
   const [roomName, setRoomName] = useState("");
+  const [projectKey, setProjectKey] = useState("BRV");
   const [cardSetType, setCardSetType] = useState<"fibonacci" | "extended" | "custom">("fibonacci");
   const [customCards, setCustomCards] = useState("");
   const [createError, setCreateError] = useState("");
@@ -67,7 +68,7 @@ export default function Home() {
     }
 
     try {
-      const { roomCode } = await createRoom({ name: roomName.trim(), cardSet });
+      const { roomCode } = await createRoom({ name: roomName.trim(), cardSet, jiraProjectKey: projectKey.trim().toUpperCase() || undefined });
       const newRoom = { roomCode, name: roomName.trim(), visitedAt: Date.now() };
       const updatedRooms = [newRoom, ...recentRooms.filter(r => r.roomCode !== roomCode)].slice(0, 5);
       localStorage.setItem("poker_recent_rooms", JSON.stringify(updatedRooms));
@@ -151,6 +152,17 @@ export default function Home() {
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
               className="h-8 text-[13px]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="project-key" className="text-[13px] font-medium">Jira Project Key</label>
+            <Input
+              id="project-key"
+              placeholder="e.g. BRV"
+              value={projectKey}
+              onChange={(e) => setProjectKey(e.target.value)}
+              className="h-8 text-[13px] font-mono uppercase"
             />
           </div>
 
