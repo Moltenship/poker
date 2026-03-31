@@ -49,6 +49,7 @@ export default defineSchema({
     jiraStatus: v.optional(v.string()),
     jiraSprintName: v.optional(v.string()),
     order: v.number(),
+    finalEstimate: v.optional(v.string()),
     hoursEstimate: v.optional(v.number()),
     jiraEstimateSyncStatus: v.optional(v.union(v.literal("syncing"), v.literal("synced"), v.literal("error"))),
     jiraEstimateSyncError: v.optional(v.string()),
