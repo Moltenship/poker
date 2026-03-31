@@ -206,6 +206,11 @@ export default function Room() {
             <ArrowLeft className="h-3.5 w-3.5" />
           </Link>
           <span className="text-[13px] font-medium truncate">{room.name}</span>
+          {(room as any).jiraProjectKey && (
+            <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+              {(room as any).jiraProjectKey}
+            </code>
+          )}
           <div className="ml-auto flex items-center gap-1.5">
             <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
               {room.roomCode}
