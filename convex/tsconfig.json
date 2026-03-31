@@ -8,5 +8,6 @@
     "jsx": "react-jsx",
     "ignoreDeprecations": "6.0"
   },
-  "include": ["."]
+  "include": ["."],
+  "exclude": ["**/*.test.ts"]
 }
