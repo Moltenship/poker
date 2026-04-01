@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { JiraTaskDetails } from "../../convex/jira";
+import type { JiraTaskDetails } from "../../convex/jiraTypes";
 
 export function useJiraDetails(jiraKeys: string[]) {
   const fetchDetails = useAction(api.jira.fetchTaskDetails);

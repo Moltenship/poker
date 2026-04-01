@@ -10,6 +10,7 @@
 
 import type * as crons from "../crons.js";
 import type * as jira from "../jira.js";
+import type * as jiraTypes from "../jiraTypes.js";
 import type * as lib_sessions from "../lib/sessions.js";
 import type * as participants from "../participants.js";
 import type * as rooms from "../rooms.js";
@@ -25,6 +26,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   jira: typeof jira;
+  jiraTypes: typeof jiraTypes;
   "lib/sessions": typeof lib_sessions;
   participants: typeof participants;
   rooms: typeof rooms;

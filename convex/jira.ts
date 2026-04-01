@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { action, internalMutation, mutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
+import { BACKLOG_FILTER_ID, type JiraSprint, type JiraIssue, type JiraTaskDetails } from "./jiraTypes";
+export { BACKLOG_FILTER_ID, type JiraSprint, type JiraIssue, type JiraTaskDetails };
 
 const jiraGlobals = globalThis as typeof globalThis & {
   fetch: (input: string, init?: Record<string, unknown>) => Promise<{
@@ -215,27 +217,6 @@ function getJiraEnv() {
   };
 }
 
-/** Sentinel value representing backlog (no sprint) in sprint filter arrays. */
-export const BACKLOG_FILTER_ID = 0;
-
-export type JiraSprint = {
-  id: number;
-  name: string;
-  state: "active" | "future" | "closed";
-};
-
-export type JiraIssue = {
-  key: string;
-  title: string;
-  status: string;
-  type: string;
-  url: string;
-  description: string;
-  sprintName?: string;
-  assignee?: string;
-  isBlocked: boolean;
-};
-
 export const fetchJiraSprints = action({
   args: { projectKey: v.string() },
   handler: async (_ctx, args): Promise<JiraSprint[]> => {
@@ -267,17 +248,6 @@ export const fetchJiraSprints = action({
     }));
   },
 });
-
-export type JiraTaskDetails = {
-  title: string;
-  description: string;
-  status: string;
-  type: string;
-  sprintName?: string;
-  url: string;
-  assignee?: string;
-  isBlocked: boolean;
-};
 
 /** Check if a Jira issue is blocked based on its issue links. */
 function checkIsBlocked(links: JiraIssueFields["issuelinks"]): boolean {

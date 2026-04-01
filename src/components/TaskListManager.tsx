@@ -11,7 +11,7 @@ import { useSessionMutation } from "@/hooks/useSession";
 import { useJiraDetails } from "@/hooks/useJiraDetails";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import { BACKLOG_FILTER_ID, type JiraSprint } from "../../convex/jira";
+import { BACKLOG_FILTER_ID, type JiraSprint } from "../../convex/jiraTypes";
 import { cn } from "@/lib/utils";
 
 export type Task = {

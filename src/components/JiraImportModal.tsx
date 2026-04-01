@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useAction, useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
-import { BACKLOG_FILTER_ID, type JiraIssue, type JiraSprint } from "../../convex/jira"
+import { BACKLOG_FILTER_ID, type JiraIssue, type JiraSprint } from "../../convex/jiraTypes"
 import {
   Dialog,
   DialogContent,
