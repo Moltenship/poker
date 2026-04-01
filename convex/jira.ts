@@ -19,6 +19,12 @@ interface JiraIssueFields {
   issuetype?: { name?: string };
   description?: unknown;
   customfield_10020?: Array<{ name?: string; state?: string }>;
+  assignee?: { displayName?: string; accountId?: string } | null;
+  issuelinks?: Array<{
+    type?: { name?: string; inward?: string; outward?: string };
+    inwardIssue?: { key?: string; fields?: { status?: { name?: string } } };
+    outwardIssue?: { key?: string; fields?: { status?: { name?: string } } };
+  }>;
 }
 
 interface JiraSearchResponse {
@@ -143,6 +149,8 @@ export type JiraIssue = {
   url: string;
   description: string;
   sprintName?: string;
+  assignee?: string;
+  isBlocked: boolean;
 };
 
 export const fetchJiraSprints = action({
@@ -184,7 +192,27 @@ export type JiraTaskDetails = {
   type: string;
   sprintName?: string;
   url: string;
+  assignee?: string;
+  isBlocked: boolean;
 };
+
+/** Check if a Jira issue is blocked based on its issue links. */
+function checkIsBlocked(links: JiraIssueFields["issuelinks"]): boolean {
+  if (!Array.isArray(links)) return false;
+  return links.some((link) => {
+    // "is blocked by" link — the blocking issue is the inward issue
+    if (
+      link.type?.inward?.toLowerCase().includes("is blocked by") &&
+      link.inwardIssue
+    ) {
+      const status = link.inwardIssue.fields?.status?.name?.toLowerCase() ?? "";
+      // Only blocked if the blocker isn't done
+      return !status.includes("done") && !status.includes("closed") && !status.includes("resolved");
+    }
+    // "blocks" link — this issue blocks the outward issue (not blocked itself)
+    return false;
+  });
+}
 
 export const fetchTaskDetails = action({
   args: { jiraKeys: v.array(v.string()) },
@@ -207,7 +235,7 @@ export const fetchTaskDetails = action({
         body: JSON.stringify({
           jql,
           maxResults: 50,
-          fields: ["summary", "status", "issuetype", "description", "customfield_10020"],
+          fields: ["summary", "status", "issuetype", "description", "customfield_10020", "assignee", "issuelinks"],
         }),
       });
       if (!res.ok) continue;
@@ -219,6 +247,8 @@ export const fetchTaskDetails = action({
           const active = sprints.find((s) => s.state === "active") ?? sprints[sprints.length - 1];
           sprintName = String(active.name ?? "");
         }
+        const assignee = issue.fields.assignee?.displayName ?? undefined;
+        const isBlocked = checkIsBlocked(issue.fields.issuelinks);
         result[issue.key] = {
           title: String(issue.fields.summary || issue.key),
           description: adfToMarkdown(issue.fields.description),
@@ -226,6 +256,8 @@ export const fetchTaskDetails = action({
           type: String(issue.fields.issuetype?.name ?? ""),
           sprintName,
           url: `${baseUrl}/browse/${issue.key}`,
+          assignee,
+          isBlocked,
         };
       }
     }
@@ -270,7 +302,7 @@ export const fetchJiraBacklog = action({
       const body: Record<string, unknown> = {
         jql: effectiveJql,
         maxResults: 50,
-        fields: ["summary", "status", "issuetype", "description", "customfield_10020"],
+        fields: ["summary", "status", "issuetype", "description", "customfield_10020", "assignee", "issuelinks"],
       };
       if (nextPageToken) body.nextPageToken = nextPageToken;
 
@@ -306,6 +338,8 @@ export const fetchJiraBacklog = action({
           url: `${baseUrl}/browse/${issue.key}`,
           description: adfToMarkdown(issue.fields.description),
           sprintName,
+          assignee: issue.fields.assignee?.displayName ?? undefined,
+          isBlocked: checkIsBlocked(issue.fields.issuelinks),
         });
       }
 

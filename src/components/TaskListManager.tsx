@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { X, Trash2, RotateCw, SlidersHorizontal } from "lucide-react";
+import { X, Trash2, RotateCw, SlidersHorizontal, User } from "lucide-react";
 import { JiraImportModal } from "./JiraImportModal";
 import { useSessionMutation } from "@/hooks/useSession";
 import { useJiraDetails } from "@/hooks/useJiraDetails";
@@ -339,11 +339,25 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                   key={task._id}
                   onClick={() => handleTaskClick(realIndex)}
                   className={cn(
-                    "group relative px-4 py-2 cursor-pointer transition-colors",
+                    "group relative cursor-pointer transition-colors",
                     isCurrent ? "bg-accent" : "hover:bg-accent/50"
                   )}
                 >
-                  <div className="flex items-start justify-between gap-2 pr-5 overflow-hidden">
+                  {/* Blocked strip on the left edge */}
+                  {enriched?.isBlocked && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="absolute left-0 inset-y-0 w-[3px] bg-destructive rounded-r-sm" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right">Blocked</TooltipContent>
+                    </Tooltip>
+                  )}
+
+                  <div className={cn(
+                    "py-2 pr-5 overflow-hidden",
+                    enriched?.isBlocked ? "pl-2.5 ml-[3px]" : "px-4"
+                  )}>
+                  <div className="flex items-start justify-between gap-2 overflow-hidden">
                     <div className="flex flex-col min-w-0 overflow-hidden">
                       <p className={cn(
                         "text-[13px] leading-snug truncate",
@@ -359,12 +373,19 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                           {enriched?.sprintName && <> · {enriched.sprintName}</>}
                         </span>
                       )}
+                      {enriched?.assignee && (
+                        <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/50 truncate">
+                          <User className="size-3 shrink-0" />
+                          <span className="truncate">{enriched.assignee}</span>
+                        </span>
+                      )}
                     </div>
                     {estimateText && (
                       <Badge variant="secondary" className="shrink-0 font-mono text-[10px] h-4 px-1 rounded">
                         {estimateText}
                       </Badge>
                     )}
+                  </div>
                   </div>
 
                   {task.isManual && (
