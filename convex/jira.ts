@@ -108,6 +108,8 @@ function convertAdfNode(node: AdfNode, depth: number): string {
       return applyMarks(node.text ?? "", node.marks ?? []);
     case "mention":
       return String(node.attrs?.text ?? "");
+    case "inlineLink":
+      return `[${convertInline(node.content ?? [])}](${String(node.attrs?.href ?? "")})`;
     default:
       if (node.content) return convertInline(node.content);
       return "";
