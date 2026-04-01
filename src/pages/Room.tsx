@@ -74,9 +74,20 @@ export default function Room() {
   };
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isCompact, setIsCompact] = useState(false);
+  const isTransitioning = useRef(false);
   const handleScroll = useCallback(() => {
+    if (isTransitioning.current) return;
     const el = scrollRef.current;
-    if (el) setIsCompact(el.scrollTop > 20);
+    if (!el) return;
+    setIsCompact(prev => {
+      // Hysteresis: enter compact at 40px, exit only near top (5px)
+      const next = prev ? el.scrollTop > 5 : el.scrollTop > 40;
+      if (prev === next) return prev;
+      // Lock during transition to prevent layout-thrash feedback loop
+      isTransitioning.current = true;
+      setTimeout(() => { isTransitioning.current = false; }, 250);
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -297,8 +308,11 @@ export default function Room() {
                   />
                 </div>
               )}
-              <div data-testid="voting-area" className="flex-1 flex flex-col items-center gap-6 px-6 pb-6 pt-2">
-                {currentTask && (
+              <div data-testid="voting-area" className={cn(
+                "flex-1 flex flex-col items-center gap-6 px-6 pt-2",
+                room.status === "voting" ? "pb-48" : "pb-6"
+              )}>
+                {room.status === "revealed" && currentTask && (
                   <ResultsPanel
                     roomId={room._id}
                     taskId={currentTask._id}
@@ -338,6 +352,22 @@ export default function Room() {
             </>
           )}
         </div>
+
+        {/* Floating vote status & reveal button — always visible during voting */}
+        {room.status === "voting" && currentTask && participantId && (
+          <div className="absolute bottom-4 right-4 z-20 w-72 drop-shadow-lg">
+            <ResultsPanel
+              roomId={room._id}
+              taskId={currentTask._id}
+              roomStatus={room.status}
+              cardSet={room.cardSet}
+              participantCount={participants?.length ?? 0}
+              votedCount={votedIds.length}
+              projectKey={room.jiraProjectKey}
+              currentSprintName={currentEnriched?.sprintName}
+            />
+          </div>
+        )}
       </main>
 
       {/* Participants */}
