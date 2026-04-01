@@ -69,9 +69,6 @@ export default function Home() {
 
     try {
       const { roomCode } = await createRoom({ name: roomName.trim(), cardSet, jiraProjectKey: projectKey.trim().toUpperCase() || undefined });
-      const newRoom = { roomCode, name: roomName.trim(), visitedAt: Date.now() };
-      const updatedRooms = [newRoom, ...recentRooms.filter(r => r.roomCode !== roomCode)].slice(0, 5);
-      localStorage.setItem("poker_recent_rooms", JSON.stringify(updatedRooms));
       navigate(`/room/${roomCode}`);
     } catch {
       setCreateError("ERROR! Failed to create room. Please try again. ");
@@ -111,7 +108,7 @@ export default function Home() {
       {/* Recent */}
       {recentRooms.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-2 text-[11px] font-medium text-muted-foreground uppercase tracking-widest">Recent</h2>
+          <h2 className="mb-2 text-[11px] font-medium text-muted-foreground uppercase tracking-widest">Your rooms</h2>
           <div className="rounded-lg bg-accent/50 overflow-hidden">
             {recentRooms.slice(0, 5).map((room, i) => (
               <button

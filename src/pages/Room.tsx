@@ -145,6 +145,18 @@ export default function Room() {
     }
     return () => { document.title = "Planning Poker"; };
   }, [room?.name]);
+
+  // Track room in "Your rooms" localStorage list
+  useEffect(() => {
+    if (!room?.name || !roomCode) return;
+    try {
+      const key = "poker_recent_rooms";
+      const stored = JSON.parse(localStorage.getItem(key) || "[]");
+      const entry = { roomCode, name: room.name, visitedAt: Date.now() };
+      const updated = [entry, ...stored.filter((r: { roomCode: string }) => r.roomCode !== roomCode)].slice(0, 5);
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch { /* ignore */ }
+  }, [room?.name, roomCode]);
   const [copied, setCopied] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(() => {
     try { return localStorage.getItem("participants_sidebar_open") !== "false"; } catch { return true; }
