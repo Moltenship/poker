@@ -241,3 +241,20 @@ export const deleteTask = sessionMutation({
     }
   },
 });
+
+/** One-shot migration: strip deprecated `isQuickVote` field from all tasks.
+ *  Run from the Convex dashboard, then remove this function + the schema field. */
+export const migrateRemoveIsQuickVote = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const tasks = await ctx.db.query("tasks").take(500);
+    let patched = 0;
+    for (const task of tasks) {
+      if (task.isQuickVote !== undefined) {
+        await ctx.db.patch(task._id, { isQuickVote: undefined });
+        patched++;
+      }
+    }
+    return { scanned: tasks.length, patched };
+  },
+});
