@@ -74,7 +74,7 @@ export default function Room() {
   const participants = useQuery(api.participants.getParticipants, room?._id ? { roomId: room._id } : "skip");
 
   const jiraKeys = (tasks || []).filter((t) => t.jiraKey).map((t) => t.jiraKey!);
-  const { details: jiraDetails } = useJiraDetails(jiraKeys);
+  const { details: jiraDetails, loading: jiraLoading } = useJiraDetails(jiraKeys);
 
   const currentTask = tasks && room ? tasks[room.currentTaskIndex] : null;
   const taskIdentifier = currentTask?.jiraKey ?? currentTask?._id ?? null;
@@ -347,31 +347,69 @@ export default function Room() {
                     currentSprintName={currentEnriched?.sprintName}
                   />
                 )}
-                {currentTask && (
-                  <div className="w-full max-w-3xl">
-                    <h2 className="text-lg font-semibold">
-                      {currentEnriched?.url ? (
-                        <a
-                          href={currentEnriched.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:underline underline-offset-2"
-                        >
-                          {currentTask.jiraKey && (
-                            <span className="text-muted-foreground font-normal whitespace-nowrap">{currentTask.jiraKey}:&nbsp;</span>
+                {currentTask && (() => {
+                  const isLoadingDetails = jiraLoading && !!currentTask.jiraKey && !currentEnriched;
+                  return (
+                    <div className="w-full max-w-3xl">
+                      {isLoadingDetails ? (
+                        /* Blurred lorem-ipsum placeholder that mimics a real Jira ticket */
+                        <div className="select-none" aria-hidden="true">
+                          <h2 className="text-lg font-semibold blur-[6px]">
+                            {currentTask.jiraKey && (
+                              <span className="text-muted-foreground font-normal whitespace-nowrap">{currentTask.jiraKey}:&nbsp;</span>
+                            )}
+                            Lorem ipsum dolor sit amet consectetur
+                          </h2>
+                          <div className="mt-5 text-left text-[13px] space-y-4 blur-[6px]">
+                            <div>
+                              <h3 className="text-base font-semibold mb-1">Description</h3>
+                              <p className="text-muted-foreground leading-relaxed">
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                              </p>
+                            </div>
+                            <div>
+                              <h3 className="text-base font-semibold mb-1">Acceptance criteria</h3>
+                              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                                <li>Ut enim ad minim veniam quis nostrud exercitation</li>
+                                <li>Duis aute irure dolor in reprehenderit</li>
+                                <li>Excepteur sint occaecat cupidatat non proident</li>
+                              </ul>
+                            </div>
+                            <div>
+                              <h3 className="text-base font-semibold mb-1">Stakeholders</h3>
+                              <p className="text-muted-foreground">@Lorem Ipsum @Dolor Sit</p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Real content — fades in when ready */
+                        <div className="animate-in fade-in duration-300">
+                          <h2 className="text-lg font-semibold">
+                            {currentEnriched?.url ? (
+                              <a
+                                href={currentEnriched.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline underline-offset-2"
+                              >
+                                {currentTask.jiraKey && (
+                                  <span className="text-muted-foreground font-normal whitespace-nowrap">{currentTask.jiraKey}:&nbsp;</span>
+                                )}
+                                {currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey}
+                                <ExternalLink className="inline size-3.5 ml-1 align-[-1px] text-muted-foreground" />
+                              </a>
+                            ) : (currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey ?? "Untitled")}
+                          </h2>
+                          {currentEnriched?.description && (
+                            <div className="mt-5 text-left text-[13px]">
+                              <Streamdown mode="static" components={streamdownComponents}>{currentEnriched.description}</Streamdown>
+                            </div>
                           )}
-                          {currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey}
-                          <ExternalLink className="inline size-3.5 ml-1 align-[-1px] text-muted-foreground" />
-                        </a>
-                      ) : (currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey ?? "Untitled")}
-                    </h2>
-                    {currentEnriched?.description && (
-                      <div className="mt-5 text-left text-[13px]">
-                        <Streamdown mode="static" components={streamdownComponents}>{currentEnriched.description}</Streamdown>
-                      </div>
-                    )}
-                  </div>
-                )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </>
           )}
