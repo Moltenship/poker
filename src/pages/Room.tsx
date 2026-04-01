@@ -305,7 +305,7 @@ export default function Room() {
                 )}
                 {currentTask && !currentTask.isQuickVote && (
                   <div className="w-full max-w-xl">
-                    <h2 className="text-sm font-semibold mb-1 text-center">
+                    <h2 className="text-lg font-semibold">
                       {currentEnriched?.url ? (
                         <a
                           href={currentEnriched.url}
@@ -321,7 +321,7 @@ export default function Room() {
                       ) : (currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey ?? "Untitled")}
                     </h2>
                     {currentEnriched?.description && (
-                      <div className="mt-2 text-left text-[13px]">
+                      <div className="mt-5 text-left text-[13px]">
                         <Streamdown mode="static">{currentEnriched.description}</Streamdown>
                       </div>
                     )}
