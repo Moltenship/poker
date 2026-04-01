@@ -446,7 +446,7 @@ export const importSelectedTasks = mutation({
           jiraKey: key,
           order: nextOrder++,
           isManual: false,
-          isQuickVote: false,
+
         });
       }
     }

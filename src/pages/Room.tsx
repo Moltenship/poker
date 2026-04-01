@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useSessionMutation, useSessionId } from "@/hooks/useSession";
@@ -67,7 +67,7 @@ export default function Room() {
   const heartbeat = useSessionMutation(api.participants.heartbeat);
   const takeoverSession = useSessionMutation(api.participants.takeoverSession);
   const startVoting = useSessionMutation(api.voting.startVoting);
-  const ensureQuickVote = useSessionMutation(api.tasks.ensureQuickVoteTask);
+
 
   const room = useQuery(api.rooms.getRoom, roomCode ? { roomCode } : "skip");
   const tasks = useQuery(api.tasks.getTasksForRoom, room?._id ? { roomId: room._id } : "skip");
@@ -77,6 +77,7 @@ export default function Room() {
   const { details: jiraDetails } = useJiraDetails(jiraKeys);
 
   const currentTask = tasks && room ? tasks[room.currentTaskIndex] : null;
+  const taskIdentifier = currentTask?.jiraKey ?? currentTask?._id ?? null;
   const currentEnriched = currentTask?.jiraKey ? jiraDetails[currentTask.jiraKey] : undefined;
   const voteStatus = useQuery(api.voting.getVoteStatus, currentTask?._id ? { taskId: currentTask._id } : "skip");
   const myVote = useQuery(api.voting.getMyVote,
@@ -122,30 +123,38 @@ export default function Room() {
       });
   }, [displayName, joinRoom, participantId, room?._id, setIdentity]);
 
-  // Heartbeat: keep isConnected alive; leave on unmount / tab close
+  // Heartbeat: keep isConnected alive; leave on unmount
   useEffect(() => {
     if (!room?._id) return;
     const send = () => heartbeat({ roomId: room._id }).catch(() => {});
     send();
     const interval = setInterval(send, 25_000);
-    const onUnload = () => leaveRoom({ roomId: room._id }).catch(() => {});
-    window.addEventListener("beforeunload", onUnload);
     return () => {
       clearInterval(interval);
-      window.removeEventListener("beforeunload", onUnload);
-      onUnload();
+      leaveRoom({ roomId: room._id }).catch(() => {});
     };
   }, [room?._id, heartbeat, leaveRoom]);
 
-  // Auto-create quick vote task when room is voting but has no current task
-  const ensureQuickVoteRef = useRef(false);
+  // Sync URL to current task
+  const navigate = useNavigate();
+  const prevTaskIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!room?._id || room.status !== "voting" || currentTask || ensureQuickVoteRef.current) return;
-    ensureQuickVoteRef.current = true;
-    ensureQuickVote({ roomId: room._id })
-      .catch(console.error)
-      .finally(() => { ensureQuickVoteRef.current = false; });
-  }, [room?._id, room?.status, currentTask, ensureQuickVote]);
+    // Don't navigate until data is loaded
+    if (room === undefined || tasks === undefined) return;
+
+    const currentId = currentTask?._id ?? null;
+
+    // Only navigate when the server's current task actually changed
+    if (prevTaskIdRef.current === currentId) return;
+    prevTaskIdRef.current = currentId;
+
+    const targetPath = taskIdentifier
+      ? `/room/${roomCode}/task/${taskIdentifier}`
+      : `/room/${roomCode}`;
+
+    navigate(targetPath, { replace: true });
+  }, [currentTask?._id, taskIdentifier, roomCode, navigate, room, tasks]);
 
   const handleCopyLink = async () => {
     const link = `${window.location.origin}/room/${roomCode}`;
@@ -220,8 +229,8 @@ export default function Room() {
       <aside className="w-full md:w-72 shrink-0 h-[30vh] md:h-full overflow-hidden bg-[var(--sidebar)]">
         <TaskListManager
           roomId={room._id}
+          roomCode={roomCode!}
           tasks={tasks || []}
-          currentTaskIndex={room.currentTaskIndex}
           jiraEnabled={room.jiraEnabled ?? false}
           projectKey={room.jiraProjectKey ?? "BRV"}
           sprintFilter={room.jiraSprintFilter ?? []}
@@ -338,7 +347,7 @@ export default function Room() {
                     currentSprintName={currentEnriched?.sprintName}
                   />
                 )}
-                {currentTask && !currentTask.isQuickVote && (
+                {currentTask && (
                   <div className="w-full max-w-3xl">
                     <h2 className="text-lg font-semibold">
                       {currentEnriched?.url ? (

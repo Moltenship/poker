@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { NavLink } from "react-router-dom";
 import { useAction, useMutation } from "convex/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,21 +21,21 @@ export type Task = {
   jiraKey?: string;
   hoursEstimate?: number;
   isManual: boolean;
-  isQuickVote?: boolean;
+
   order: number;
 };
 
 interface TaskListManagerProps {
   roomId: Id<"rooms">;
+  roomCode: string;
   tasks: Task[];
-  currentTaskIndex: number;
   jiraEnabled: boolean;
   projectKey: string;
   sprintFilter: number[];
   typeFilter: string[];
 }
 
-export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, projectKey, sprintFilter, typeFilter }: TaskListManagerProps) {
+export function TaskListManager({ roomId, roomCode, tasks, jiraEnabled, projectKey, sprintFilter, typeFilter }: TaskListManagerProps) {
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
@@ -150,7 +151,6 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
   };
 
   const visibleTasks = tasks.filter(t => {
-    if (t.isQuickVote) return false;
     if (localTypeFilter.length > 0 && t.jiraKey) {
       const type = jiraDetails[t.jiraKey]?.type;
       if (type && !localTypeFilter.includes(type)) return false;
@@ -329,82 +329,88 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
           <div className={cn("w-full py-0.5 transition-opacity duration-150", syncing && "opacity-50")}>
             {visibleTasks.map((task) => {
               const realIndex = tasks.indexOf(task);
-              const isCurrent = realIndex === currentTaskIndex;
               const estimateText = task.hoursEstimate ? `${task.hoursEstimate}h` : undefined;
               const enriched = task.jiraKey ? jiraDetails[task.jiraKey] : undefined;
               const displayTitle = enriched?.title ?? task.title ?? task.jiraKey ?? "Untitled";
 
+              const taskPath = `/room/${roomCode}/task/${task.jiraKey ?? task._id}`;
+
               return (
-                <div
+                <NavLink
                   key={task._id}
+                  to={taskPath}
                   onClick={() => handleTaskClick(realIndex)}
-                  className={cn(
-                    "group relative cursor-pointer transition-colors",
-                    isCurrent ? "bg-accent" : "hover:bg-accent/50"
+                  className={({ isActive }) => cn(
+                    "group relative block cursor-pointer transition-colors no-underline",
+                    isActive ? "bg-accent" : "hover:bg-accent/50"
                   )}
                 >
-                  {/* Blocked strip on the left edge */}
-                  {enriched?.isBlocked && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="absolute left-0 inset-y-0 w-[3px] bg-destructive rounded-r-sm" />
-                      </TooltipTrigger>
-                      <TooltipContent side="right">Blocked</TooltipContent>
-                    </Tooltip>
-                  )}
+                  {({ isActive }) => (
+                    <>
+                      {/* Blocked strip on the left edge */}
+                      {enriched?.isBlocked && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="absolute left-0 inset-y-0 w-[3px] bg-destructive rounded-r-sm" />
+                          </TooltipTrigger>
+                          <TooltipContent side="right">Blocked</TooltipContent>
+                        </Tooltip>
+                      )}
 
-                  <div className={cn(
-                    "py-2 pr-5 overflow-hidden",
-                    enriched?.isBlocked ? "pl-2.5 ml-[3px]" : "px-4"
-                  )}>
-                  <div className="flex items-start justify-between gap-2 overflow-hidden">
-                    <div className="flex flex-col min-w-0 overflow-hidden">
-                      <p className={cn(
-                        "text-[13px] leading-snug truncate",
-                        isCurrent ? "text-foreground font-medium" : "text-foreground/70"
+                      <div className={cn(
+                        "py-2 pr-5 overflow-hidden",
+                        enriched?.isBlocked ? "pl-2.5 ml-[3px]" : "px-4"
                       )}>
-                        {displayTitle}
-                      </p>
-                      {task.jiraKey && (
-                        <span className="text-[11px] text-muted-foreground/50 truncate">
-                          {task.jiraKey}
-                          {enriched?.type && <> · {enriched.type}</>}
-                          {enriched?.status && <> · {enriched.status}</>}
-                          {enriched?.sprintName && <> · {enriched.sprintName}</>}
-                        </span>
-                      )}
-                      {enriched?.assignee && (
-                        <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/50 truncate">
-                          <User className="size-3 shrink-0" />
-                          <span className="truncate">{enriched.assignee}</span>
-                        </span>
-                      )}
-                    </div>
-                    {estimateText && (
-                      <Badge variant="secondary" className="shrink-0 font-mono text-[10px] h-4 px-1 rounded">
-                        {estimateText}
-                      </Badge>
-                    )}
-                  </div>
-                  </div>
+                      <div className="flex items-start justify-between gap-2 overflow-hidden">
+                        <div className="flex flex-col min-w-0 overflow-hidden">
+                          <p className={cn(
+                            "text-[13px] leading-snug truncate",
+                            isActive ? "text-foreground font-medium" : "text-foreground/70"
+                          )}>
+                            {displayTitle}
+                          </p>
+                          {task.jiraKey && (
+                            <span className="text-[11px] text-muted-foreground/50 truncate">
+                              {task.jiraKey}
+                              {enriched?.type && <> · {enriched.type}</>}
+                              {enriched?.status && <> · {enriched.status}</>}
+                              {enriched?.sprintName && <> · {enriched.sprintName}</>}
+                            </span>
+                          )}
+                          {enriched?.assignee && (
+                            <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/50 truncate">
+                              <User className="size-3 shrink-0" />
+                              <span className="truncate">{enriched.assignee}</span>
+                            </span>
+                          )}
+                        </div>
+                        {estimateText && (
+                          <Badge variant="secondary" className="shrink-0 font-mono text-[10px] h-4 px-1 rounded">
+                            {estimateText}
+                          </Badge>
+                        )}
+                      </div>
+                      </div>
 
-                  {task.isManual && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          onClick={(e) => handleDeleteTask(e, task._id)}
-                        >
-                          <X />
-                          <span className="sr-only">Delete {task.title}</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete task</TooltipContent>
-                    </Tooltip>
+                      {task.isManual && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-xs"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={(e) => handleDeleteTask(e, task._id)}
+                            >
+                              <X />
+                              <span className="sr-only">Delete {task.title}</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete task</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </>
                   )}
-                </div>
+                </NavLink>
               );
             })}
           </div>
