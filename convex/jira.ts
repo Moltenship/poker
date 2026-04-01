@@ -187,7 +187,10 @@ function convertAdfNode(node: AdfNode, depth: number, mediaUrlMap: Map<string, s
       const resolvedUrl = mediaUrlMap.get(mediaId);
       if (resolvedUrl) {
         const alt = String(node.attrs?.alt || "image");
-        return `![${alt}](${resolvedUrl})`;
+        const w = node.attrs?.width;
+        const h = node.attrs?.height;
+        const dimFragment = w && h ? `#dim=${w}x${h}` : "";
+        return `![${alt}](${resolvedUrl}${dimFragment})`;
       }
       // Fallback: placeholder when URL couldn't be resolved
       const altText = String(node.attrs?.alt || "image attachment");
