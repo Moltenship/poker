@@ -69,8 +69,6 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
     ? findNearestCard(voteResults.average, cardSet)
     : null;
 
-  const isQuickVote = currentTask?.isQuickVote ?? false;
-
   return (
     <Card className="w-full max-w-2xl" data-testid="results-area">
       <CardHeader className="pb-3">
@@ -112,7 +110,7 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
           {/* Right: distribution + estimate controls */}
           <div className="flex flex-col gap-4 border-t pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-6">
             <VoteDistribution votes={formattedVotes} cardSet={cardSet} />
-            {!isQuickVote && currentTask?.jiraKey && (
+            {currentTask?.jiraKey && (
               <>
                 <JiraEstimateInput
                   taskId={taskId}
@@ -136,20 +134,12 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
         <Separator />
 
         <div className="flex gap-2">
-          {isQuickVote ? (
-            <Button size="sm" onClick={() => resetVoting({ roomId })}>
-              New Vote
-            </Button>
-          ) : (
-            <>
-              <Button variant="outline" size="sm" onClick={() => resetVoting({ roomId })}>
-                Re-vote
-              </Button>
-              <Button size="sm" onClick={() => advanceToNextTask({ roomId })}>
-                Next Task
-              </Button>
-            </>
-          )}
+          <Button variant="outline" size="sm" onClick={() => resetVoting({ roomId })}>
+            Re-vote
+          </Button>
+          <Button size="sm" onClick={() => advanceToNextTask({ roomId })}>
+            Next Task
+          </Button>
         </div>
       </CardContent>
     </Card>

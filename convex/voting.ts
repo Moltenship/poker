@@ -48,25 +48,6 @@ export const startVoting = sessionMutation({
       throw new Error("Room is not in lobby status");
     }
 
-    const tasks = await ctx.db
-      .query("tasks")
-      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
-      .collect();
-    const regularTasks = tasks.filter((t) => !t.isQuickVote);
-
-    if (regularTasks.length === 0) {
-      const existingQv = tasks.find((t) => t.isQuickVote);
-      if (!existingQv) {
-        await ctx.db.insert("tasks", {
-          roomId: args.roomId,
-          title: "Quick Vote",
-          order: 0,
-          isManual: false,
-          isQuickVote: true,
-        });
-      }
-    }
-
     await ctx.db.patch(args.roomId, { status: "voting" });
   },
 });

@@ -65,6 +65,7 @@ export default defineSchema({
     jiraSprintSyncStatus: v.optional(v.union(v.literal("syncing"), v.literal("synced"), v.literal("error"))),
     jiraSprintSyncError: v.optional(v.string()),
     isManual: v.boolean(),
+    /** @deprecated Kept for existing documents only. To be removed by migration. */
     isQuickVote: v.optional(v.boolean()),
   })
     .index("by_room", ["roomId"])
