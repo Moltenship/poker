@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, internalMutation } from "./_generated/server";
+import { query } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
 
 export const addTask = sessionMutation({
@@ -153,32 +153,5 @@ export const deleteTask = sessionMutation({
         await ctx.db.patch(roomId, { currentTaskIndex: sorted.length - 1 });
       }
     }
-  },
-});
-
-const DEPRECATED_FIELDS = [
-  "description", "jiraUrl", "jiraStatus", "jiraType",
-  "jiraSprintName", "finalEstimate", "isQuickVote",
-] as const;
-
-/** One-shot migration: strip all deprecated fields from task documents.
- *  Run from the Convex dashboard until it returns { patched: 0 }, then remove. */
-export const migrateStripDeprecatedFields = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const tasks = await ctx.db.query("tasks").take(500);
-    let patched = 0;
-    for (const task of tasks) {
-      const raw = task as Record<string, unknown>;
-      const removals: Record<string, undefined> = {};
-      for (const field of DEPRECATED_FIELDS) {
-        if (raw[field] !== undefined) removals[field] = undefined;
-      }
-      if (Object.keys(removals).length > 0) {
-        await ctx.db.patch(task._id, removals as never);
-        patched++;
-      }
-    }
-    return { scanned: tasks.length, patched };
   },
 });
