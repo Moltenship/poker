@@ -22,6 +22,41 @@ import { Streamdown } from "streamdown";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useJiraDetails } from "@/hooks/useJiraDetails";
 
+/** Image component with a skeleton placeholder to prevent layout shifts. */
+function DescriptionImage({ className, ...props }: React.ComponentProps<"img">) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <span className="text-muted-foreground text-xs italic">
+        Image not available
+      </span>
+    );
+  }
+
+  return (
+    <>
+      {!loaded && (
+        <span className="block h-32 w-48 animate-pulse rounded-lg bg-muted" />
+      )}
+      <img
+        {...props}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+        className={cn(
+          "max-w-full rounded-lg",
+          loaded
+            ? "opacity-100 transition-opacity duration-300"
+            : "!m-0 !h-0 !p-0 overflow-hidden opacity-0",
+        )}
+      />
+    </>
+  );
+}
+
+const streamdownComponents = { img: DescriptionImage };
+
 export default function Room() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const sessionId = useSessionId();
@@ -323,7 +358,7 @@ export default function Room() {
                     </h2>
                     {currentEnriched?.description && (
                       <div className="mt-5 text-left text-[13px]">
-                        <Streamdown mode="static">{currentEnriched.description}</Streamdown>
+                        <Streamdown mode="static" components={streamdownComponents}>{currentEnriched.description}</Streamdown>
                       </div>
                     )}
                   </div>
