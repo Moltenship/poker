@@ -14,7 +14,7 @@ import { CardDeck } from "@/components/CardDeck";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowLeft, Users, Link as LinkIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Check, ArrowLeft, Users, Link as LinkIcon, ExternalLink, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { EditCardSetDialog } from "@/components/EditCardSetDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -311,12 +311,13 @@ export default function Room() {
                           href={currentEnriched.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="hover:underline underline-offset-2"
+                          className="inline-flex items-center gap-1.5 hover:underline underline-offset-2"
                         >
                           {currentTask.jiraKey && (
                             <span className="text-muted-foreground font-normal">{currentTask.jiraKey}: </span>
                           )}
                           {currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey}
+                          <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
                         </a>
                       ) : (currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey ?? "Untitled")}
                     </h2>
