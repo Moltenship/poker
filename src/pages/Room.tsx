@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -14,7 +14,7 @@ import { CardDeck } from "@/components/CardDeck";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowLeft, Users, Link as LinkIcon, ChevronDown, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Check, ArrowLeft, Users, Link as LinkIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { EditCardSetDialog } from "@/components/EditCardSetDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -72,9 +72,12 @@ export default function Room() {
     setParticipantsOpen(value);
     try { localStorage.setItem("participants_sidebar_open", String(value)); } catch { /* ignore */ }
   };
-  const [descriptionOpen, setDescriptionOpen] = useState(false);
-
-  useEffect(() => { setDescriptionOpen(false); }, [currentTask?._id]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isCompact, setIsCompact] = useState(false);
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) setIsCompact(el.scrollTop > 20);
+  }, []);
 
   useEffect(() => {
     if (!room?._id || !participantId || !displayName) return;
@@ -257,9 +260,9 @@ export default function Room() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-6 flex flex-col">
+        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-auto flex flex-col">
           {room.status === "lobby" && (
-            <div className="flex-1 flex items-center justify-center" data-testid="room-lobby">
+            <div className="flex-1 flex items-center justify-center p-6" data-testid="room-lobby">
               <div className="text-center max-w-xs space-y-4">
                 <h2 className="text-base font-semibold">Ready to estimate?</h2>
                 <p className="text-[13px] text-muted-foreground">
@@ -277,65 +280,62 @@ export default function Room() {
           )}
 
           {(room.status === "voting" || room.status === "revealed") && participantId && (
-            <div data-testid="voting-area" className="flex-1 flex flex-col items-center justify-center gap-6">
-              {currentTask && !currentTask.isQuickVote && (
-                <div className="w-full max-w-xl text-center">
-                  <h2 className="text-sm font-semibold mb-0.5">
-                    {currentEnriched?.url ? (
-                      <a
-                        href={currentEnriched.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline underline-offset-2"
-                      >
-                        {currentTask.jiraKey && (
-                          <span className="text-muted-foreground font-normal">{currentTask.jiraKey}: </span>
-                        )}
-                        {currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey}
-                      </a>
-                    ) : (currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey ?? "Untitled")}
-                  </h2>
-                  {currentEnriched?.description && (
-                    <div className="mt-1">
-                      <button
-                        onClick={() => setDescriptionOpen(o => !o)}
-                        className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <ChevronDown className={cn("size-3.5 transition-transform duration-200", descriptionOpen && "rotate-180")} />
-                        {descriptionOpen ? "Hide description" : "Show description"}
-                      </button>
-                      {descriptionOpen && (
-                        <div className="mt-2 text-left text-[13px]">
-                          <Streamdown mode="static">{currentEnriched.description}</Streamdown>
-                        </div>
-                      )}
-                    </div>
-                  )}
+            <>
+              {room.status === "voting" && currentTask && (
+                <div className={cn(
+                  "sticky top-0 z-10 w-full flex justify-center bg-background/95 backdrop-blur-sm border-b transition-all duration-200",
+                  isCompact ? "py-2 border-border" : "pt-6 pb-4 border-transparent"
+                )}>
+                  <CardDeck
+                    cardSet={room.cardSet}
+                    currentVote={currentVote}
+                    roomStatus={room.status}
+                    taskId={currentTask._id}
+                    participantId={participantId}
+                    onVoteChange={setCurrentVote}
+                    compact={isCompact}
+                  />
                 </div>
               )}
-              {room.status === "voting" && currentTask && (
-                <CardDeck
-                  cardSet={room.cardSet}
-                  currentVote={currentVote}
-                  roomStatus={room.status}
-                  taskId={currentTask._id}
-                  participantId={participantId}
-                  onVoteChange={setCurrentVote}
-                />
-              )}
-              {currentTask && (
-                <ResultsPanel
-                  roomId={room._id}
-                  taskId={currentTask._id}
-                  roomStatus={room.status}
-                  cardSet={room.cardSet}
-                  participantCount={participants?.length ?? 0}
-                  votedCount={votedIds.length}
-                  projectKey={room.jiraProjectKey}
-                  currentSprintName={currentEnriched?.sprintName}
-                />
-              )}
-            </div>
+              <div data-testid="voting-area" className="flex-1 flex flex-col items-center gap-6 px-6 pb-6 pt-2">
+                {currentTask && (
+                  <ResultsPanel
+                    roomId={room._id}
+                    taskId={currentTask._id}
+                    roomStatus={room.status}
+                    cardSet={room.cardSet}
+                    participantCount={participants?.length ?? 0}
+                    votedCount={votedIds.length}
+                    projectKey={room.jiraProjectKey}
+                    currentSprintName={currentEnriched?.sprintName}
+                  />
+                )}
+                {currentTask && !currentTask.isQuickVote && (
+                  <div className="w-full max-w-xl">
+                    <h2 className="text-sm font-semibold mb-1 text-center">
+                      {currentEnriched?.url ? (
+                        <a
+                          href={currentEnriched.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline underline-offset-2"
+                        >
+                          {currentTask.jiraKey && (
+                            <span className="text-muted-foreground font-normal">{currentTask.jiraKey}: </span>
+                          )}
+                          {currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey}
+                        </a>
+                      ) : (currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey ?? "Untitled")}
+                    </h2>
+                    {currentEnriched?.description && (
+                      <div className="mt-2 text-left text-[13px]">
+                        <Streamdown mode="static">{currentEnriched.description}</Streamdown>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       </main>

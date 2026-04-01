@@ -1,5 +1,6 @@
 import { Id } from "../../convex/_generated/dataModel";
 import { VoteCard } from "./VoteCard";
+import { cn } from "@/lib/utils";
 import { useSessionMutation } from "@/hooks/useSession";
 import { api } from "../../convex/_generated/api";
 import { useCallback } from "react";
@@ -11,9 +12,10 @@ interface CardDeckProps {
   taskId: Id<"tasks">;
   participantId: Id<"participants">;
   onVoteChange?: (value: string | null) => void;
+  compact?: boolean;
 }
 
-export function CardDeck({ cardSet, currentVote, roomStatus, taskId, participantId, onVoteChange }: CardDeckProps) {
+export function CardDeck({ cardSet, currentVote, roomStatus, taskId, participantId, onVoteChange, compact }: CardDeckProps) {
   const castVote = useSessionMutation(api.voting.castVote);
   const removeVote = useSessionMutation(api.voting.removeVote);
 
@@ -31,7 +33,7 @@ export function CardDeck({ cardSet, currentVote, roomStatus, taskId, participant
   );
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+    <div className={cn("flex flex-wrap items-center justify-center transition-all duration-200", compact ? "gap-1.5 md:gap-2" : "gap-2 md:gap-3")}>
       {cardSet.map((value) => (
         <VoteCard
           key={value}
@@ -39,6 +41,7 @@ export function CardDeck({ cardSet, currentVote, roomStatus, taskId, participant
           isSelected={value === currentVote}
           isDisabled={roomStatus !== "voting"}
           onClick={() => handleVote(value)}
+          compact={compact}
         />
       ))}
     </div>
