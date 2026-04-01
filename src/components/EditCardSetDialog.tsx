@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -57,6 +57,48 @@ export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogP
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Drag state
+  const dragIndexRef = useRef<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => {
+    dragIndexRef.current = index;
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverIndex !== index) setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    const fromIndex = dragIndexRef.current;
+    if (fromIndex === null || fromIndex === toIndex) {
+      dragIndexRef.current = null;
+      setDragOverIndex(null);
+      return;
+    }
+    setCards((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+    setPresetType("custom");
+    dragIndexRef.current = null;
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    dragIndexRef.current = null;
+    setDragOverIndex(null);
+  };
+
   const resetState = useCallback(() => {
     setCards(currentCardSet);
     setPresetType(detectPreset(currentCardSet));
@@ -65,6 +107,8 @@ export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogP
     setEditValue("");
     setError("");
     setSaving(false);
+    dragIndexRef.current = null;
+    setDragOverIndex(null);
   }, [currentCardSet]);
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -213,9 +257,19 @@ export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogP
                   {cards.map((card, index) => (
                     <div
                       key={`${card}-${index}`}
-                      className="flex items-center gap-2 px-2 py-1.5 group"
+                      draggable={editingIndex !== index}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, index)}
+                      onDragEnd={handleDragEnd}
+                      className={`flex items-center gap-2 px-2 py-1.5 group transition-colors ${
+                        dragOverIndex === index
+                          ? "bg-accent border-t-2 border-t-primary"
+                          : ""
+                      }`}
                     >
-                      <GripVertical className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+                      <GripVertical className="h-3 w-3 text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
                       {editingIndex === index ? (
                         <div className="flex-1 flex items-center gap-1.5">
                           <Input
