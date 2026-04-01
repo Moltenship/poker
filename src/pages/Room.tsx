@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -72,23 +72,6 @@ export default function Room() {
     setParticipantsOpen(value);
     try { localStorage.setItem("participants_sidebar_open", String(value)); } catch { /* ignore */ }
   };
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isCompact, setIsCompact] = useState(false);
-  const isTransitioning = useRef(false);
-  const handleScroll = useCallback(() => {
-    if (isTransitioning.current) return;
-    const el = scrollRef.current;
-    if (!el) return;
-    setIsCompact(prev => {
-      // Hysteresis: enter compact at 40px, exit only near top (5px)
-      const next = prev ? el.scrollTop > 5 : el.scrollTop > 40;
-      if (prev === next) return prev;
-      // Lock during transition to prevent layout-thrash feedback loop
-      isTransitioning.current = true;
-      setTimeout(() => { isTransitioning.current = false; }, 250);
-      return next;
-    });
-  }, []);
 
   useEffect(() => {
     if (!room?._id || !participantId || !displayName) return;
@@ -271,7 +254,7 @@ export default function Room() {
           </div>
         </header>
 
-        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-auto flex flex-col">
+        <div className="flex-1 overflow-auto flex flex-col">
           {room.status === "lobby" && (
             <div className="flex-1 flex items-center justify-center p-6" data-testid="room-lobby">
               <div className="text-center max-w-xs space-y-4">
@@ -293,10 +276,7 @@ export default function Room() {
           {(room.status === "voting" || room.status === "revealed") && participantId && (
             <>
               {room.status === "voting" && currentTask && (
-                <div className={cn(
-                  "sticky top-0 z-10 w-full flex justify-center bg-background/95 backdrop-blur-sm border-b transition-all duration-200",
-                  isCompact ? "py-2 border-border" : "pt-6 pb-4 border-transparent"
-                )}>
+                <div className="sticky top-0 z-10 w-full flex justify-center bg-background/95 backdrop-blur-sm py-3">
                   <CardDeck
                     cardSet={room.cardSet}
                     currentVote={currentVote}
@@ -304,7 +284,6 @@ export default function Room() {
                     taskId={currentTask._id}
                     participantId={participantId}
                     onVoteChange={setCurrentVote}
-                    compact={isCompact}
                   />
                 </div>
               )}

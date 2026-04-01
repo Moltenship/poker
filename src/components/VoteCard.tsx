@@ -5,10 +5,9 @@ interface VoteCardProps {
   isSelected: boolean;
   isDisabled: boolean;
   onClick: () => void;
-  compact?: boolean;
 }
 
-export function VoteCard({ value, isSelected, isDisabled, onClick, compact }: VoteCardProps) {
+export function VoteCard({ value, isSelected, isDisabled, onClick }: VoteCardProps) {
   return (
     <button
       type="button"
@@ -16,11 +15,9 @@ export function VoteCard({ value, isSelected, isDisabled, onClick, compact }: Vo
       disabled={isDisabled}
       aria-pressed={isSelected}
       className={cn(
-        "relative flex items-center justify-center rounded-md border transition-all duration-200",
-        compact
-          ? "h-12 w-9 md:h-14 md:w-11 text-xs md:text-sm"
-          : "h-20 w-14 md:h-24 md:w-16 text-sm md:text-base",
-        "font-medium",
+        "relative flex items-center justify-center rounded-md border transition-all duration-100",
+        "h-14 w-10 md:h-16 md:w-12",
+        "text-xs font-medium md:text-sm",
         isSelected
           ? "bg-primary text-primary-foreground border-primary -translate-y-1"
           : "bg-muted/50 text-foreground/70 border-border",
