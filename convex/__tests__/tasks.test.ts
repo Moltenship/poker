@@ -43,36 +43,6 @@ describe("tasks", () => {
     expect(taskId2).toBeDefined();
   });
 
-  test("importTasks upserts by jiraKey — no duplicates on reimport", async () => {
-    const t = convexTest(schema, modules);
-    const roomId = await createTestRoom(t);
-
-    await t.mutation(api.tasks.importTasks, {
-      roomId,
-      tasks: [
-        { jiraKey: "PROJ-1", title: "Story 1", description: "Desc 1", jiraUrl: "https://jira.example.com/PROJ-1" },
-        { jiraKey: "PROJ-2", title: "Story 2", description: "Desc 2", jiraUrl: "https://jira.example.com/PROJ-2" },
-        { jiraKey: "PROJ-3", title: "Story 3", description: null, jiraUrl: null },
-      ],
-    });
-
-    let tasks = await t.query(api.tasks.getTasksForRoom, { roomId });
-    expect(tasks).toHaveLength(3);
-
-    await t.mutation(api.tasks.importTasks, {
-      roomId,
-      tasks: [
-        { jiraKey: "PROJ-2", title: "Story 2 UPDATED", description: "Updated", jiraUrl: "https://jira.example.com/PROJ-2" },
-        { jiraKey: "PROJ-4", title: "Story 4", description: null, jiraUrl: null },
-      ],
-    });
-
-    tasks = await t.query(api.tasks.getTasksForRoom, { roomId });
-    expect(tasks).toHaveLength(4);
-    const proj2 = tasks.find((t) => t.jiraKey === "PROJ-2");
-    expect(proj2?.title).toBe("Story 2 UPDATED");
-  });
-
   test("getTasksForRoom returns tasks ordered by order field", async () => {
     const t = convexTest(schema, modules);
     const roomId = await createTestRoom(t);
@@ -142,16 +112,19 @@ describe("tasks", () => {
     const t = convexTest(schema, modules);
     const roomId = await createTestRoom(t);
 
-    await t.mutation(api.tasks.importTasks, {
-      roomId,
-      tasks: [{ jiraKey: "PROJ-1", title: "Jira Story", description: null, jiraUrl: null }],
+    // Insert a non-manual task directly
+    const taskId = await t.run(async (ctx) => {
+      return await ctx.db.insert("tasks", {
+        roomId,
+        jiraKey: "PROJ-1",
+        title: "Jira Story",
+        order: 1,
+        isManual: false,
+      });
     });
 
-    const tasks = await t.query(api.tasks.getTasksForRoom, { roomId });
-    const importedTask = tasks[0];
-
     await expect(
-      t.mutation(api.tasks.deleteTask, { sessionId: "s1", taskId: importedTask._id })
+      t.mutation(api.tasks.deleteTask, { sessionId: "s1", taskId })
     ).rejects.toThrow();
   });
 });

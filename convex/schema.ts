@@ -46,27 +46,13 @@ export default defineSchema({
     roomId: v.id("rooms"),
     jiraKey: v.optional(v.string()),
     title: v.optional(v.string()),
-    /** @deprecated Kept for existing documents only */
-    description: v.optional(v.string()),
-    /** @deprecated Kept for existing documents only */
-    jiraUrl: v.optional(v.string()),
-    /** @deprecated Kept for existing documents only */
-    jiraStatus: v.optional(v.string()),
-    /** @deprecated Kept for existing documents only */
-    jiraType: v.optional(v.string()),
-    /** @deprecated Kept for existing documents only */
-    jiraSprintName: v.optional(v.string()),
     order: v.number(),
-    /** @deprecated Kept for existing documents. Use Jira originalEstimate via API instead. */
-    finalEstimate: v.optional(v.string()),
     hoursEstimate: v.optional(v.number()),
     jiraEstimateSyncStatus: v.optional(v.union(v.literal("syncing"), v.literal("synced"), v.literal("error"))),
     jiraEstimateSyncError: v.optional(v.string()),
     jiraSprintSyncStatus: v.optional(v.union(v.literal("syncing"), v.literal("synced"), v.literal("error"))),
     jiraSprintSyncError: v.optional(v.string()),
     isManual: v.boolean(),
-    /** @deprecated Kept for existing documents only. To be removed by migration. */
-    isQuickVote: v.optional(v.boolean()),
   })
     .index("by_room", ["roomId"])
     .index("by_room_jira_key", ["roomId", "jiraKey"]),
