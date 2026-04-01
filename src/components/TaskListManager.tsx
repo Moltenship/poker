@@ -361,27 +361,20 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                           {displayTitle}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 overflow-hidden">
-                        {task.jiraKey && (
-                          <span className="text-[11px] text-muted-foreground/50 truncate">
-                            {task.jiraKey}
-                            {enriched?.type && <> · {enriched.type}</>}
-                            {enriched?.status && <> · {enriched.status}</>}
-                            {enriched?.sprintName && <> · {enriched.sprintName}</>}
-                          </span>
-                        )}
-                        {enriched?.assignee && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/50 shrink-0">
-                                <User className="size-3" />
-                                <span className="max-w-[80px] truncate">{enriched.assignee}</span>
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>{enriched.assignee}</TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
+                      {task.jiraKey && (
+                        <span className="text-[11px] text-muted-foreground/50 truncate">
+                          {task.jiraKey}
+                          {enriched?.type && <> · {enriched.type}</>}
+                          {enriched?.status && <> · {enriched.status}</>}
+                          {enriched?.sprintName && <> · {enriched.sprintName}</>}
+                        </span>
+                      )}
+                      {enriched?.assignee && (
+                        <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/50 truncate">
+                          <User className="size-3 shrink-0" />
+                          <span className="truncate">{enriched.assignee}</span>
+                        </span>
+                      )}
                     </div>
                     {estimateText && (
                       <Badge variant="secondary" className="shrink-0 font-mono text-[10px] h-4 px-1 rounded">
