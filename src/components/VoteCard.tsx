@@ -16,8 +16,8 @@ export function VoteCard({ value, isSelected, isDisabled, onClick }: VoteCardPro
       aria-pressed={isSelected}
       className={cn(
         "relative flex items-center justify-center rounded-md border transition-all duration-100",
-        "h-20 w-14 md:h-24 md:w-16",
-        "text-sm font-medium md:text-base",
+        "h-14 w-10 md:h-16 md:w-12",
+        "text-xs font-medium md:text-sm",
         isSelected
           ? "bg-primary text-primary-foreground border-primary -translate-y-1"
           : "bg-muted/50 text-foreground/70 border-border",

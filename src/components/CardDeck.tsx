@@ -31,7 +31,7 @@ export function CardDeck({ cardSet, currentVote, roomStatus, taskId, participant
   );
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+    <div className="flex flex-wrap items-center justify-center gap-1.5 md:gap-2">
       {cardSet.map((value) => (
         <VoteCard
           key={value}
