@@ -15,6 +15,7 @@ import { ResultsPanel } from "@/components/ResultsPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft, Users, Link as LinkIcon, ChevronDown, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { EditCardSetDialog } from "@/components/EditCardSetDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Streamdown } from "streamdown";
@@ -217,6 +218,7 @@ export default function Room() {
               {room.jiraProjectKey}
             </code>
           )}
+          <EditCardSetDialog roomId={room._id} currentCardSet={room.cardSet} />
           <div className="ml-auto flex items-center gap-1.5">
             <code className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
               {room.roomCode}

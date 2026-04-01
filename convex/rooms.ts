@@ -80,6 +80,21 @@ export const setTypeFilter = mutation({
   },
 });
 
+export const updateCardSet = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    cardSet: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error("Room not found");
+    if (args.cardSet.length === 0) {
+      throw new Error("Card set must have at least one card");
+    }
+    await ctx.db.patch(args.roomId, { cardSet: args.cardSet });
+  },
+});
+
 export const listMyRooms = sessionQuery({
   args: {},
   handler: async (ctx) => {
