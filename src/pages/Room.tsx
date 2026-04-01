@@ -304,7 +304,7 @@ export default function Room() {
                   />
                 )}
                 {currentTask && !currentTask.isQuickVote && (
-                  <div className="w-full max-w-xl">
+                  <div className="w-full max-w-3xl">
                     <h2 className="text-lg font-semibold">
                       {currentEnriched?.url ? (
                         <a
