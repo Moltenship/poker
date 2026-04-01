@@ -126,6 +126,9 @@ function getJiraEnv() {
   };
 }
 
+/** Sentinel value representing backlog (no sprint) in sprint filter arrays. */
+export const BACKLOG_FILTER_ID = 0;
+
 export type JiraSprint = {
   id: number;
   name: string;
@@ -239,10 +242,22 @@ export const fetchJiraBacklog = action({
   handler: async (_ctx, args): Promise<JiraIssue[]> => {
     const { authHeader, baseUrl } = getJiraEnv();
 
-    const sprintClause =
-      args.sprintIds && args.sprintIds.length > 0
-        ? `sprint in (${args.sprintIds.join(", ")})`
-        : "sprint is EMPTY";
+    const realSprintIds = (args.sprintIds ?? []).filter(
+      (id) => id !== BACKLOG_FILTER_ID
+    );
+    const includeBacklog =
+      !args.sprintIds ||
+      args.sprintIds.length === 0 ||
+      args.sprintIds.includes(BACKLOG_FILTER_ID);
+
+    let sprintClause: string;
+    if (realSprintIds.length > 0 && includeBacklog) {
+      sprintClause = `(sprint in (${realSprintIds.join(", ")}) OR sprint is EMPTY)`;
+    } else if (realSprintIds.length > 0) {
+      sprintClause = `sprint in (${realSprintIds.join(", ")})`;
+    } else {
+      sprintClause = "sprint is EMPTY";
+    }
 
     const effectiveJql =
       args.jql ||

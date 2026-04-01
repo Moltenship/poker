@@ -11,7 +11,7 @@ import { useSessionMutation } from "@/hooks/useSession";
 import { useJiraDetails } from "@/hooks/useJiraDetails";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import type { JiraSprint } from "../../convex/jira";
+import { BACKLOG_FILTER_ID, type JiraSprint } from "../../convex/jira";
 import { cn } from "@/lib/utils";
 
 export type Task = {
@@ -40,7 +40,9 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
 
   // Jira mode state
   const [jiraSprints, setJiraSprints] = useState<JiraSprint[]>([]);
-  const [localSprintFilter, setLocalSprintFilter] = useState<number[]>(sprintFilter);
+  const [localSprintFilter, setLocalSprintFilter] = useState<number[]>(
+    sprintFilter.length === 0 ? [BACKLOG_FILTER_ID] : sprintFilter
+  );
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const hasSyncedRef = useRef(false);
@@ -62,7 +64,7 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
 
   // Keep local filters in sync when DB value changes (e.g. from another session)
   useEffect(() => {
-    setLocalSprintFilter(sprintFilter);
+    setLocalSprintFilter(sprintFilter.length === 0 ? [BACKLOG_FILTER_ID] : sprintFilter);
   }, [JSON.stringify(sprintFilter)]);
 
   useEffect(() => {
@@ -228,37 +230,44 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                             onClick={() => updateSprintFilter([])}
                           >
-                            Clear (backlog)
+                            Clear
                           </button>
                         )}
                       </div>
-                      {jiraSprints.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {jiraSprints.map(sprint => (
-                            <button
-                              key={sprint.id}
-                              onClick={() => toggleSprint(sprint.id)}
-                              className={cn(
-                                "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
-                                localSprintFilter.includes(sprint.id)
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-                              )}
-                            >
-                              {sprint.state === "active" && (
-                                <span className="size-1.5 rounded-full bg-green-500 shrink-0" />
-                              )}
-                              {sprint.name}
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          onClick={() => toggleSprint(BACKLOG_FILTER_ID)}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
+                            localSprintFilter.includes(BACKLOG_FILTER_ID)
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                          )}
+                        >
+                          Backlog
+                        </button>
+                        {jiraSprints.map(sprint => (
+                          <button
+                            key={sprint.id}
+                            onClick={() => toggleSprint(sprint.id)}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
+                              localSprintFilter.includes(sprint.id)
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                            )}
+                          >
+                            {sprint.state === "active" && (
+                              <span className="size-1.5 rounded-full bg-green-500 shrink-0" />
+                            )}
+                            {sprint.name}
+                          </button>
+                        ))}
+                      </div>
+                      {jiraSprints.length === 0 && (
                         <p className="text-xs text-muted-foreground">
                           {syncing ? "Loading sprints…" : "No sprints found"}
                         </p>
-                      )}
-                      {localSprintFilter.length === 0 && jiraSprints.length > 0 && (
-                        <p className="text-xs text-muted-foreground">Showing backlog items</p>
                       )}
                       {syncError && (
                         <p className="text-xs text-destructive truncate">{syncError}</p>

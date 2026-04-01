@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useAction, useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
-import type { JiraIssue, JiraSprint } from "../../convex/jira"
+import { BACKLOG_FILTER_ID, type JiraIssue, type JiraSprint } from "../../convex/jira"
 import {
   Dialog,
   DialogContent,
@@ -45,7 +45,7 @@ export function JiraImportModal({ roomId, projectKey, isOpen, onClose, sprintFil
 
   useEffect(() => {
     if (!isOpen) return
-    const ids = sprintFilter ?? []
+    const ids = sprintFilter.length === 0 ? [BACKLOG_FILTER_ID] : sprintFilter
     setStep("loading")
     setSelectedSprintIds(ids)
     setIssues([])
@@ -158,11 +158,22 @@ export function JiraImportModal({ roomId, projectKey, isOpen, onClose, sprintFil
                         className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                         onClick={() => updateSprintFilter([])}
                       >
-                        Clear (backlog)
+                        Clear
                       </button>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => toggleSprint(BACKLOG_FILTER_ID)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
+                        selectedSprintIds.includes(BACKLOG_FILTER_ID)
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                      )}
+                    >
+                      Backlog
+                    </button>
                     {sprints.map(sprint => (
                       <button
                         key={sprint.id}
@@ -181,9 +192,6 @@ export function JiraImportModal({ roomId, projectKey, isOpen, onClose, sprintFil
                       </button>
                     ))}
                   </div>
-                  {selectedSprintIds.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Showing backlog items</p>
-                  )}
                 </div>
                 <Separator />
               </>
