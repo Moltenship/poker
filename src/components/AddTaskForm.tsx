@@ -4,7 +4,6 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 
 interface AddTaskFormProps {
@@ -14,7 +13,6 @@ interface AddTaskFormProps {
 
 export function AddTaskForm({ roomId, onSuccess }: AddTaskFormProps) {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -36,10 +34,8 @@ export function AddTaskForm({ roomId, onSuccess }: AddTaskFormProps) {
       await addTask({
         roomId,
         title: trimmedTitle,
-        description: description.trim() || undefined,
       });
       setTitle("");
-      setDescription("");
       onSuccess?.();
     } catch (err) {
       setError("Failed to add task");
@@ -64,16 +60,6 @@ export function AddTaskForm({ roomId, onSuccess }: AddTaskFormProps) {
         aria-invalid={error ? true : undefined}
       />
       {error && <p className="text-[12px] text-destructive">{error}</p>}
-
-      <Textarea
-        id="task-description"
-        rows={2}
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Description (optional)"
-        disabled={isPending}
-        className="text-[13px] min-h-0 resize-none"
-      />
 
       <Button type="submit" size="sm" disabled={isPending} className="w-full text-[13px]">
         {isPending && <Loader2 className="animate-spin" data-icon="inline-start" />}

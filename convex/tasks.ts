@@ -1,62 +1,11 @@
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
-import { query, mutation, internalMutation } from "./_generated/server";
-import type { MutationCtx } from "./_generated/server";
+import { query, internalMutation } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
-
-async function upsertImportedTasks(
-  ctx: MutationCtx,
-  args: {
-    roomId: Id<"rooms">;
-    tasks: Array<{
-      jiraKey: string;
-      title: string;
-      description: string | null;
-      jiraUrl: string | null;
-    }>;
-  }
-) {
-  const existingTasks = await ctx.db
-    .query("tasks")
-    .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
-    .collect();
-  let maxOrder =
-    existingTasks.length > 0 ? Math.max(...existingTasks.map((t) => t.order)) : 0;
-
-  for (const task of args.tasks) {
-    const existing = await ctx.db
-      .query("tasks")
-      .withIndex("by_room_jira_key", (q) =>
-        q.eq("roomId", args.roomId).eq("jiraKey", task.jiraKey)
-      )
-      .unique();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        title: task.title,
-        description: task.description ?? undefined,
-        jiraUrl: task.jiraUrl ?? undefined,
-      });
-    } else {
-      maxOrder += 1;
-      await ctx.db.insert("tasks", {
-        roomId: args.roomId,
-        jiraKey: task.jiraKey,
-        title: task.title,
-        description: task.description ?? undefined,
-        jiraUrl: task.jiraUrl ?? undefined,
-        order: maxOrder,
-        isManual: false,
-      });
-    }
-  }
-}
 
 export const addTask = sessionMutation({
   args: {
     roomId: v.id("rooms"),
     title: v.string(),
-    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -68,44 +17,9 @@ export const addTask = sessionMutation({
     return await ctx.db.insert("tasks", {
       roomId: args.roomId,
       title: args.title,
-      description: args.description,
       order: maxOrder + 1,
       isManual: true,
     });
-  },
-});
-
-export const importTasks = mutation({
-  args: {
-    roomId: v.id("rooms"),
-    tasks: v.array(
-      v.object({
-        jiraKey: v.string(),
-        title: v.string(),
-        description: v.union(v.string(), v.null()),
-        jiraUrl: v.union(v.string(), v.null()),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    await upsertImportedTasks(ctx, args);
-  },
-});
-
-export const importTasksInternal = internalMutation({
-  args: {
-    roomId: v.id("rooms"),
-    tasks: v.array(
-      v.object({
-        jiraKey: v.string(),
-        title: v.string(),
-        description: v.union(v.string(), v.null()),
-        jiraUrl: v.union(v.string(), v.null()),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    await upsertImportedTasks(ctx, args);
   },
 });
 
@@ -242,16 +156,26 @@ export const deleteTask = sessionMutation({
   },
 });
 
-/** One-shot migration: strip deprecated `isQuickVote` field from all tasks.
- *  Run from the Convex dashboard, then remove this function + the schema field. */
-export const migrateRemoveIsQuickVote = internalMutation({
+const DEPRECATED_FIELDS = [
+  "description", "jiraUrl", "jiraStatus", "jiraType",
+  "jiraSprintName", "finalEstimate", "isQuickVote",
+] as const;
+
+/** One-shot migration: strip all deprecated fields from task documents.
+ *  Run from the Convex dashboard until it returns { patched: 0 }, then remove. */
+export const migrateStripDeprecatedFields = internalMutation({
   args: {},
   handler: async (ctx) => {
     const tasks = await ctx.db.query("tasks").take(500);
     let patched = 0;
     for (const task of tasks) {
-      if (task.isQuickVote !== undefined) {
-        await ctx.db.patch(task._id, { isQuickVote: undefined });
+      const raw = task as Record<string, unknown>;
+      const removals: Record<string, undefined> = {};
+      for (const field of DEPRECATED_FIELDS) {
+        if (raw[field] !== undefined) removals[field] = undefined;
+      }
+      if (Object.keys(removals).length > 0) {
+        await ctx.db.patch(task._id, removals as never);
         patched++;
       }
     }
