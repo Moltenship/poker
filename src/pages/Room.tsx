@@ -311,13 +311,13 @@ export default function Room() {
                           href={currentEnriched.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 hover:underline underline-offset-2"
+                          className="hover:underline underline-offset-2"
                         >
                           {currentTask.jiraKey && (
-                            <span className="text-muted-foreground font-normal">{currentTask.jiraKey}: </span>
+                            <span className="text-muted-foreground font-normal whitespace-nowrap">{currentTask.jiraKey}:&nbsp;</span>
                           )}
                           {currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey}
-                          <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
+                          <ExternalLink className="inline size-3.5 ml-1 align-[-1px] text-muted-foreground" />
                         </a>
                       ) : (currentEnriched?.title ?? currentTask.title ?? currentTask.jiraKey ?? "Untitled")}
                     </h2>
