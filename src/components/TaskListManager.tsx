@@ -80,10 +80,14 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
         jiraProjectKey: projectKey,
         sprintIds: ids.length > 0 ? ids : undefined,
       });
+      // Include all existing Jira task keys in fetchedKeys so that tasks
+      // from a previously selected sprint are removed when the filter changes.
+      const existingJiraKeys = tasks.filter(t => t.jiraKey).map(t => t.jiraKey!);
+      const fetchedKeys = [...new Set([...issues.map(i => i.key), ...existingJiraKeys])];
       await importSelectedTasks({
         roomId,
         keys: issues.map(i => i.key),
-        fetchedKeys: issues.map(i => i.key),
+        fetchedKeys,
       });
     } catch (err: unknown) {
       setSyncError(err instanceof Error ? err.message : "Sync failed");
