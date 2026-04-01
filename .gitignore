@@ -5,3 +5,9 @@ dist
 .DS_Store
 *.log
 .env.*
+
+# AI tool dot folders (keep only .agents and .claude)
+.*
+!.agents
+!.claude
+!.gitignore
