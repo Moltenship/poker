@@ -6,6 +6,7 @@ const jiraGlobals = globalThis as typeof globalThis & {
   fetch: (input: string, init?: Record<string, unknown>) => Promise<{
     ok: boolean;
     status: number;
+    url: string;
     json: () => Promise<unknown>;
     text: () => Promise<string>;
   }>;
@@ -24,6 +25,12 @@ interface JiraIssueFields {
     type?: { name?: string; inward?: string; outward?: string };
     inwardIssue?: { key?: string; fields?: { status?: { name?: string } } };
     outwardIssue?: { key?: string; fields?: { status?: { name?: string } } };
+  }>;
+  attachment?: Array<{
+    id: string;
+    filename: string;
+    mimeType: string;
+    content: string;
   }>;
 }
 
@@ -53,47 +60,100 @@ function applyMarks(text: string, marks: AdfMark[]): string {
   return out;
 }
 
-function convertInline(nodes: AdfNode[]): string {
+/** Collect all media node IDs from ADF in document order. */
+function collectMediaIds(node: AdfNode): string[] {
+  if (node.type === "media" && node.attrs?.id) {
+    return [String(node.attrs.id)];
+  }
+  return (node.content ?? []).flatMap(collectMediaIds);
+}
+
+/**
+ * Resolve ADF media UUIDs → publicly accessible temporary URLs.
+ *
+ * Jira stores media with internal UUIDs, while attachments have numeric IDs.
+ * There is no direct mapping via REST API, so we match by position:
+ * media nodes in document order ↔ image attachments sorted by ID (creation order).
+ *
+ * For each attachment we GET the `content` URL with auth — Jira Cloud responds
+ * with a redirect to a temporary Atlassian Media CDN URL that embeds a short-lived
+ * token, making it publicly accessible without extra auth.
+ */
+async function resolveMediaUrls(
+  adf: unknown,
+  attachments: JiraIssueFields["attachment"],
+  authHeader: string,
+): Promise<Map<string, string>> {
+  const mediaUrlMap = new Map<string, string>();
+  if (!adf || typeof adf !== "object" || !attachments?.length) return mediaUrlMap;
+
+  const mediaIds = collectMediaIds(adf as AdfNode);
+  if (!mediaIds.length) return mediaUrlMap;
+
+  const imageAttachments = attachments
+    .filter((a) => a.mimeType.startsWith("image/"))
+    .sort((a, b) => Number(a.id) - Number(b.id));
+
+  for (let i = 0; i < Math.min(mediaIds.length, imageAttachments.length); i++) {
+    try {
+      // Follow the redirect to obtain the temporary public CDN URL
+      const res = await jiraGlobals.fetch(imageAttachments[i].content, {
+        method: "HEAD",
+        headers: { Authorization: authHeader },
+      });
+      // response.url is the final URL after redirects (standard Fetch API)
+      if (res.url && res.url !== imageAttachments[i].content) {
+        mediaUrlMap.set(mediaIds[i], res.url);
+      }
+    } catch {
+      // Skip unresolvable attachments — the converter will show a placeholder
+    }
+  }
+
+  return mediaUrlMap;
+}
+
+function convertInline(nodes: AdfNode[], mediaUrlMap: Map<string, string>): string {
   return nodes.map(n => {
     if (n.type === "text") return applyMarks(n.text ?? "", n.marks ?? []);
     if (n.type === "hardBreak") return "  \n";
-    return convertAdfNode(n, 0);
+    return convertAdfNode(n, 0, mediaUrlMap);
   }).join("");
 }
 
-function convertListItem(item: AdfNode, depth: number): string {
+function convertListItem(item: AdfNode, depth: number, mediaUrlMap: Map<string, string>): string {
   const parts: string[] = [];
   for (const child of item.content ?? []) {
-    if (child.type === "paragraph") parts.push(convertInline(child.content ?? []));
+    if (child.type === "paragraph") parts.push(convertInline(child.content ?? [], mediaUrlMap));
     else if (child.type === "bulletList" || child.type === "orderedList") {
-      parts.push("\n" + convertAdfNode(child, depth + 1));
-    } else parts.push(convertAdfNode(child, depth));
+      parts.push("\n" + convertAdfNode(child, depth + 1, mediaUrlMap));
+    } else parts.push(convertAdfNode(child, depth, mediaUrlMap));
   }
   return parts.join("");
 }
 
-function convertAdfNode(node: AdfNode, depth: number): string {
+function convertAdfNode(node: AdfNode, depth: number, mediaUrlMap: Map<string, string>): string {
   const indent = "  ".repeat(depth);
   switch (node.type) {
     case "doc":
-      return (node.content ?? []).map(n => convertAdfNode(n, 0)).join("\n\n");
+      return (node.content ?? []).map(n => convertAdfNode(n, 0, mediaUrlMap)).join("\n\n");
     case "paragraph":
-      return convertInline(node.content ?? []);
+      return convertInline(node.content ?? [], mediaUrlMap);
     case "heading": {
       const level = Math.min(Number(node.attrs?.level ?? 1), 6);
-      return `${"#".repeat(level)} ${convertInline(node.content ?? [])}`;
+      return `${"#".repeat(level)} ${convertInline(node.content ?? [], mediaUrlMap)}`;
     }
     case "bulletList":
       return (node.content ?? []).map(item =>
-        `${indent}- ${convertListItem(item, depth)}`
+        `${indent}- ${convertListItem(item, depth, mediaUrlMap)}`
       ).join("\n");
     case "orderedList":
       return (node.content ?? []).map((item, i) =>
-        `${indent}${i + 1}. ${convertListItem(item, depth)}`
+        `${indent}${i + 1}. ${convertListItem(item, depth, mediaUrlMap)}`
       ).join("\n");
     case "blockquote":
       return (node.content ?? []).map(n =>
-        convertAdfNode(n, 0).split("\n").map(l => `> ${l}`).join("\n")
+        convertAdfNode(n, 0, mediaUrlMap).split("\n").map(l => `> ${l}`).join("\n")
       ).join("\n>\n");
     case "codeBlock": {
       const lang = String(node.attrs?.language ?? "");
@@ -109,16 +169,37 @@ function convertAdfNode(node: AdfNode, depth: number): string {
     case "mention":
       return String(node.attrs?.text ?? "");
     case "inlineLink":
-      return `[${convertInline(node.content ?? [])}](${String(node.attrs?.href ?? "")})`;
+      return `[${convertInline(node.content ?? [], mediaUrlMap)}](${String(node.attrs?.href ?? "")})`;
+    case "inlineCard":
+    case "blockCard": {
+      const url = String(node.attrs?.url ?? "");
+      // Try to extract a readable label from the URL (e.g. Jira issue key from /browse/BRV-1568)
+      const browseMatch = url.match(/\/browse\/([A-Z][A-Z0-9]+-\d+)/);
+      const label = browseMatch ? browseMatch[1] : url;
+      return url ? `[${label}](${url.split("#")[0]})` : "";
+    }
+    case "mediaSingle":
+      return (node.content ?? []).map(n => convertAdfNode(n, 0, mediaUrlMap)).join("");
+    case "media": {
+      const mediaId = String(node.attrs?.id ?? "");
+      const resolvedUrl = mediaUrlMap.get(mediaId);
+      if (resolvedUrl) {
+        const alt = String(node.attrs?.alt || "image");
+        return `![${alt}](${resolvedUrl})`;
+      }
+      // Fallback: placeholder when URL couldn't be resolved
+      const altText = String(node.attrs?.alt || "image attachment");
+      return `*[${altText}]*`;
+    }
     default:
-      if (node.content) return convertInline(node.content);
+      if (node.content) return convertInline(node.content, mediaUrlMap);
       return "";
   }
 }
 
-function adfToMarkdown(adf: unknown): string {
+function adfToMarkdown(adf: unknown, mediaUrlMap?: Map<string, string>): string {
   if (!adf || typeof adf !== "object") return "";
-  return convertAdfNode(adf as AdfNode, 0).trim();
+  return convertAdfNode(adf as AdfNode, 0, mediaUrlMap ?? new Map()).trim();
 }
 
 function getJiraEnv() {
@@ -237,7 +318,7 @@ export const fetchTaskDetails = action({
         body: JSON.stringify({
           jql,
           maxResults: 50,
-          fields: ["summary", "status", "issuetype", "description", "customfield_10020", "assignee", "issuelinks"],
+          fields: ["summary", "status", "issuetype", "description", "customfield_10020", "assignee", "issuelinks", "attachment"],
         }),
       });
       if (!res.ok) continue;
@@ -251,9 +332,17 @@ export const fetchTaskDetails = action({
         }
         const assignee = issue.fields.assignee?.displayName ?? undefined;
         const isBlocked = checkIsBlocked(issue.fields.issuelinks);
+
+        // Resolve embedded image URLs from attachments
+        const mediaUrlMap = await resolveMediaUrls(
+          issue.fields.description,
+          issue.fields.attachment,
+          authHeader,
+        );
+
         result[issue.key] = {
           title: String(issue.fields.summary || issue.key),
-          description: adfToMarkdown(issue.fields.description),
+          description: adfToMarkdown(issue.fields.description, mediaUrlMap),
           status: String(issue.fields.status?.name ?? ""),
           type: String(issue.fields.issuetype?.name ?? ""),
           sprintName,
