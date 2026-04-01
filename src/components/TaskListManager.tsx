@@ -61,7 +61,7 @@ export function TaskListManager({ roomId, roomCode, tasks, jiraEnabled, projectK
 
   // Fetch Jira details for all tasks with jiraKey
   const jiraKeys = tasks.filter(t => t.jiraKey).map(t => t.jiraKey!);
-  const { details: jiraDetails } = useJiraDetails(jiraKeys);
+  const { details: jiraDetails, loading: jiraLoading } = useJiraDetails(jiraKeys);
 
   // Keep local filters in sync when DB value changes (e.g. from another session)
   useEffect(() => {
@@ -331,6 +331,7 @@ export function TaskListManager({ roomId, roomCode, tasks, jiraEnabled, projectK
               const realIndex = tasks.indexOf(task);
               const estimateText = task.hoursEstimate ? `${task.hoursEstimate}h` : undefined;
               const enriched = task.jiraKey ? jiraDetails[task.jiraKey] : undefined;
+              const isLoadingRow = jiraLoading && !!task.jiraKey && !enriched;
               const displayTitle = enriched?.title ?? task.title ?? task.jiraKey ?? "Untitled";
 
               const taskPath = `/room/${roomCode}/task/${task.jiraKey ?? task._id}`;
@@ -361,35 +362,51 @@ export function TaskListManager({ roomId, roomCode, tasks, jiraEnabled, projectK
                         "py-2 pr-5 overflow-hidden",
                         enriched?.isBlocked ? "pl-2.5 ml-[3px]" : "px-4"
                       )}>
-                      <div className="flex items-start justify-between gap-2 overflow-hidden">
-                        <div className="flex flex-col min-w-0 overflow-hidden">
-                          <p className={cn(
-                            "text-[13px] leading-snug truncate",
-                            isActive ? "text-foreground font-medium" : "text-foreground/70"
-                          )}>
-                            {displayTitle}
+                      {isLoadingRow ? (
+                        /* Blurred placeholder row while Jira details load */
+                        <div className="flex flex-col min-w-0 overflow-hidden select-none" aria-hidden="true">
+                          <p className="text-[13px] leading-snug truncate blur-[4px] text-foreground/70">
+                            Lorem ipsum dolor sit amet
                           </p>
-                          {task.jiraKey && (
-                            <span className="text-[11px] text-muted-foreground/50 truncate">
-                              {task.jiraKey}
-                              {enriched?.type && <> · {enriched.type}</>}
-                              {enriched?.status && <> · {enriched.status}</>}
-                              {enriched?.sprintName && <> · {enriched.sprintName}</>}
-                            </span>
-                          )}
-                          {enriched?.assignee && (
-                            <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/50 truncate">
-                              <User className="size-3 shrink-0" />
-                              <span className="truncate">{enriched.assignee}</span>
-                            </span>
+                          <span className="text-[11px] text-muted-foreground/50 truncate blur-[4px]">
+                            {task.jiraKey} · Story · In Progress · Sprint 1
+                          </span>
+                          <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/50 truncate blur-[4px]">
+                            <User className="size-3 shrink-0" />
+                            <span className="truncate">Lorem Ipsum</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-start justify-between gap-2 overflow-hidden">
+                          <div className="flex flex-col min-w-0 overflow-hidden">
+                            <p className={cn(
+                              "text-[13px] leading-snug truncate",
+                              isActive ? "text-foreground font-medium" : "text-foreground/70"
+                            )}>
+                              {displayTitle}
+                            </p>
+                            {task.jiraKey && (
+                              <span className="text-[11px] text-muted-foreground/50 truncate">
+                                {task.jiraKey}
+                                {enriched?.type && <> · {enriched.type}</>}
+                                {enriched?.status && <> · {enriched.status}</>}
+                                {enriched?.sprintName && <> · {enriched.sprintName}</>}
+                              </span>
+                            )}
+                            {enriched?.assignee && (
+                              <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/50 truncate">
+                                <User className="size-3 shrink-0" />
+                                <span className="truncate">{enriched.assignee}</span>
+                              </span>
+                            )}
+                          </div>
+                          {estimateText && (
+                            <Badge variant="secondary" className="shrink-0 font-mono text-[10px] h-4 px-1 rounded">
+                              {estimateText}
+                            </Badge>
                           )}
                         </div>
-                        {estimateText && (
-                          <Badge variant="secondary" className="shrink-0 font-mono text-[10px] h-4 px-1 rounded">
-                            {estimateText}
-                          </Badge>
-                        )}
-                      </div>
+                      )}
                       </div>
 
                       {task.isManual && (
