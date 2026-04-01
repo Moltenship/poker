@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { X, Trash2, RotateCw, SlidersHorizontal } from "lucide-react";
+import { X, Trash2, RotateCw, SlidersHorizontal, Ban, User } from "lucide-react";
 import { JiraImportModal } from "./JiraImportModal";
 import { useSessionMutation } from "@/hooks/useSession";
 import { useJiraDetails } from "@/hooks/useJiraDetails";
@@ -345,20 +345,43 @@ export function TaskListManager({ roomId, tasks, currentTaskIndex, jiraEnabled, 
                 >
                   <div className="flex items-start justify-between gap-2 pr-5 overflow-hidden">
                     <div className="flex flex-col min-w-0 overflow-hidden">
-                      <p className={cn(
-                        "text-[13px] leading-snug truncate",
-                        isCurrent ? "text-foreground font-medium" : "text-foreground/70"
-                      )}>
-                        {displayTitle}
-                      </p>
-                      {task.jiraKey && (
-                        <span className="text-[11px] text-muted-foreground/50 truncate">
-                          {task.jiraKey}
-                          {enriched?.type && <> · {enriched.type}</>}
-                          {enriched?.status && <> · {enriched.status}</>}
-                          {enriched?.sprintName && <> · {enriched.sprintName}</>}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {enriched?.isBlocked && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Ban className="size-3.5 shrink-0 text-destructive" />
+                            </TooltipTrigger>
+                            <TooltipContent>Blocked</TooltipContent>
+                          </Tooltip>
+                        )}
+                        <p className={cn(
+                          "text-[13px] leading-snug truncate",
+                          isCurrent ? "text-foreground font-medium" : "text-foreground/70"
+                        )}>
+                          {displayTitle}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 overflow-hidden">
+                        {task.jiraKey && (
+                          <span className="text-[11px] text-muted-foreground/50 truncate">
+                            {task.jiraKey}
+                            {enriched?.type && <> · {enriched.type}</>}
+                            {enriched?.status && <> · {enriched.status}</>}
+                            {enriched?.sprintName && <> · {enriched.sprintName}</>}
+                          </span>
+                        )}
+                        {enriched?.assignee && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/50 shrink-0">
+                                <User className="size-3" />
+                                <span className="max-w-[80px] truncate">{enriched.assignee}</span>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>{enriched.assignee}</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
                     </div>
                     {estimateText && (
                       <Badge variant="secondary" className="shrink-0 font-mono text-[10px] h-4 px-1 rounded">
