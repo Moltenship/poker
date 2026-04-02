@@ -156,6 +156,7 @@ export const getVoteStatus = query({
 
     return participants.map((participant) => ({
       hasVoted: votedParticipantIds.has(participant._id.toString()),
+      isHost: participant.isHost ?? false,
       participantId: participant._id,
     }));
   },
@@ -174,19 +175,30 @@ export const getVoteResults = query({
       return null;
     }
 
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const hostIds = new Set(
+      participants.filter((p) => p.isHost).map((p) => p._id.toString()),
+    );
+
     const votes = await ctx.db
       .query("votes")
       .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
       .collect();
+
+    // Filter out votes from hosts for calculation
+    const voterVotes = votes.filter((v) => !hostIds.has(v.participantId.toString()));
     const { average, numericCount, totalVotes } = calculateAverage(
-      votes.map((vote) => vote.value ?? ""),
+      voterVotes.map((vote) => vote.value ?? ""),
     );
 
     return {
       average,
       numericCount,
       totalVotes,
-      votes: votes.map((vote) => ({
+      votes: voterVotes.map((vote) => ({
         participantId: vote.participantId,
         value: vote.value,
       })),
@@ -200,6 +212,19 @@ export const revealVotes = sessionMutation({
     const room = await ctx.db.get(args.roomId);
     if (!room) {
       throw new Error("Room not found");
+    }
+
+    // Check host gating: if any host exists, only hosts can reveal
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const hasAnyHost = participants.some((p) => p.isHost);
+    if (hasAnyHost) {
+      const caller = participants.find((p) => p.sessionId === ctx.sessionId);
+      if (!caller?.isHost) {
+        throw new Error("Only hosts can perform this action");
+      }
     }
 
     await ctx.db.patch(args.roomId, { status: "revealed" });
@@ -219,6 +244,19 @@ export const resetVoting = sessionMutation({
     const room = await ctx.db.get(args.roomId);
     if (!room) {
       throw new Error("Room not found");
+    }
+
+    // Check host gating: if any host exists, only hosts can reset
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const hasAnyHost = participants.some((p) => p.isHost);
+    if (hasAnyHost) {
+      const caller = participants.find((p) => p.sessionId === ctx.sessionId);
+      if (!caller?.isHost) {
+        throw new Error("Only hosts can perform this action");
+      }
     }
 
     const tasks = await getSortedTasksForRoom(ctx, args.roomId);
@@ -243,6 +281,19 @@ export const advanceToNextTask = sessionMutation({
     const room = await ctx.db.get(args.roomId);
     if (!room) {
       throw new Error("Room not found");
+    }
+
+    // Check host gating: if any host exists, only hosts can advance
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const hasAnyHost = participants.some((p) => p.isHost);
+    if (hasAnyHost) {
+      const caller = participants.find((p) => p.sessionId === ctx.sessionId);
+      if (!caller?.isHost) {
+        throw new Error("Only hosts can perform this action");
+      }
     }
 
     const tasks = await getSortedTasksForRoom(ctx, args.roomId);

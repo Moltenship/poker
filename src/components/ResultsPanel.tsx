@@ -20,6 +20,8 @@ export interface ResultsPanelProps {
   cardSet: string[];
   participantCount: number;
   votedCount: number;
+  isHost?: boolean;
+  hasAnyHost?: boolean;
   projectKey?: string;
   currentSprintName?: string;
 }
@@ -31,6 +33,8 @@ export function ResultsPanel({
   cardSet,
   participantCount,
   votedCount,
+  isHost = false,
+  hasAnyHost = false,
   projectKey,
   currentSprintName,
 }: ResultsPanelProps) {
@@ -51,17 +55,23 @@ export function ResultsPanel({
   }
 
   const progressPct = participantCount > 0 ? (votedCount / participantCount) * 100 : 0;
+  const canControl = isHost || !hasAnyHost;
 
   if (roomStatus === "voting") {
     return (
-      <Card className="w-full max-w-sm">
-        <CardContent className="flex flex-col items-center gap-4 py-6">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold">{votedCount}</span>
-            <span className="text-muted-foreground text-sm">/ {participantCount} voted</span>
+      <Card className="w-full max-w-md border-none bg-transparent">
+        <CardContent className="flex items-center gap-3 px-4 py-1.5">
+          <div className="flex shrink-0 items-baseline gap-1">
+            <span className="text-base font-bold">{votedCount}</span>
+            <span className="text-muted-foreground text-xs">/ {participantCount}</span>
           </div>
-          <Progress value={progressPct} className="w-full" />
-          <Button size="sm" className="w-full" onClick={() => revealVotes({ roomId })}>
+          <Progress value={progressPct} className="min-w-0 flex-1" />
+          <Button
+            size="sm"
+            className="shrink-0"
+            disabled={!canControl}
+            onClick={() => revealVotes({ roomId })}
+          >
             Reveal Votes
           </Button>
         </CardContent>
@@ -150,16 +160,19 @@ export function ResultsPanel({
           </div>
         </div>
 
-        <Separator />
-
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => resetVoting({ roomId })}>
-            Re-vote
-          </Button>
-          <Button size="sm" onClick={() => advanceToNextTask({ roomId })}>
-            Next Task
-          </Button>
-        </div>
+        {canControl && (
+          <>
+            <Separator />
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => resetVoting({ roomId })}>
+                Re-vote
+              </Button>
+              <Button size="sm" onClick={() => advanceToNextTask({ roomId })}>
+                Next Task
+              </Button>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );

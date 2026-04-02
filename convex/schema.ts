@@ -9,6 +9,7 @@ export default defineSchema({
     isConnected: v.boolean(),
     lastHeartbeatAt: v.optional(v.number()),
     joinedAt: v.number(),
+    isHost: v.optional(v.boolean()),
   })
     .index("by_room", ["roomId"])
     .index("by_room_session", ["roomId", "sessionId"])

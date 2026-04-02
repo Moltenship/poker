@@ -2,6 +2,7 @@ import { useQuery } from "convex/react";
 import {
   ArrowLeft,
   Check,
+  Crown,
   ExternalLink,
   Link as LinkIcon,
   PanelRightClose,
@@ -31,6 +32,7 @@ import { useSessionId, useSessionMutation } from "@/hooks/useSession";
 import { cn } from "@/lib/utils";
 
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 
 /** Image component with a skeleton placeholder to prevent layout shifts.
  *  Dimensions are read from a `#dim=WxH` URL hash fragment appended by the server.
@@ -113,13 +115,16 @@ const streamdownComponents = { img: DescriptionImage };
 export default function Room() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const sessionId = useSessionId();
-  const { participantId, displayName, setIdentity } = useIdentity(roomCode ?? "");
+  const { participantId, displayName, setIdentity, clearIdentity } = useIdentity(roomCode ?? "");
 
   const joinRoom = useSessionMutation(api.participants.joinRoom);
   const leaveRoom = useSessionMutation(api.participants.leaveRoom);
   const heartbeat = useSessionMutation(api.participants.heartbeat);
   const takeoverSession = useSessionMutation(api.participants.takeoverSession);
   const startVoting = useSessionMutation(api.voting.startVoting);
+  const toggleHost = useSessionMutation(api.participants.toggleHost);
+  const removeParticipant = useSessionMutation(api.participants.removeParticipant);
+  const updateDisplayName = useSessionMutation(api.participants.updateDisplayName);
 
   const room = useQuery(api.rooms.getRoom, roomCode ? { roomCode } : "skip");
   const tasks = useQuery(api.tasks.getTasksForRoom, room?._id ? { roomId: room._id } : "skip");
@@ -143,7 +148,19 @@ export default function Room() {
     currentTask?._id && participantId ? { participantId, taskId: currentTask._id } : "skip",
   );
 
-  const votedIds = voteStatus?.filter((v) => v.hasVoted).map((v) => v.participantId) || [];
+  // Derive host status and filter voters (exclude hosts from vote counting)
+  const myParticipant = participants?.find((p) => p._id === participantId);
+  const isHost = myParticipant?.isHost ?? false;
+  const hasAnyHost = participants?.some((p) => p.isHost) ?? false;
+
+  const voters = voteStatus?.filter((v) => !v.isHost) || [];
+  const votedIds = voters.filter((v) => v.hasVoted).map((v) => v.participantId) || [];
+  const voterCount = voters.length;
+
+  // Detect removal: participantId is set but not found in loaded participants list
+  const wasRemoved =
+    !!participantId && participants !== undefined && !participants.some((p) => p._id === participantId);
+
   const showVoteStatus = room?.status === "voting";
   const autoRejoinKeyRef = useRef<string | null>(null);
   const [currentVote, setCurrentVote] = useState<string | null>(null);
@@ -338,6 +355,35 @@ export default function Room() {
     return <IdentityFlow roomId={room._id} roomCode={roomCode} onIdentitySet={setIdentity} />;
   }
 
+  if (wasRemoved) {
+    return (
+      <div className="bg-background flex h-screen items-center justify-center">
+        <div className="max-w-xs space-y-4 text-center">
+          <h2 className="text-sm font-semibold">You were removed from this room</h2>
+          <p className="text-muted-foreground text-[13px]">
+            The host removed you from the session.
+          </p>
+          <div className="flex justify-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 text-[13px]"
+              onClick={() => clearIdentity()}
+            >
+              Rejoin
+            </Button>
+            <Link to="/">
+              <Button variant="outline" size="sm" className="h-7 text-[13px]">
+                <ArrowLeft className="mr-1.5 h-3 w-3" />
+                Home
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background flex h-screen w-full flex-col overflow-hidden md:flex-row">
       {/* Tasks */}
@@ -379,6 +425,22 @@ export default function Room() {
             </code>
           )}
           <EditCardSetDialog roomId={room._id} currentCardSet={room.cardSet} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className={cn(
+                  "text-muted-foreground",
+                  isHost && "text-amber-600 dark:text-amber-500",
+                )}
+                onClick={() => toggleHost({ roomId: room._id }).catch(() => {})}
+              >
+                <Crown className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{isHost ? "Become Voter" : "Become Host"}</TooltipContent>
+          </Tooltip>
           <div className="ml-auto flex items-center gap-1.5">
             <code className="text-muted-foreground bg-muted rounded px-1.5 py-0.5 font-mono text-[11px]">
               {room.roomCode}
@@ -448,14 +510,29 @@ export default function Room() {
             <>
               {room.status === "voting" && currentTask && (
                 <div className="bg-background/95 sticky top-0 z-10 flex w-full justify-center py-3 backdrop-blur-sm">
-                  <CardDeck
-                    cardSet={room.cardSet}
-                    currentVote={currentVote}
-                    roomStatus={room.status}
-                    taskId={currentTask._id}
-                    participantId={participantId}
-                    onVoteChange={setCurrentVote}
-                  />
+                  {isHost ? (
+                    <ResultsPanel
+                      roomId={room._id}
+                      taskId={currentTask._id}
+                      roomStatus={room.status}
+                      cardSet={room.cardSet}
+                      participantCount={voterCount}
+                      votedCount={votedIds.length}
+                      isHost={isHost}
+                      hasAnyHost={hasAnyHost}
+                      projectKey={room.jiraProjectKey}
+                      currentSprintName={currentEnriched?.sprintName}
+                    />
+                  ) : (
+                    <CardDeck
+                      cardSet={room.cardSet}
+                      currentVote={currentVote}
+                      roomStatus={room.status}
+                      taskId={currentTask._id}
+                      participantId={participantId}
+                      onVoteChange={setCurrentVote}
+                    />
+                  )}
                 </div>
               )}
               <div
@@ -471,8 +548,10 @@ export default function Room() {
                     taskId={currentTask._id}
                     roomStatus={room.status}
                     cardSet={room.cardSet}
-                    participantCount={participants?.length ?? 0}
+                    participantCount={voterCount}
                     votedCount={votedIds.length}
+                    isHost={isHost}
+                    hasAnyHost={hasAnyHost}
                     projectKey={room.jiraProjectKey}
                     currentSprintName={currentEnriched?.sprintName}
                   />
@@ -563,21 +642,6 @@ export default function Room() {
           )}
         </div>
 
-        {/* Floating vote status & reveal button — always visible during voting */}
-        {room.status === "voting" && currentTask && participantId && (
-          <div className="absolute right-4 bottom-4 z-20 w-72 drop-shadow-lg">
-            <ResultsPanel
-              roomId={room._id}
-              taskId={currentTask._id}
-              roomStatus={room.status}
-              cardSet={room.cardSet}
-              participantCount={participants?.length ?? 0}
-              votedCount={votedIds.length}
-              projectKey={room.jiraProjectKey}
-              currentSprintName={currentEnriched?.sprintName}
-            />
-          </div>
-        )}
       </main>
 
       {/* Participants */}
@@ -593,9 +657,21 @@ export default function Room() {
             participants={participants || []}
             votedIds={votedIds}
             showVoteStatus={showVoteStatus}
+            currentUserIsHost={isHost}
+            currentParticipantId={participantId ?? undefined}
+            onRemoveParticipant={(id) => {
+              removeParticipant({ roomId: room._id, targetParticipantId: id as Id<"participants"> }).catch(() => {});
+            }}
+            onUpdateDisplayName={(name) => {
+              updateDisplayName({ roomId: room._id, displayName: name })
+                .then(() => {
+                  if (participantId) setIdentity(participantId, name);
+                })
+                .catch(() => {});
+            }}
           />
         ) : (
-          <div className="hidden flex-col items-center gap-2 pt-3 md:flex">
+          <div className="hidden flex-col items-center gap-3 pt-3 md:flex">
             {(participants || []).map((p) => (
               <Tooltip key={p._id}>
                 <TooltipTrigger asChild>
@@ -611,6 +687,11 @@ export default function Room() {
                         p.isConnected ? "bg-emerald-500" : "bg-muted-foreground/40",
                       )}
                     />
+                    {p.isHost && (
+                      <span className="text-amber-600 dark:text-amber-500 absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border-2 border-[var(--sidebar)] bg-[var(--sidebar)]">
+                        <Crown className="size-2.5" />
+                      </span>
+                    )}
                     {showVoteStatus && votedIds.includes(p._id) && (
                       <span className="bg-primary absolute -bottom-1 -left-1 flex size-4 items-center justify-center rounded-full border-2 border-[var(--sidebar)]">
                         <Check className="text-primary-foreground size-2.5" strokeWidth={3} />
