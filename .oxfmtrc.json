@@ -11,5 +11,5 @@
   "sortImports": true,
   "sortTailwindcss": true,
   "sortPackageJson": true,
-  "ignorePatterns": ["convex/_generated/**", "dist/**"]
+  "ignorePatterns": ["convex/_generated/**", "dist/**", "*.md"]
 }
