@@ -1,11 +1,12 @@
 import { v } from "convex/values";
+
 import { internalMutation, query } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
 
 export const joinRoom = sessionMutation({
   args: {
-    roomId: v.id("rooms"),
     displayName: v.string(),
+    roomId: v.id("rooms"),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -17,18 +18,18 @@ export const joinRoom = sessionMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        isConnected: true,
         displayName: args.displayName,
+        isConnected: true,
       });
       return existing._id;
     }
 
     return await ctx.db.insert("participants", {
-      roomId: args.roomId,
-      sessionId: ctx.sessionId,
       displayName: args.displayName,
       isConnected: true,
       joinedAt: Date.now(),
+      roomId: args.roomId,
+      sessionId: ctx.sessionId,
     });
   },
 });
@@ -53,12 +54,11 @@ export const leaveRoom = sessionMutation({
 
 export const getParticipants = query({
   args: { roomId: v.id("rooms") },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("participants")
       .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
-      .collect();
-  },
+      .collect(),
 });
 
 export const takeoverSession = sessionMutation({
@@ -87,8 +87,8 @@ export const takeoverSession = sessionMutation({
     }
 
     await ctx.db.patch(args.targetParticipantId, {
-      sessionId: ctx.sessionId,
       isConnected: true,
+      sessionId: ctx.sessionId,
     });
   },
 });
@@ -118,7 +118,7 @@ export const markStaleOffline = internalMutation({
     const stale = await ctx.db
       .query("participants")
       .withIndex("by_isConnected_lastHeartbeatAt", (q) =>
-        q.eq("isConnected", true).lt("lastHeartbeatAt", cutoff)
+        q.eq("isConnected", true).lt("lastHeartbeatAt", cutoff),
       )
       .collect();
     await Promise.all(stale.map((p) => ctx.db.patch(p._id, { isConnected: false })));

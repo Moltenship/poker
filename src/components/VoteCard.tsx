@@ -22,7 +22,7 @@ export function VoteCard({ value, isSelected, isDisabled, onClick }: VoteCardPro
           ? "bg-primary text-primary-foreground border-primary -translate-y-1"
           : "bg-muted/50 text-foreground/70 border-border",
         !isDisabled && !isSelected && "hover:bg-muted hover:text-foreground",
-        isDisabled && "cursor-not-allowed opacity-30"
+        isDisabled && "cursor-not-allowed opacity-30",
       )}
     >
       {value}

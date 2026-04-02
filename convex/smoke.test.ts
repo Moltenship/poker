@@ -1,6 +1,7 @@
 import { convexTest } from "convex-test";
-import schema from "./schema";
+
 import * as api from "./_generated/api";
+import schema from "./schema";
 
 test("convex-test round-trips a rooms document", async () => {
   const modules = {
@@ -9,13 +10,13 @@ test("convex-test round-trips a rooms document", async () => {
   const t = convexTest(schema, modules);
   await t.run(async (ctx) => {
     const id = await ctx.db.insert("rooms", {
+      cardSet: ["1", "2", "3", "5", "8", "13", "21"],
+      createdAt: Date.now(),
+      createdBy: "session-abc",
+      currentTaskIndex: 0,
       name: "Sprint 1",
       roomCode: "ABC12345",
-      cardSet: ["1", "2", "3", "5", "8", "13", "21"],
       status: "lobby",
-      currentTaskIndex: 0,
-      createdBy: "session-abc",
-      createdAt: Date.now(),
     });
     const doc = await ctx.db.get(id);
     expect(doc?.name).toBe("Sprint 1");

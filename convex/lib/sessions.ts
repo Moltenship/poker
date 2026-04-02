@@ -1,6 +1,7 @@
 import { customMutation, customQuery } from "convex-helpers/server/customFunctions";
-import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
+
+import { mutation, query } from "../_generated/server";
 
 export const SessionIdArg = {
   sessionId: v.string(),
@@ -16,20 +17,16 @@ function validateSessionId(sessionId: string) {
 
 export const sessionMutation = customMutation(mutation, {
   args: SessionIdArg,
-  input: async (_ctx, { sessionId }) => {
-    return {
-      ctx: { sessionId: validateSessionId(sessionId) },
-      args: {},
-    };
-  },
+  input: async (_ctx, { sessionId }) => ({
+    ctx: { sessionId: validateSessionId(sessionId) },
+    args: {},
+  }),
 });
 
 export const sessionQuery = customQuery(query, {
   args: SessionIdArg,
-  input: async (_ctx, { sessionId }) => {
-    return {
-      ctx: { sessionId: validateSessionId(sessionId) },
-      args: {},
-    };
-  },
+  input: async (_ctx, { sessionId }) => ({
+    ctx: { sessionId: validateSessionId(sessionId) },
+    args: {},
+  }),
 });

@@ -3,15 +3,16 @@
 ## TL;DR
 
 > **Quick Summary**: Build a real-time planning poker app that imports tasks from Jira Cloud backlog, lets teams vote on estimates with configurable Fibonacci cards, and stores everything in Convex with zero-auth session-based identity.
-> 
+>
 > **Deliverables**:
+>
 > - Full-stack SPA: React + Vite + React Router + Tailwind + shadcn/ui
 > - Convex backend: real-time rooms, voting, participant management
 > - Jira Cloud integration: readonly import via Convex action proxy
 > - Session-based identity with cross-device takeover
 > - Configurable card sets, vote averaging, optional hours annotation
 > - Vercel deployment
-> 
+>
 > **Estimated Effort**: Large
 > **Parallel Execution**: YES — 4 waves + final verification
 > **Critical Path**: Scaffold → Convex Schema → Session Mgmt → Voting Engine → Voting UI → Integration → Deploy
@@ -21,10 +22,13 @@
 ## Context
 
 ### Original Request
+
 Build a planning poker app with Jira backlog import (readonly). No auth — just ask for username. Store client data in localStorage. If user joins from different PC, let them claim an existing identity (old PC gets kicked). Use Convex for DB. Poker cards should be configurable (amount and value). Include optional hours estimation. Show average estimate. Any participant can reveal results — not all votes required. React + React Router frontend (no SSR). Real-time with reconnection handling.
 
 ### Interview Summary
+
 **Key Discussions**:
+
 - **Jira**: Cloud instance, API token as Convex server-side env var, Convex action as CORS proxy
 - **Cards**: Default Fibonacci (1,2,3,5,8,13,21), configurable per room. Card values are strings (supports "?", "☕")
 - **Hours**: Optional annotation per task — separate numeric field alongside card vote
@@ -37,12 +41,15 @@ Build a planning poker app with Jira backlog import (readonly). No auth — just
 - **Deploy**: Vercel
 
 **Research Findings**:
+
 - **Convex**: `useQuery` auto-subscribes via WebSocket, auto-reconnect built-in, `useConvexConnectionState()` for offline banner, `convex-helpers` for session patterns, `internalAction` for external API calls, `convex-test` for backend testing
 - **Jira API**: `POST /rest/api/3/search/jql` (new endpoint, old `/search` being deprecated), cursor-based pagination with `nextPageToken`, Basic Auth header, story points field ID varies per workspace (discover via `GET /rest/api/3/field`), description returns ADF (need simple recursive text extractor), rate limits generous (65k pts/hour)
 - **CORS**: Jira blocks browser Basic Auth calls — must proxy via Convex action
 
 ### Metis Review
+
 **Identified Gaps** (addressed):
+
 - **Manual task creation**: Added — rooms without Jira config need a way to add tasks
 - **Room code format**: Using `nanoid` for short readable codes (8 chars) — shared via link
 - **Display name uniqueness**: No enforcement, but show warning if duplicate name in room
@@ -58,9 +65,11 @@ Build a planning poker app with Jira backlog import (readonly). No auth — just
 ## Work Objectives
 
 ### Core Objective
+
 Build a real-time, multi-user planning poker application where teams can import Jira backlog tasks, vote on estimates using configurable card sets, and collaboratively arrive at story point + hours estimates — all with zero authentication friction.
 
 ### Concrete Deliverables
+
 - Deployable SPA on Vercel with Convex backend
 - Room creation with configurable card sets
 - Jira backlog import via Convex action
@@ -73,6 +82,7 @@ Build a real-time, multi-user planning poker application where teams can import 
 - Room history page with past estimates
 
 ### Definition of Done
+
 - [ ] `npm run dev` starts both Vite and Convex dev servers
 - [ ] `npm test` runs Vitest with all tests passing
 - [ ] App deploys to Vercel with `VITE_CONVEX_URL` configured
@@ -83,6 +93,7 @@ Build a real-time, multi-user planning poker application where teams can import 
 - [ ] Average calculated correctly (numeric only, "N/A" if all non-numeric)
 
 ### Must Have
+
 - Real-time vote synchronization across all participants
 - Configurable card sets per room (default: Fibonacci)
 - Jira backlog import with pagination
@@ -96,6 +107,7 @@ Build a real-time, multi-user planning poker application where teams can import 
 - TDD with Vitest + convex-test
 
 ### Must NOT Have (Guardrails)
+
 - **No Jira write-back** — import is strictly read-only snapshot
 - **No real authentication** — no Clerk, Auth0, OAuth, passwords. Session ID + display name only
 - **No custom WebSocket/reconnect logic** — Convex handles all of this natively
@@ -124,12 +136,14 @@ Build a real-time, multi-user planning poker application where teams can import 
 > Acceptance criteria requiring "user manually tests/confirms" are FORBIDDEN.
 
 ### Test Decision
+
 - **Infrastructure exists**: NO (greenfield project)
 - **Automated tests**: YES (TDD — RED → GREEN → REFACTOR)
 - **Framework**: Vitest for unit/integration + convex-test for Convex functions + React Testing Library for components
 - **TDD Flow**: Every task writes failing tests first, then implements to make them pass
 
 ### QA Policy
+
 Every task MUST include agent-executed QA scenarios.
 Evidence saved to `.sisyphus/evidence/task-{N}-{scenario-slug}.{ext}`.
 
@@ -188,29 +202,29 @@ Max Concurrent: 6 (Waves 2 & 3)
 
 ### Dependency Matrix
 
-| Task | Depends On | Blocks | Wave |
-|------|-----------|--------|------|
-| 1 | — | 12-17, 18-20 | 1 |
-| 2 | — | 12-17, 18-20 | 1 |
-| 3 | — | 6-11 | 1 |
-| 4 | — | 6-11 | 1 |
-| 5 | — | 11 | 1 |
-| 6 | 3, 4 | 7-11 | 2 |
-| 7 | 3, 4, 6 | 12, 13, 17 | 2 |
-| 8 | 3, 4, 6 | 13, 18 | 2 |
-| 9 | 3, 4, 6 | 10, 20 | 2 |
-| 10 | 3, 4, 6, 9 | 14, 15 | 2 |
-| 11 | 3, 4, 5, 6, 9 | 16 | 2 |
-| 12 | 1, 2, 7 | — | 3 |
-| 13 | 1, 2, 7, 8, 10 | 18, 19, 20 | 3 |
-| 14 | 1, 2, 10 | — | 3 |
-| 15 | 1, 2, 10 | — | 3 |
-| 16 | 1, 2, 11 | — | 3 |
-| 17 | 1, 2, 7 | — | 3 |
-| 18 | 8, 13 | — | 4 |
-| 19 | 13 | — | 4 |
-| 20 | 9, 13 | — | 4 |
-| 21 | all | F1-F4 | 4 |
+| Task | Depends On     | Blocks       | Wave |
+| ---- | -------------- | ------------ | ---- |
+| 1    | —              | 12-17, 18-20 | 1    |
+| 2    | —              | 12-17, 18-20 | 1    |
+| 3    | —              | 6-11         | 1    |
+| 4    | —              | 6-11         | 1    |
+| 5    | —              | 11           | 1    |
+| 6    | 3, 4           | 7-11         | 2    |
+| 7    | 3, 4, 6        | 12, 13, 17   | 2    |
+| 8    | 3, 4, 6        | 13, 18       | 2    |
+| 9    | 3, 4, 6        | 10, 20       | 2    |
+| 10   | 3, 4, 6, 9     | 14, 15       | 2    |
+| 11   | 3, 4, 5, 6, 9  | 16           | 2    |
+| 12   | 1, 2, 7        | —            | 3    |
+| 13   | 1, 2, 7, 8, 10 | 18, 19, 20   | 3    |
+| 14   | 1, 2, 10       | —            | 3    |
+| 15   | 1, 2, 10       | —            | 3    |
+| 16   | 1, 2, 11       | —            | 3    |
+| 17   | 1, 2, 7        | —            | 3    |
+| 18   | 8, 13          | —            | 4    |
+| 19   | 13             | —            | 4    |
+| 20   | 9, 13          | —            | 4    |
+| 21   | all            | F1-F4        | 4    |
 
 ### Agent Dispatch Summary
 
@@ -585,7 +599,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Card parsing must handle edge cases like "½" (half) which is a valid Fibonacci extended value
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST (RED phase), then implemented (GREEN phase)
   - [ ] `npx vitest run src/lib/__tests__/` → all pass
 
@@ -666,7 +679,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Session ID is the user's identity credential — must be deterministically stored and retrieved
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run` passes all session tests
 
@@ -749,7 +761,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - nanoid generates short, URL-safe codes (vs UUID which is too long for sharing)
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run convex/__tests__/rooms.test.ts` → all pass
 
@@ -827,7 +838,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Session takeover requires updating sessionId on a participant doc — must also handle disconnecting the old session
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run convex/__tests__/participants.test.ts` → all pass
 
@@ -914,7 +924,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - `by_room` index for efficient task listing per room
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run convex/__tests__/tasks.test.ts` → all pass
 
@@ -1000,7 +1009,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Room status transitions (lobby → voting → revealed → voting) must be enforced server-side
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run convex/__tests__/voting.test.ts` → all pass
 
@@ -1040,7 +1048,7 @@ Max Concurrent: 6 (Waves 2 & 3)
   **What to do**:
   - Create `convex/jira.ts`:
     - `triggerJiraImport` (sessionMutation): args = { roomId, projectKey, jqlFilter? }. Validates args. Calls `ctx.scheduler.runAfter(0, internal.jira.executeJiraImport, { roomId, projectKey, jqlFilter })`. Returns immediately (async import).
-    - `executeJiraImport` (internalAction): 
+    - `executeJiraImport` (internalAction):
       1. Read env vars: `JIRA_API_TOKEN`, `JIRA_EMAIL`, `JIRA_BASE_URL`
       2. Call `GET /rest/api/3/field` to discover story points field ID (search for "Story Points" or "Story point estimate")
       3. Build JQL: `project = "${projectKey}" AND statusCategory != Done${jqlFilter ? " AND " + jqlFilter : ""} ORDER BY rank ASC`
@@ -1097,7 +1105,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Scheduler pattern: mutation triggers → action runs async → internal mutation stores results. This keeps the client responsive.
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST with mocked fetch, then implemented
   - [ ] `npx vitest run convex/__tests__/jira.test.ts` → all pass
 
@@ -1182,7 +1189,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - shadcn components ensure consistent styling without custom CSS
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run src/pages/__tests__/Home.test.tsx` → all pass
 
@@ -1276,7 +1282,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Participant connection status drives the green/gray indicators
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST for layout structure, then implemented
   - [ ] `npx vitest run src/pages/__tests__/Room.test.tsx` → all pass
 
@@ -1385,7 +1390,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Room status determines if cards are interactive — must read from `getRoom` query
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run src/components/__tests__/CardDeck.test.tsx` → all pass
 
@@ -1479,7 +1483,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Hours input uses debounced mutation — don't fire on every keystroke
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run src/components/__tests__/ResultsPanel.test.tsx` → all pass
 
@@ -1570,7 +1573,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Dialog component provides accessible modal behavior
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run src/components/__tests__/JiraImportModal.test.tsx` → all pass
 
@@ -1670,7 +1672,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Room cards need enough info to be useful without clicking in
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run src/pages/__tests__/History.test.tsx` → all pass
 
@@ -1756,7 +1757,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - `listRoomParticipants` provides the dropdown list for returning users
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run src/components/__tests__/IdentityFlow.test.tsx` → all pass
 
@@ -1844,7 +1844,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - Don't implement reconnection logic — it's built into the Convex client
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run src/components/__tests__/ConnectionBanner.test.tsx` → all pass
 
@@ -1931,7 +1930,6 @@ Max Concurrent: 6 (Waves 2 & 3)
   - This task enhances Task 13's sidebar — coordinate to avoid conflicts
 
   **Acceptance Criteria**:
-
   - [ ] Tests written FIRST, then implemented
   - [ ] `npx vitest run src/components/__tests__/AddTaskForm.test.tsx` → all pass
   - [ ] `npx vitest run src/components/__tests__/TaskListManager.test.tsx` → all pass
@@ -2277,35 +2275,36 @@ Max Concurrent: 6 (Waves 2 & 3)
 
 ## Commit Strategy
 
-| Group | Message | Files | Pre-commit |
-|-------|---------|-------|------------|
-| T1 | `infra: scaffold Vite + React + TypeScript + React Router + concurrently` | package.json, vite.config.ts, tsconfig.json, src/main.tsx, src/App.tsx, src/routes/ | `npm run build` |
-| T2 | `infra: add Tailwind CSS + shadcn/ui + theme tokens` | tailwind.config.ts, postcss.config.js, src/index.css, components.json, src/components/ui/ | `npm run build` |
-| T3 | `infra: initialize Convex project + define schema` | convex/schema.ts, convex/tsconfig.json, .env.local | `npx convex dev --once` |
-| T4 | `infra: set up Vitest + convex-test + RTL` | vitest.config.ts, src/test/setup.ts, src/test/utils.ts | `npx vitest run` |
-| T5 | `feat(utils): add card sets, ADF parser, vote average calculator` | src/lib/cards.ts, src/lib/adf.ts, src/lib/average.ts, tests | `npx vitest run` |
-| T6 | `feat(auth): add session management with convex-helpers` | convex/lib/sessions.ts, convex/lib/withSession.ts, src/hooks/useSession.ts | `npx vitest run` |
-| T7 | `feat(rooms): add room CRUD service` | convex/rooms.ts, convex/rooms.test.ts | `npx vitest run` |
-| T8 | `feat(participants): add participant management service` | convex/participants.ts, convex/participants.test.ts | `npx vitest run` |
-| T9 | `feat(tasks): add task CRUD + ordering + hours` | convex/tasks.ts, convex/tasks.test.ts | `npx vitest run` |
-| T10 | `feat(voting): add voting engine` | convex/voting.ts, convex/voting.test.ts | `npx vitest run` |
-| T11 | `feat(jira): add Jira import action with field discovery` | convex/jira.ts, convex/jira.test.ts | `npx vitest run` |
-| T12 | `feat(ui): add home page with room creation + join` | src/pages/Home.tsx, src/components/CreateRoom.tsx, src/components/JoinRoom.tsx | `npx vitest run` |
-| T13 | `feat(ui): add room view layout` | src/pages/Room.tsx, src/components/TaskSidebar.tsx, src/components/ParticipantList.tsx | `npx vitest run` |
-| T14 | `feat(ui): add voting interface with card deck` | src/components/CardDeck.tsx, src/components/VoteIndicator.tsx | `npx vitest run` |
-| T15 | `feat(ui): add results panel with average + distribution` | src/components/ResultsPanel.tsx, src/components/VoteDistribution.tsx, src/components/HoursInput.tsx | `npx vitest run` |
-| T16 | `feat(ui): add Jira import modal` | src/components/JiraImportModal.tsx | `npx vitest run` |
-| T17 | `feat(ui): add room history page` | src/pages/History.tsx, src/components/RoomCard.tsx | `npx vitest run` |
-| T18 | `feat(identity): add name entry + returning user + session takeover` | src/components/IdentityFlow.tsx, src/hooks/useIdentity.ts | `npx vitest run` |
-| T19 | `feat(ui): add connection status banner` | src/components/ConnectionBanner.tsx | `npx vitest run` |
-| T20 | `feat(ui): add manual task creation` | src/components/AddTaskForm.tsx, src/components/TaskListManager.tsx | `npx vitest run` |
-| T21 | `infra: add Vercel deployment config` | vercel.json, .env.example | `npm run build` |
+| Group | Message                                                                   | Files                                                                                               | Pre-commit              |
+| ----- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------- |
+| T1    | `infra: scaffold Vite + React + TypeScript + React Router + concurrently` | package.json, vite.config.ts, tsconfig.json, src/main.tsx, src/App.tsx, src/routes/                 | `npm run build`         |
+| T2    | `infra: add Tailwind CSS + shadcn/ui + theme tokens`                      | tailwind.config.ts, postcss.config.js, src/index.css, components.json, src/components/ui/           | `npm run build`         |
+| T3    | `infra: initialize Convex project + define schema`                        | convex/schema.ts, convex/tsconfig.json, .env.local                                                  | `npx convex dev --once` |
+| T4    | `infra: set up Vitest + convex-test + RTL`                                | vitest.config.ts, src/test/setup.ts, src/test/utils.ts                                              | `npx vitest run`        |
+| T5    | `feat(utils): add card sets, ADF parser, vote average calculator`         | src/lib/cards.ts, src/lib/adf.ts, src/lib/average.ts, tests                                         | `npx vitest run`        |
+| T6    | `feat(auth): add session management with convex-helpers`                  | convex/lib/sessions.ts, convex/lib/withSession.ts, src/hooks/useSession.ts                          | `npx vitest run`        |
+| T7    | `feat(rooms): add room CRUD service`                                      | convex/rooms.ts, convex/rooms.test.ts                                                               | `npx vitest run`        |
+| T8    | `feat(participants): add participant management service`                  | convex/participants.ts, convex/participants.test.ts                                                 | `npx vitest run`        |
+| T9    | `feat(tasks): add task CRUD + ordering + hours`                           | convex/tasks.ts, convex/tasks.test.ts                                                               | `npx vitest run`        |
+| T10   | `feat(voting): add voting engine`                                         | convex/voting.ts, convex/voting.test.ts                                                             | `npx vitest run`        |
+| T11   | `feat(jira): add Jira import action with field discovery`                 | convex/jira.ts, convex/jira.test.ts                                                                 | `npx vitest run`        |
+| T12   | `feat(ui): add home page with room creation + join`                       | src/pages/Home.tsx, src/components/CreateRoom.tsx, src/components/JoinRoom.tsx                      | `npx vitest run`        |
+| T13   | `feat(ui): add room view layout`                                          | src/pages/Room.tsx, src/components/TaskSidebar.tsx, src/components/ParticipantList.tsx              | `npx vitest run`        |
+| T14   | `feat(ui): add voting interface with card deck`                           | src/components/CardDeck.tsx, src/components/VoteIndicator.tsx                                       | `npx vitest run`        |
+| T15   | `feat(ui): add results panel with average + distribution`                 | src/components/ResultsPanel.tsx, src/components/VoteDistribution.tsx, src/components/HoursInput.tsx | `npx vitest run`        |
+| T16   | `feat(ui): add Jira import modal`                                         | src/components/JiraImportModal.tsx                                                                  | `npx vitest run`        |
+| T17   | `feat(ui): add room history page`                                         | src/pages/History.tsx, src/components/RoomCard.tsx                                                  | `npx vitest run`        |
+| T18   | `feat(identity): add name entry + returning user + session takeover`      | src/components/IdentityFlow.tsx, src/hooks/useIdentity.ts                                           | `npx vitest run`        |
+| T19   | `feat(ui): add connection status banner`                                  | src/components/ConnectionBanner.tsx                                                                 | `npx vitest run`        |
+| T20   | `feat(ui): add manual task creation`                                      | src/components/AddTaskForm.tsx, src/components/TaskListManager.tsx                                  | `npx vitest run`        |
+| T21   | `infra: add Vercel deployment config`                                     | vercel.json, .env.example                                                                           | `npm run build`         |
 
 ---
 
 ## Success Criteria
 
 ### Verification Commands
+
 ```bash
 npm run build          # Expected: Build succeeds, no TS errors
 npx vitest run         # Expected: All tests pass
@@ -2314,6 +2313,7 @@ npm run dev            # Expected: Both Vite + Convex dev servers start (via con
 ```
 
 ### Final Checklist
+
 - [ ] All "Must Have" items present and working
 - [ ] All "Must NOT Have" items absent (no timer, no auth lib, no Jira write-back, etc.)
 - [ ] All tests pass (Vitest + convex-test)

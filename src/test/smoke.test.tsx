@@ -1,5 +1,6 @@
-import { renderWithProviders } from "./utils";
 import { screen } from "@testing-library/react";
+
+import { renderWithProviders } from "./utils";
 
 function HelloWorld() {
   return <div>Hello World</div>;

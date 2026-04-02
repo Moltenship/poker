@@ -11,7 +11,7 @@ export function ConnectionDot() {
 
   return (
     <div
-      className={`w-2 h-2 rounded-full transition-colors ${isConnected ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`}
+      className={`h-2 w-2 rounded-full transition-colors ${isConnected ? "bg-emerald-500" : "animate-pulse bg-amber-500"}`}
       title={isConnected ? "Connected" : "Reconnecting..."}
     />
   );

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
+
 import type { Id } from "./_generated/dataModel";
-import type { MutationCtx } from "./_generated/server";
-import { query } from "./_generated/server";
+import { type MutationCtx, query } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
 
 function parseCardValue(value: string): number | null {
@@ -14,7 +14,9 @@ function parseCardValue(value: string): number | null {
 }
 
 function calculateAverage(votes: string[]) {
-  const numericValues = votes.map(parseCardValue).filter((value): value is number => value !== null);
+  const numericValues = votes
+    .map(parseCardValue)
+    .filter((value): value is number => value !== null);
   if (numericValues.length === 0) {
     return { average: null, numericCount: 0, totalVotes: votes.length };
   }
@@ -26,10 +28,7 @@ function calculateAverage(votes: string[]) {
   };
 }
 
-async function getSortedTasksForRoom(
-  ctx: MutationCtx,
-  roomId: Id<"rooms">,
-) {
+async function getSortedTasksForRoom(ctx: MutationCtx, roomId: Id<"rooms">) {
   const tasks = await ctx.db
     .query("tasks")
     .withIndex("by_room", (q) => q.eq("roomId", roomId))
@@ -54,8 +53,8 @@ export const startVoting = sessionMutation({
 
 export const castVote = sessionMutation({
   args: {
-    taskId: v.id("tasks"),
     participantId: v.id("participants"),
+    taskId: v.id("tasks"),
     value: v.string(),
   },
   handler: async (ctx, args) => {
@@ -89,26 +88,26 @@ export const castVote = sessionMutation({
 
     if (existingVote) {
       await ctx.db.patch(existingVote._id, {
-        value: args.value,
         submittedAt: Date.now(),
+        value: args.value,
       });
       return existingVote._id;
     }
 
     return await ctx.db.insert("votes", {
-      roomId: task.roomId,
-      taskId: args.taskId,
       participantId: args.participantId,
-      value: args.value,
+      roomId: task.roomId,
       submittedAt: Date.now(),
+      taskId: args.taskId,
+      value: args.value,
     });
   },
 });
 
 export const removeVote = sessionMutation({
   args: {
-    taskId: v.id("tasks"),
     participantId: v.id("participants"),
+    taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
     const existingVote = await ctx.db
@@ -125,7 +124,7 @@ export const removeVote = sessionMutation({
 });
 
 export const getMyVote = query({
-  args: { taskId: v.id("tasks"), participantId: v.id("participants") },
+  args: { participantId: v.id("participants"), taskId: v.id("tasks") },
   handler: async (ctx, args) => {
     const vote = await ctx.db
       .query("votes")
@@ -156,14 +155,14 @@ export const getVoteStatus = query({
     const votedParticipantIds = new Set(votes.map((vote) => vote.participantId.toString()));
 
     return participants.map((participant) => ({
-      participantId: participant._id,
       hasVoted: votedParticipantIds.has(participant._id.toString()),
+      participantId: participant._id,
     }));
   },
 });
 
 export const getVoteResults = query({
-  args: { taskId: v.id("tasks"), roomId: v.id("rooms") },
+  args: { roomId: v.id("rooms"), taskId: v.id("tasks") },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
     if (!room || room.status !== "revealed") {
@@ -184,13 +183,13 @@ export const getVoteResults = query({
     );
 
     return {
+      average,
+      numericCount,
+      totalVotes,
       votes: votes.map((vote) => ({
         participantId: vote.participantId,
         value: vote.value,
       })),
-      average,
-      numericCount,
-      totalVotes,
     };
   },
 });
@@ -224,9 +223,7 @@ export const resetVoting = sessionMutation({
         .withIndex("by_task", (q) => q.eq("taskId", currentTask._id))
         .collect();
 
-      for (const vote of votes) {
-        await ctx.db.delete(vote._id);
-      }
+      await Promise.all(votes.map((vote) => ctx.db.delete(vote._id)));
     }
 
     await ctx.db.patch(args.roomId, { status: "voting" });
@@ -249,9 +246,7 @@ export const advanceToNextTask = sessionMutation({
         .query("votes")
         .withIndex("by_task", (q) => q.eq("taskId", currentTask._id))
         .collect();
-      for (const vote of votes) {
-        await ctx.db.delete(vote._id);
-      }
+      await Promise.all(votes.map((vote) => ctx.db.delete(vote._id)));
     }
 
     const nextTaskIndex = room.currentTaskIndex + 1;

@@ -1,13 +1,13 @@
 /** Sentinel value representing backlog (no sprint) in sprint filter arrays. */
 export const BACKLOG_FILTER_ID = 0;
 
-export type JiraSprint = {
+export interface JiraSprint {
   id: number;
   name: string;
   state: "active" | "future" | "closed";
-};
+}
 
-export type JiraIssue = {
+export interface JiraIssue {
   key: string;
   title: string;
   status: string;
@@ -17,9 +17,9 @@ export type JiraIssue = {
   sprintName?: string;
   assignee?: string;
   isBlocked: boolean;
-};
+}
 
-export type JiraTaskDetails = {
+export interface JiraTaskDetails {
   title: string;
   description: string;
   status: string;
@@ -28,4 +28,4 @@ export type JiraTaskDetails = {
   url: string;
   assignee?: string;
   isBlocked: boolean;
-};
+}

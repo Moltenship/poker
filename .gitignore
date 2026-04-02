@@ -11,3 +11,5 @@ dist
 !.agents
 !.claude
 !.gitignore
+!.oxlintrc.json
+!.oxfmtrc.json

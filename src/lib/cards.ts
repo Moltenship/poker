@@ -1,7 +1,7 @@
-export type CardSet = {
+export interface CardSet {
   name: string;
   values: string[];
-};
+}
 
 export const FIBONACCI: CardSet = {
   name: "Fibonacci",
@@ -16,9 +16,13 @@ export const FIBONACCI_EXTENDED: CardSet = {
 export const DEFAULT_CARD_SETS: CardSet[] = [FIBONACCI, FIBONACCI_EXTENDED];
 
 export function parseCardValue(value: string): number | null {
-  if (value === "½") return 0.5;
+  if (value === "½") {
+    return 0.5;
+  }
   const n = parseFloat(value);
-  if (!isNaN(n)) return n;
+  if (!isNaN(n)) {
+    return n;
+  }
   return null;
 }
 

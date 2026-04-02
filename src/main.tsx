@@ -1,14 +1,17 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { ConvexProvider, ConvexReactClient } from 'convex/react'
-import { RouterProvider } from 'react-router-dom'
-import { SessionProvider } from '@/providers/SessionProvider'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { Toaster } from '@/components/ui/sonner'
-import router from './router'
-import './index.css'
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { SessionProvider } from "@/providers/SessionProvider";
+
+import router from "./router";
+
+import "./index.css";
+
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 const App = () => (
   <ConvexProvider client={convex}>
@@ -19,10 +22,13 @@ const App = () => (
       </TooltipProvider>
     </SessionProvider>
   </ConvexProvider>
-)
+);
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );
+}
