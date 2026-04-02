@@ -5,11 +5,14 @@ import {
   Link as LinkIcon,
   PanelRightClose,
   PanelRightOpen,
+  Trash2,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { ConnectionDot } from "@/components/ConnectionBanner";
+import { DeleteRoomDialog } from "@/components/DeleteRoomDialog";
 import { EditCardSetDialog } from "@/components/EditCardSetDialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -32,6 +35,7 @@ interface RoomHeaderProps {
   participantsOpen: boolean;
   onToggleHost: () => void;
   onToggleParticipants: (value: boolean) => void;
+  onDeleteRoom: () => Promise<void>;
 }
 
 export function RoomHeader({
@@ -41,10 +45,12 @@ export function RoomHeader({
   participantsOpen,
   onToggleHost,
   onToggleParticipants,
+  onDeleteRoom,
 }: RoomHeaderProps) {
   const { copied, copy: handleCopyLink } = useCopyToClipboard(
     `${typeof window !== "undefined" ? window.location.origin : ""}/room/${room.roomCode}`,
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   return (
     <header className="flex h-11 shrink-0 items-center gap-2 px-4">
@@ -75,6 +81,27 @@ export function RoomHeader({
         </TooltipTrigger>
         <TooltipContent>{isHost ? "Become Voter" : "Become Host"}</TooltipContent>
       </Tooltip>
+      {isHost && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Delete room</TooltipContent>
+        </Tooltip>
+      )}
+      <DeleteRoomDialog
+        roomName={room.name}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={onDeleteRoom}
+      />
       <div className="ml-auto flex items-center gap-1.5">
         <code className="text-muted-foreground bg-muted rounded px-1.5 py-0.5 font-mono text-[11px]">
           {room.roomCode}

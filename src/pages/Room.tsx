@@ -1,6 +1,6 @@
 import { useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { CardDeck } from "@/components/CardDeck";
 import { CollapsedParticipantList } from "@/components/CollapsedParticipantList";
@@ -17,7 +17,7 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useIdentity } from "@/hooks/useIdentity";
 import { useJiraDetails } from "@/hooks/useJiraDetails";
-import { useTrackRoom } from "@/hooks/useRecentRooms";
+import { removeRecentRoom, useTrackRoom } from "@/hooks/useRecentRooms";
 import { useSessionId, useSessionMutation } from "@/hooks/useSession";
 import { useTaskUrlSync } from "@/hooks/useTaskUrlSync";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ const EMPTY_TYPE_FILTER: string[] = [];
 
 export default function Room() {
   const { roomCode } = useParams<{ roomCode: string }>();
+  const navigate = useNavigate();
   const sessionId = useSessionId();
   const { participantId, displayName, setIdentity, clearIdentity } = useIdentity(roomCode ?? "");
 
@@ -41,6 +42,7 @@ export default function Room() {
   const startVoting = useSessionMutation(api.voting.startVoting);
   const toggleHost = useSessionMutation(api.participants.toggleHost);
   const removeParticipant = useSessionMutation(api.participants.removeParticipant);
+  const deleteRoom = useSessionMutation(api.rooms.deleteRoom);
   const updateDisplayName = useSessionMutation(api.participants.updateDisplayName);
 
   const room = useQuery(api.rooms.getRoom, roomCode ? { roomCode } : "skip");
@@ -207,6 +209,11 @@ export default function Room() {
           participantsOpen={participantsOpen}
           onToggleHost={() => toggleHost({ roomId: room._id }).catch(() => {})}
           onToggleParticipants={toggleParticipants}
+          onDeleteRoom={async () => {
+            await deleteRoom({ roomId: room._id, confirmName: room.name });
+            removeRecentRoom(room.roomCode);
+            navigate("/");
+          }}
         />
 
         <div className="flex flex-1 flex-col overflow-auto">

@@ -96,6 +96,63 @@ export const updateCardSet = mutation({
   },
 });
 
+export const deleteRoom = sessionMutation({
+  args: {
+    roomId: v.id("rooms"),
+    confirmName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) {
+      throw new Error("Room not found");
+    }
+
+    const caller = await ctx.db
+      .query("participants")
+      .withIndex("by_room_session", (q) =>
+        q.eq("roomId", args.roomId).eq("sessionId", ctx.sessionId),
+      )
+      .unique();
+
+    if (!caller?.isHost) {
+      throw new Error("Only a host can delete the room");
+    }
+
+    if (args.confirmName !== room.name) {
+      throw new Error("Room name does not match");
+    }
+
+    // 1. Delete all votes in this room
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+
+    for (const task of tasks) {
+      const votes = await ctx.db
+        .query("votes")
+        .withIndex("by_task", (q) => q.eq("taskId", task._id))
+        .collect();
+
+      await Promise.all(votes.map((vote) => ctx.db.delete(vote._id)));
+    }
+
+    // 2. Delete all tasks in this room
+    await Promise.all(tasks.map((task) => ctx.db.delete(task._id)));
+
+    // 3. Delete all participants in this room
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+
+    await Promise.all(participants.map((p) => ctx.db.delete(p._id)));
+
+    // 4. Delete the room itself
+    await ctx.db.delete(args.roomId);
+  },
+});
+
 export const listMyRooms = sessionQuery({
   args: {},
   handler: async (ctx) => {

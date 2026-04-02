@@ -19,22 +19,16 @@ export default function Layout() {
             Planning Poker
           </Link>
           <nav className="ml-6 flex items-center gap-0.5">
-            {[
-              { label: "Home", to: "/" },
-              { label: "History", to: "/history" },
-            ].map(({ to, label }) => (
-              <Link
-                key={to}
-                to={to}
-                className={`rounded-md px-2.5 py-1 text-[13px] transition-colors ${
-                  location.pathname === to
-                    ? "text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
+            <Link
+              to="/"
+              className={`rounded-md px-2.5 py-1 text-[13px] transition-colors ${
+                location.pathname === "/"
+                  ? "text-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Home
+            </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <ConnectionDot />

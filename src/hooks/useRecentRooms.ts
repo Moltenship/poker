@@ -63,6 +63,12 @@ export function useRecentRooms(): {
   return { recentRooms, trackRoom };
 }
 
+/** Remove a room from the recent-rooms list (e.g. after deletion). */
+export function removeRecentRoom(roomCode: string): void {
+  const updated = loadRooms().filter((r) => r.roomCode !== roomCode);
+  saveRooms(updated);
+}
+
 /**
  * Side-effect hook: tracks the given room in the recent-rooms list once
  * the room name is available.
