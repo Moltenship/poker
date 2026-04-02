@@ -13,3 +13,7 @@ Convex agent skills for common tasks can be installed by running `npx convex ai-
 ## Task Completion Requirements
 
 - All of `npm run format:check`, `npm run lint`, and `npm run typecheck` must pass before considering tasks completed.
+
+## Commit message style
+
+You MUST use conventional commits specification for commit message and body - https://www.conventionalcommits.org/en/v1.0.0/#specification
