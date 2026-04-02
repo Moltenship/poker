@@ -1,7 +1,8 @@
 import { useMutation } from "convex/react";
-import { GripVertical, Plus, Settings2, X } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { Plus, Settings2 } from "lucide-react";
+import { useCallback, useState } from "react";
 
+import { CardListItem } from "@/components/CardListItem";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,7 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { FIBONACCI, FIBONACCI_EXTENDED } from "@/lib/cards";
+import { useDragReorder } from "@/hooks/useDragReorder";
+import { detectPreset, FIBONACCI, FIBONACCI_EXTENDED } from "@/lib/cards";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -29,23 +31,6 @@ import type { Id } from "../../convex/_generated/dataModel";
 interface EditCardSetDialogProps {
   roomId: Id<"rooms">;
   currentCardSet: string[];
-}
-
-function detectPreset(cards: string[]): "fibonacci" | "extended" | "custom" {
-  const fibMatch =
-    cards.length === FIBONACCI.values.length && cards.every((c, i) => c === FIBONACCI.values[i]);
-  if (fibMatch) {
-    return "fibonacci";
-  }
-
-  const extMatch =
-    cards.length === FIBONACCI_EXTENDED.values.length &&
-    cards.every((c, i) => c === FIBONACCI_EXTENDED.values[i]);
-  if (extMatch) {
-    return "extended";
-  }
-
-  return "custom";
 }
 
 export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogProps) {
@@ -62,49 +47,16 @@ export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogP
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Drag state
-  const dragIndexRef = useRef<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-
-  const handleDragStart = (index: number) => {
-    dragIndexRef.current = index;
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (dragOverIndex !== index) {
-      setDragOverIndex(index);
-    }
-  };
-
-  const handleDragLeave = () => {
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, toIndex: number) => {
-    e.preventDefault();
-    const fromIndex = dragIndexRef.current;
-    if (fromIndex === null || fromIndex === toIndex) {
-      dragIndexRef.current = null;
-      setDragOverIndex(null);
-      return;
-    }
-    setCards((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, moved);
-      return next;
+  const { dragOverIndex, handleDragStart, handleDragOver, handleDragLeave, handleDrop, handleDragEnd } =
+    useDragReorder((fromIndex, toIndex) => {
+      setCards((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(fromIndex, 1);
+        next.splice(toIndex, 0, moved);
+        return next;
+      });
+      setPresetType("custom");
     });
-    setPresetType("custom");
-    dragIndexRef.current = null;
-    setDragOverIndex(null);
-  };
-
-  const handleDragEnd = () => {
-    dragIndexRef.current = null;
-    setDragOverIndex(null);
-  };
 
   const resetState = useCallback(() => {
     setCards(currentCardSet);
@@ -114,8 +66,6 @@ export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogP
     setEditValue("");
     setError("");
     setSaving(false);
-    dragIndexRef.current = null;
-    setDragOverIndex(null);
   }, [currentCardSet]);
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -267,72 +217,24 @@ export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogP
               ) : (
                 <div className="divide-border/40 divide-y">
                   {cards.map((card, index) => (
-                    <div
+                    <CardListItem
                       key={`${card}-${index}`}
-                      draggable={editingIndex !== index}
+                      card={card}
+                      index={index}
+                      isEditing={editingIndex === index}
+                      editValue={editValue}
+                      isDragOver={dragOverIndex === index}
+                      onStartEdit={() => handleStartEdit(index)}
+                      onConfirmEdit={handleConfirmEdit}
+                      onCancelEdit={handleCancelEdit}
+                      onEditValueChange={setEditValue}
+                      onRemove={() => handleRemoveCard(index)}
                       onDragStart={() => handleDragStart(index)}
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, index)}
                       onDragEnd={handleDragEnd}
-                      className={`group flex items-center gap-2 px-2 py-1.5 transition-colors ${
-                        dragOverIndex === index ? "bg-accent border-t-primary border-t-2" : ""
-                      }`}
-                    >
-                      <GripVertical className="text-muted-foreground/40 h-3 w-3 shrink-0 cursor-grab active:cursor-grabbing" />
-                      {editingIndex === index ? (
-                        <div className="flex flex-1 items-center gap-1.5">
-                          <Input
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleConfirmEdit();
-                              }
-                              if (e.key === "Escape") {
-                                handleCancelEdit();
-                              }
-                            }}
-                            className="h-7 flex-1 text-[13px]"
-                            autoFocus
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={handleConfirmEdit}
-                            className="text-primary shrink-0"
-                          >
-                            <span className="text-[11px] font-medium">OK</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={handleCancelEdit}
-                            className="text-muted-foreground shrink-0"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <button
-                            className="hover:bg-accent flex-1 truncate rounded px-1.5 py-0.5 text-left font-mono text-[13px] transition-colors"
-                            onClick={() => handleStartEdit(index)}
-                            title="Click to edit"
-                          >
-                            {card}
-                          </button>
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => handleRemoveCard(index)}
-                            className="text-muted-foreground hover:text-destructive shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                    />
                   ))}
                 </div>
               )}
@@ -368,7 +270,7 @@ export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogP
             </Button>
           </div>
 
-          {error && <p className="text-destructive text-[12px]">{error}</p>}
+          {error ? <p className="text-destructive text-[12px]">{error}</p> : null}
         </div>
 
         <DialogFooter>

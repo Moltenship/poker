@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -11,16 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRecentRooms } from "@/hooks/useRecentRooms";
 import { useSessionMutation } from "@/hooks/useSession";
 import { FIBONACCI, FIBONACCI_EXTENDED } from "@/lib/cards";
 
 import { api } from "../../convex/_generated/api";
-
-interface RecentRoom {
-  roomCode: string;
-  name: string;
-  visitedAt: number;
-}
 
 function extractRoomCode(input: string): string | null {
   const trimmed = input.trim();
@@ -53,18 +48,7 @@ export default function Home() {
   const [customCards, setCustomCards] = useState("");
   const [createError, setCreateError] = useState("");
   const [joinInput, setJoinInput] = useState("");
-  const [recentRooms, setRecentRooms] = useState<RecentRoom[]>([]);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("poker_recent_rooms");
-      if (stored) {
-        setRecentRooms(JSON.parse(stored));
-      }
-    } catch {
-      /* Ignore */
-    }
-  }, []);
+  const { recentRooms } = useRecentRooms();
 
   const joinCode = extractRoomCode(joinInput);
 

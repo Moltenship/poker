@@ -13,7 +13,23 @@ export const FIBONACCI_EXTENDED: CardSet = {
   values: ["0", "½", "1", "2", "3", "5", "8", "13", "20", "40", "100", "?", "☕"],
 };
 
-export const DEFAULT_CARD_SETS: CardSet[] = [FIBONACCI, FIBONACCI_EXTENDED];
+/** Detects whether a card set matches a known preset. */
+export function detectPreset(cards: string[]): "fibonacci" | "extended" | "custom" {
+  const fibMatch =
+    cards.length === FIBONACCI.values.length && cards.every((c, i) => c === FIBONACCI.values[i]);
+  if (fibMatch) {
+    return "fibonacci";
+  }
+
+  const extMatch =
+    cards.length === FIBONACCI_EXTENDED.values.length &&
+    cards.every((c, i) => c === FIBONACCI_EXTENDED.values[i]);
+  if (extMatch) {
+    return "extended";
+  }
+
+  return "custom";
+}
 
 export function parseCardValue(value: string): number | null {
   if (value === "½") {
