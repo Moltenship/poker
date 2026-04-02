@@ -28,8 +28,8 @@ export function RoomNotFound({ roomCode }: RoomNotFoundProps) {
         <h2 className="mb-1 text-sm font-semibold">Room not found</h2>
         <p className="text-muted-foreground mb-4 text-[13px]">
           Code{" "}
-          <code className="bg-muted rounded px-1 py-0.5 font-mono text-[12px]">{roomCode}</code>{" "}
-          is invalid or expired.
+          <code className="bg-muted rounded px-1 py-0.5 font-mono text-[12px]">{roomCode}</code> is
+          invalid or expired.
         </p>
         <Link to="/">
           <Button variant="secondary" size="sm" className="h-7 text-[13px]">
@@ -52,16 +52,9 @@ export function RoomRemoved({ onRejoin }: RoomRemovedProps) {
     <div className="bg-background flex h-screen items-center justify-center">
       <div className="max-w-xs space-y-4 text-center">
         <h2 className="text-sm font-semibold">You were removed from this room</h2>
-        <p className="text-muted-foreground text-[13px]">
-          The host removed you from the session.
-        </p>
+        <p className="text-muted-foreground text-[13px]">The host removed you from the session.</p>
         <div className="flex justify-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="h-7 text-[13px]"
-            onClick={onRejoin}
-          >
+          <Button variant="secondary" size="sm" className="h-7 text-[13px]" onClick={onRejoin}>
             Rejoin
           </Button>
           <Link to="/">

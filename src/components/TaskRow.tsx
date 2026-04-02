@@ -80,10 +80,7 @@ export function TaskRow({
           >
             {isLoadingRow ? (
               /* Blurred placeholder row while Jira details load */
-              <div
-                className="flex min-w-0 flex-col overflow-hidden select-none"
-                aria-hidden="true"
-              >
+              <div className="flex min-w-0 flex-col overflow-hidden select-none" aria-hidden="true">
                 <p className="text-foreground/70 truncate text-[13px] leading-snug blur-[4px]">
                   Lorem ipsum dolor sit amet
                 </p>

@@ -18,7 +18,8 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt --write",
     "format:check": "oxfmt --check",
-    "check": "oxlint && oxfmt --check"
+    "check": "oxlint && oxfmt --check",
+    "prepare": "husky"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
@@ -51,6 +52,7 @@
     "concurrently": "^9.2.1",
     "convex-test": "^0.0.44",
     "glob": "^13.0.6",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.1",
     "oxfmt": "^0.43.0",
     "oxlint": "^1.58.0",

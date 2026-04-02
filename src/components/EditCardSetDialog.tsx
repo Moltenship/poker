@@ -47,16 +47,22 @@ export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogP
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const { dragOverIndex, handleDragStart, handleDragOver, handleDragLeave, handleDrop, handleDragEnd } =
-    useDragReorder((fromIndex, toIndex) => {
-      setCards((prev) => {
-        const next = [...prev];
-        const [moved] = next.splice(fromIndex, 1);
-        next.splice(toIndex, 0, moved);
-        return next;
-      });
-      setPresetType("custom");
+  const {
+    dragOverIndex,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleDragEnd,
+  } = useDragReorder((fromIndex, toIndex) => {
+    setCards((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
     });
+    setPresetType("custom");
+  });
 
   const resetState = useCallback(() => {
     setCards(currentCardSet);

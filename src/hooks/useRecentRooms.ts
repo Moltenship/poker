@@ -52,10 +52,10 @@ export function useRecentRooms(): {
   /** Called from Room.tsx when the room data loads. */
   const trackRoom = (roomCode: string, name: string) => {
     const entry: RecentRoom = { _v: SCHEMA_VERSION, name, roomCode, visitedAt: Date.now() };
-    const updated = [
-      entry,
-      ...loadRooms().filter((r) => r.roomCode !== roomCode),
-    ].slice(0, MAX_ROOMS);
+    const updated = [entry, ...loadRooms().filter((r) => r.roomCode !== roomCode)].slice(
+      0,
+      MAX_ROOMS,
+    );
     saveRooms(updated);
     setRecentRooms(updated);
   };
@@ -72,11 +72,16 @@ export function useTrackRoom(roomCode: string | undefined, roomName: string | un
     if (!roomCode || !roomName) {
       return;
     }
-    const entry: RecentRoom = { _v: SCHEMA_VERSION, name: roomName, roomCode, visitedAt: Date.now() };
-    const updated = [
-      entry,
-      ...loadRooms().filter((r) => r.roomCode !== roomCode),
-    ].slice(0, MAX_ROOMS);
+    const entry: RecentRoom = {
+      _v: SCHEMA_VERSION,
+      name: roomName,
+      roomCode,
+      visitedAt: Date.now(),
+    };
+    const updated = [entry, ...loadRooms().filter((r) => r.roomCode !== roomCode)].slice(
+      0,
+      MAX_ROOMS,
+    );
     saveRooms(updated);
   }, [roomCode, roomName]);
 }

@@ -67,10 +67,7 @@ export function RoomHeader({
           <Button
             variant="ghost"
             size="icon-xs"
-            className={cn(
-              "text-muted-foreground",
-              isHost && "text-amber-600 dark:text-amber-500",
-            )}
+            className={cn("text-muted-foreground", isHost && "text-amber-600 dark:text-amber-500")}
             onClick={onToggleHost}
           >
             <Crown className="h-4 w-4" />
