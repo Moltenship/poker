@@ -203,6 +203,13 @@ export const revealVotes = sessionMutation({
     }
 
     await ctx.db.patch(args.roomId, { status: "revealed" });
+
+    // Mark the current task as estimated
+    const tasks = await getSortedTasksForRoom(ctx, args.roomId);
+    const currentTask = tasks[room.currentTaskIndex] ?? null;
+    if (currentTask) {
+      await ctx.db.patch(currentTask._id, { isEstimated: true });
+    }
   },
 });
 

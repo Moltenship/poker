@@ -48,6 +48,7 @@ export default defineSchema({
     ),
     jiraSprintSyncError: v.optional(v.string()),
     isManual: v.boolean(),
+    isEstimated: v.optional(v.boolean()),
   })
     .index("by_room", ["roomId"])
     .index("by_room_jira_key", ["roomId", "jiraKey"]),

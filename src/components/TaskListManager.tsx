@@ -1,5 +1,5 @@
 import { useAction, useMutation } from "convex/react";
-import { RotateCw, SlidersHorizontal, Trash2, User, X } from "lucide-react";
+import { Check, RotateCw, SlidersHorizontal, Trash2, User, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 
@@ -23,6 +23,7 @@ export interface Task {
   jiraKey?: string;
   hoursEstimate?: number;
   isManual: boolean;
+  isEstimated?: boolean;
 
   order: number;
 }
@@ -473,14 +474,26 @@ export function TaskListManager({
                                 </div>
                               )}
                             </div>
-                            {estimateText && (
-                              <Badge
-                                variant="secondary"
-                                className="h-4 shrink-0 rounded px-1 font-mono text-[10px]"
-                              >
-                                {estimateText}
-                              </Badge>
-                            )}
+                            <div className="flex shrink-0 items-center gap-1">
+                              {task.isEstimated && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="bg-green-500/15 text-green-600 dark:text-green-400 inline-flex size-4 items-center justify-center rounded-full">
+                                      <Check className="size-3" strokeWidth={3} />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Estimated</TooltipContent>
+                                </Tooltip>
+                              )}
+                              {estimateText && (
+                                <Badge
+                                  variant="secondary"
+                                  className="h-4 shrink-0 rounded px-1 font-mono text-[10px]"
+                                >
+                                  {estimateText}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
