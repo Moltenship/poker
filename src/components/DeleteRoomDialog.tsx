@@ -30,7 +30,9 @@ export function DeleteRoomDialog({
   const isMatch = confirmValue === roomName;
 
   const handleConfirm = async () => {
-    if (!isMatch || isDeleting) return;
+    if (!isMatch || isDeleting) {
+      return;
+    }
     setIsDeleting(true);
     try {
       await onConfirm();
@@ -66,7 +68,9 @@ export function DeleteRoomDialog({
             value={confirmValue}
             onChange={(e) => setConfirmValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") handleConfirm();
+              if (e.key === "Enter") {
+                handleConfirm();
+              }
             }}
             placeholder="Room name"
             autoFocus
