@@ -179,9 +179,7 @@ export const getVoteResults = query({
       .query("participants")
       .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
       .collect();
-    const hostIds = new Set(
-      participants.filter((p) => p.isHost).map((p) => p._id.toString()),
-    );
+    const hostIds = new Set(participants.filter((p) => p.isHost).map((p) => p._id.toString()));
 
     const votes = await ctx.db
       .query("votes")

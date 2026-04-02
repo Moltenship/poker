@@ -159,7 +159,9 @@ export default function Room() {
 
   // Detect removal: participantId is set but not found in loaded participants list
   const wasRemoved =
-    !!participantId && participants !== undefined && !participants.some((p) => p._id === participantId);
+    Boolean(participantId) &&
+    participants !== undefined &&
+    !participants.some((p) => p._id === participantId);
 
   const showVoteStatus = room?.status === "voting";
   const autoRejoinKeyRef = useRef<string | null>(null);
@@ -641,7 +643,6 @@ export default function Room() {
             </>
           )}
         </div>
-
       </main>
 
       {/* Participants */}
@@ -660,12 +661,17 @@ export default function Room() {
             currentUserIsHost={isHost}
             currentParticipantId={participantId ?? undefined}
             onRemoveParticipant={(id) => {
-              removeParticipant({ roomId: room._id, targetParticipantId: id as Id<"participants"> }).catch(() => {});
+              removeParticipant({
+                roomId: room._id,
+                targetParticipantId: id as Id<"participants">,
+              }).catch(() => {});
             }}
             onUpdateDisplayName={(name) => {
               updateDisplayName({ roomId: room._id, displayName: name })
                 .then(() => {
-                  if (participantId) setIdentity(participantId, name);
+                  if (participantId) {
+                    setIdentity(participantId, name);
+                  }
                 })
                 .catch(() => {});
             }}
@@ -688,7 +694,7 @@ export default function Room() {
                       )}
                     />
                     {p.isHost && (
-                      <span className="text-amber-600 dark:text-amber-500 absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border-2 border-[var(--sidebar)] bg-[var(--sidebar)]">
+                      <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border-2 border-[var(--sidebar)] bg-[var(--sidebar)] text-amber-600 dark:text-amber-500">
                         <Crown className="size-2.5" />
                       </span>
                     )}

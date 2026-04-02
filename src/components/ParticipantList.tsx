@@ -38,7 +38,7 @@ export function ParticipantList({
     setEditingName(currentName);
   };
 
-  const handleSaveName = (id: string) => {
+  const handleSaveName = (_id: string) => {
     if (editingName.trim() && onUpdateDisplayName) {
       onUpdateDisplayName(editingName.trim());
     }
@@ -66,7 +66,7 @@ export function ParticipantList({
               return (
                 <div
                   key={p._id}
-                  className="flex items-center justify-between px-4 py-1.5 group"
+                  className="group flex items-center justify-between px-4 py-1.5"
                   onMouseEnter={() => setHoveredId(p._id)}
                   onMouseLeave={() => setHoveredId(null)}
                 >
@@ -82,8 +82,12 @@ export function ParticipantList({
                         onChange={(e) => setEditingName(e.target.value)}
                         onBlur={() => handleSaveName(p._id)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveName(p._id);
-                          if (e.key === "Escape") setEditingId(null);
+                          if (e.key === "Enter") {
+                            handleSaveName(p._id);
+                          }
+                          if (e.key === "Escape") {
+                            setEditingId(null);
+                          }
                         }}
                         className="bg-muted border-primary text-foreground min-w-0 flex-1 rounded border px-1 py-0.5 text-[13px]"
                       />
@@ -98,7 +102,7 @@ export function ParticipantList({
                       </span>
                     )}
                     {p.isHost && (
-                      <Crown className="text-amber-600 dark:text-amber-500 h-3.5 w-3.5 shrink-0" />
+                      <Crown className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-500" />
                     )}
                   </div>
                   <div className="flex items-center gap-1">

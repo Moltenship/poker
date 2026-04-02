@@ -77,9 +77,5 @@
     "no-shadow": "off",
     "require-await": "off"
   },
-  "ignorePatterns": [
-    "convex/_generated/**",
-    "dist/**",
-    "node_modules/**"
-  ]
+  "ignorePatterns": ["convex/_generated/**", "dist/**", "node_modules/**"]
 }

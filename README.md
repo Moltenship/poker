@@ -15,15 +15,15 @@ A real-time planning poker app for agile teams. Estimate tasks together using co
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, React Router, TypeScript |
-| Styling | Tailwind CSS 4, shadcn/ui |
-| Backend | [Convex](https://convex.dev) (real-time database + serverless functions) |
-| Build | Vite |
-| Testing | Vitest, React Testing Library |
-| Linting | OxLint, OxFmt |
-| Deployment | Vercel |
+| Layer      | Technology                                                               |
+| ---------- | ------------------------------------------------------------------------ |
+| Frontend   | React 19, React Router, TypeScript                                       |
+| Styling    | Tailwind CSS 4, shadcn/ui                                                |
+| Backend    | [Convex](https://convex.dev) (real-time database + serverless functions) |
+| Build      | Vite                                                                     |
+| Testing    | Vitest, React Testing Library                                            |
+| Linting    | OxLint, OxFmt                                                            |
+| Deployment | Vercel                                                                   |
 
 ## Getting Started
 
@@ -77,19 +77,19 @@ Generate an API token at [id.atlassian.com/manage-profile/security/api-tokens](h
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start frontend + backend in development mode |
-| `npm run dev:frontend` | Start Vite dev server only |
-| `npm run dev:backend` | Start Convex dev server only |
-| `npm run build` | Type-check and build for production |
-| `npm run preview` | Preview production build locally |
-| `npm test` | Run tests |
-| `npm run lint` | Lint with OxLint |
-| `npm run lint:fix` | Lint and auto-fix |
-| `npm run format` | Format with OxFmt |
-| `npm run format:check` | Check formatting |
-| `npm run check` | Lint + format check |
+| Command                | Description                                  |
+| ---------------------- | -------------------------------------------- |
+| `npm run dev`          | Start frontend + backend in development mode |
+| `npm run dev:frontend` | Start Vite dev server only                   |
+| `npm run dev:backend`  | Start Convex dev server only                 |
+| `npm run build`        | Type-check and build for production          |
+| `npm run preview`      | Preview production build locally             |
+| `npm test`             | Run tests                                    |
+| `npm run lint`         | Lint with OxLint                             |
+| `npm run lint:fix`     | Lint and auto-fix                            |
+| `npm run format`       | Format with OxFmt                            |
+| `npm run format:check` | Check formatting                             |
+| `npm run check`        | Lint + format check                          |
 
 ## Project Structure
 

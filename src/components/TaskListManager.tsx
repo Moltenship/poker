@@ -478,7 +478,7 @@ export function TaskListManager({
                               {task.isEstimated && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <span className="bg-green-500/15 text-green-600 dark:text-green-400 inline-flex size-4 items-center justify-center rounded-full">
+                                    <span className="inline-flex size-4 items-center justify-center rounded-full bg-green-500/15 text-green-600 dark:text-green-400">
                                       <Check className="size-3" strokeWidth={3} />
                                     </span>
                                   </TooltipTrigger>
