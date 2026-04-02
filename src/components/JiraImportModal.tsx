@@ -1,7 +1,8 @@
 import { useAction, useMutation } from "convex/react";
 import { AlertTriangle, CheckCircle2, ExternalLink, Loader2, RotateCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { FilterChip } from "@/components/FilterChip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,32 +44,42 @@ export function JiraImportModal({
   const importTasks = useMutation(api.jira.importSelectedTasks);
   const saveSprintFilter = useMutation(api.rooms.setSprintFilter);
 
-  const loadIssues = (ids: number[]) =>
-    fetchBacklog({ jiraProjectKey: projectKey, sprintIds: ids.length > 0 ? ids : undefined });
+  const loadIssues = useCallback(
+    (ids: number[]) =>
+      fetchBacklog({ jiraProjectKey: projectKey, sprintIds: ids.length > 0 ? ids : undefined }),
+    [fetchBacklog, projectKey],
+  );
+
+  /** Shared data loader used both on open and on retry. */
+  const loadData = useCallback(
+    (ids: number[]) => {
+      setStep("loading");
+      return Promise.all([fetchSprints({ projectKey }), loadIssues(ids)])
+        .then(([sprintsResult, issuesResult]) => {
+          setSprints(sprintsResult);
+          setIssues(issuesResult);
+          setSelected(new Set(issuesResult.map((i) => i.key)));
+          setStep("select");
+        })
+        .catch((err: unknown) => {
+          setError(err instanceof Error ? err.message : "Failed to load");
+          setStep("error");
+        });
+    },
+    [fetchSprints, loadIssues, projectKey],
+  );
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
     const ids = sprintFilter.length === 0 ? [BACKLOG_FILTER_ID] : sprintFilter;
-    setStep("loading");
     setSelectedSprintIds(ids);
     setIssues([]);
     setSelected(new Set());
     setError("");
-
-    Promise.all([fetchSprints({ projectKey }), loadIssues(ids)])
-      .then(([sprintsResult, issuesResult]) => {
-        setSprints(sprintsResult);
-        setIssues(issuesResult);
-        setSelected(new Set(issuesResult.map((i) => i.key)));
-        setStep("select");
-      })
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Failed to load");
-        setStep("error");
-      });
-  }, [isOpen]);
+    loadData(ids);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateSprintFilter = (ids: number[]) => {
     setSelectedSprintIds(ids);
@@ -145,67 +156,57 @@ export function JiraImportModal({
         </DialogHeader>
 
         {/* Loading */}
-        {step === "loading" && (
+        {step === "loading" ? (
           <div className="flex flex-col items-center gap-3 py-10">
             <Loader2 className="text-muted-foreground size-7 animate-spin" />
-            <p className="text-muted-foreground text-sm">Loading sprints and backlog…</p>
+            <p className="text-muted-foreground text-sm">Loading sprints and backlog\u2026</p>
           </div>
-        )}
+        ) : null}
 
         {/* Select */}
-        {step === "select" && (
+        {step === "select" ? (
           <div className="flex min-w-0 flex-col gap-3">
             {/* Sprint filter */}
-            {sprints.length > 0 && (
+            {sprints.length > 0 ? (
               <>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                       Sprints
                     </span>
-                    {selectedSprintIds.length > 0 && (
+                    {selectedSprintIds.length > 0 ? (
                       <button
                         className="text-muted-foreground hover:text-foreground text-xs transition-colors"
                         onClick={() => updateSprintFilter([])}
                       >
                         Clear
                       </button>
-                    )}
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    <button
+                    <FilterChip
+                      selected={selectedSprintIds.includes(BACKLOG_FILTER_ID)}
                       onClick={() => toggleSprint(BACKLOG_FILTER_ID)}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
-                        selectedSprintIds.includes(BACKLOG_FILTER_ID)
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                      )}
                     >
                       Backlog
-                    </button>
+                    </FilterChip>
                     {sprints.map((sprint) => (
-                      <button
+                      <FilterChip
                         key={sprint.id}
+                        selected={selectedSprintIds.includes(sprint.id)}
                         onClick={() => toggleSprint(sprint.id)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
-                          selectedSprintIds.includes(sprint.id)
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                        )}
                       >
-                        {sprint.state === "active" && (
+                        {sprint.state === "active" ? (
                           <span className="size-1.5 shrink-0 rounded-full bg-green-500" />
-                        )}
+                        ) : null}
                         {sprint.name}
-                      </button>
+                      </FilterChip>
                     ))}
                   </div>
                 </div>
                 <Separator />
               </>
-            )}
+            ) : null}
 
             {/* Issues */}
             {issues.length === 0 && !issuesLoading ? (
@@ -226,7 +227,7 @@ export function JiraImportModal({
                     {selected.size === issues.length ? "Deselect all" : "Select all"}
                   </button>
                   <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                    {issuesLoading && <Loader2 className="size-3 animate-spin" />}
+                    {issuesLoading ? <Loader2 className="size-3 animate-spin" /> : null}
                     {selected.size} / {issues.length} selected
                   </span>
                 </div>
@@ -290,18 +291,18 @@ export function JiraImportModal({
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Saving */}
-        {step === "saving" && (
+        {step === "saving" ? (
           <div className="flex flex-col items-center gap-3 py-10">
             <Loader2 className="text-muted-foreground size-7 animate-spin" />
-            <p className="text-muted-foreground text-sm">Adding tasks to room…</p>
+            <p className="text-muted-foreground text-sm">Adding tasks to room\u2026</p>
           </div>
-        )}
+        ) : null}
 
         {/* Success */}
-        {step === "success" && (
+        {step === "success" ? (
           <div className="flex flex-col items-center gap-4 py-8 text-center">
             <CheckCircle2 className="size-12 text-green-500" />
             <div className="flex flex-col gap-1">
@@ -314,10 +315,10 @@ export function JiraImportModal({
               Close
             </Button>
           </div>
-        )}
+        ) : null}
 
         {/* Error */}
-        {step === "error" && (
+        {step === "error" ? (
           <div className="flex flex-col items-center gap-4 py-8 text-center">
             <AlertTriangle className="text-destructive size-12" />
             <div className="flex flex-col gap-1">
@@ -327,25 +328,12 @@ export function JiraImportModal({
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => {
-                setStep("loading");
-                Promise.all([fetchSprints({ projectKey }), loadIssues(selectedSprintIds)])
-                  .then(([s, i]) => {
-                    setSprints(s);
-                    setIssues(i);
-                    setSelected(new Set(i.map((x) => x.key)));
-                    setStep("select");
-                  })
-                  .catch((err: unknown) => {
-                    setError(err instanceof Error ? err.message : "Failed to load");
-                    setStep("error");
-                  });
-              }}
+              onClick={() => loadData(selectedSprintIds)}
             >
               Try Again
             </Button>
           </div>
-        )}
+        ) : null}
       </DialogContent>
     </Dialog>
   );

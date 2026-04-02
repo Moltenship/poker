@@ -1,10 +1,5 @@
 import { useConvexConnectionState } from "convex/react";
 
-export function ConnectionBanner() {
-  // No-op: replaced by ConnectionDot in headers
-  return null;
-}
-
 export function ConnectionDot() {
   const connectionState = useConvexConnectionState();
   const isConnected = connectionState.isWebSocketConnected;

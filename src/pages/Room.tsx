@@ -1,116 +1,33 @@
 import { useQuery } from "convex/react";
-import {
-  ArrowLeft,
-  Check,
-  Crown,
-  ExternalLink,
-  Link as LinkIcon,
-  PanelRightClose,
-  PanelRightOpen,
-  Users,
-} from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { Streamdown } from "streamdown";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 
 import { CardDeck } from "@/components/CardDeck";
-import { ConnectionDot } from "@/components/ConnectionBanner";
-import { EditCardSetDialog } from "@/components/EditCardSetDialog";
+import { CollapsedParticipantList } from "@/components/CollapsedParticipantList";
 import { IdentityFlow } from "@/components/IdentityFlow";
 import { ParticipantList } from "@/components/ParticipantList";
 import { ResultsPanel } from "@/components/ResultsPanel";
+import { RoomHeader } from "@/components/RoomHeader";
+import { RoomLobby } from "@/components/RoomLobby";
+import { RoomLoading, RoomNotFound, RoomRemoved } from "@/components/RoomStatusScreens";
 import { SessionKickedBanner } from "@/components/SessionKickedBanner";
+import { TaskDetails } from "@/components/TaskDetails";
 import { TaskListManager } from "@/components/TaskListManager";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useIdentity } from "@/hooks/useIdentity";
 import { useJiraDetails } from "@/hooks/useJiraDetails";
+import { useTrackRoom } from "@/hooks/useRecentRooms";
 import { useSessionId, useSessionMutation } from "@/hooks/useSession";
+import { useTaskUrlSync } from "@/hooks/useTaskUrlSync";
 import { cn } from "@/lib/utils";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
-/** Image component with a skeleton placeholder to prevent layout shifts.
- *  Dimensions are read from a `#dim=WxH` URL hash fragment appended by the server.
- *  Clicking the image opens a full-size preview dialog. */
-function DescriptionImage({ className: _className, src, ...props }: React.ComponentProps<"img">) {
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
-  const [preview, setPreview] = useState(false);
-
-  // Parse server-provided dimensions from URL hash (e.g., #dim=800x600)
-  const { cleanSrc, width, height } = useMemo(() => {
-    if (!src) {
-      return { cleanSrc: src };
-    }
-    const hashIdx = src.indexOf("#dim=");
-    if (hashIdx === -1) {
-      return { cleanSrc: src };
-    }
-    const dimStr = src.slice(hashIdx + 5);
-    const [w, h] = dimStr.split("x").map(Number);
-    return {
-      cleanSrc: src.slice(0, hashIdx),
-      height: h || undefined,
-      width: w || undefined,
-    };
-  }, [src]);
-
-  if (error) {
-    return <span className="text-muted-foreground text-xs italic">Image not available</span>;
-  }
-
-  return (
-    <>
-      {!loaded && (
-        <span
-          className="bg-muted block animate-pulse rounded-lg"
-          style={
-            width && height
-              ? { aspectRatio: `${width}/${height}`, maxWidth: width, width: "100%" }
-              : { height: 128, width: 192 }
-          }
-        />
-      )}
-      <img
-        {...props}
-        src={cleanSrc}
-        width={width}
-        height={height}
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
-        onClick={() => setPreview(true)}
-        className={cn(
-          "max-w-full cursor-pointer rounded-lg",
-          loaded
-            ? "opacity-100 transition-opacity duration-300"
-            : "!m-0 !h-0 !p-0 overflow-hidden opacity-0",
-        )}
-        style={width && height ? { height: "auto" } : undefined}
-      />
-
-      <Dialog open={preview} onOpenChange={setPreview}>
-        <DialogContent
-          className="w-auto max-w-[calc(100vw-2rem)] gap-0 border-0 bg-transparent p-0 shadow-none sm:max-w-[calc(100vw-2rem)]"
-          aria-describedby={undefined}
-        >
-          <DialogTitle className="sr-only">{props.alt || "Image preview"}</DialogTitle>
-          <img
-            src={cleanSrc}
-            alt={props.alt}
-            className="max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] rounded-lg object-contain"
-          />
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
-const streamdownComponents = { img: DescriptionImage };
+/** Stable empty arrays to avoid re-render from new references each render. */
+const EMPTY_SPRINT_FILTER: number[] = [];
+const EMPTY_TYPE_FILTER: string[] = [];
 
 export default function Room() {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -165,42 +82,15 @@ export default function Room() {
 
   const showVoteStatus = room?.status === "voting";
   const autoRejoinKeyRef = useRef<string | null>(null);
-  const [currentVote, setCurrentVote] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (myVote !== undefined) {
-      setCurrentVote(myVote);
-    }
-  }, [myVote]);
+  // Derive currentVote from server state (no useEffect sync needed).
+  // Optimistic vote stores the user's selection while the server round-trips.
+  const [optimisticVote, setOptimisticVote] = useState<string | null>(null);
+  const currentVote = myVote !== undefined ? myVote : optimisticVote;
 
-  useEffect(() => {
-    if (room?.name) {
-      document.title = `${room.name} — Planning Poker`;
-    }
-    return () => {
-      document.title = "Planning Poker";
-    };
-  }, [room?.name]);
+  useDocumentTitle(room?.name);
+  useTrackRoom(roomCode, room?.name);
 
-  // Track room in "Your rooms" localStorage list
-  useEffect(() => {
-    if (!room?.name || !roomCode) {
-      return;
-    }
-    try {
-      const key = "poker_recent_rooms";
-      const stored = JSON.parse(localStorage.getItem(key) || "[]");
-      const entry = { name: room.name, roomCode, visitedAt: Date.now() };
-      const updated = [
-        entry,
-        ...stored.filter((r: { roomCode: string }) => r.roomCode !== roomCode),
-      ].slice(0, 5);
-      localStorage.setItem(key, JSON.stringify(updated));
-    } catch {
-      /* Ignore */
-    }
-  }, [room?.name, roomCode]);
-  const [copied, setCopied] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(() => {
     try {
       return localStorage.getItem("participants_sidebar_open") !== "false";
@@ -236,94 +126,17 @@ export default function Room() {
       });
   }, [displayName, joinRoom, participantId, room?._id, setIdentity]);
 
-  // Heartbeat: keep isConnected alive; leave on unmount
-  useEffect(() => {
-    if (!room?._id) {
-      return;
-    }
-    const send = () => heartbeat({ roomId: room._id }).catch(() => {});
-    send();
-    const interval = setInterval(send, 25_000);
-    return () => {
-      clearInterval(interval);
-      leaveRoom({ roomId: room._id }).catch(() => {});
-    };
-  }, [room?._id, heartbeat, leaveRoom]);
+  useHeartbeat(room?._id, heartbeat, leaveRoom);
+  useTaskUrlSync(roomCode, room, tasks, currentTask?._id, taskIdentifier);
 
-  // Sync URL to current task
-  const navigate = useNavigate();
-  const prevTaskIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    // Don't navigate until data is loaded
-    if (room === undefined || tasks === undefined) {
-      return;
-    }
-
-    const currentId = currentTask?._id ?? null;
-
-    // Only navigate when the server's current task actually changed
-    if (prevTaskIdRef.current === currentId) {
-      return;
-    }
-    prevTaskIdRef.current = currentId;
-
-    const targetPath = taskIdentifier
-      ? `/room/${roomCode}/task/${taskIdentifier}`
-      : `/room/${roomCode}`;
-
-    navigate(targetPath, { replace: true });
-  }, [currentTask?._id, taskIdentifier, roomCode, navigate, room, tasks]);
-
-  const handleCopyLink = async () => {
-    const link = `${window.location.origin}/room/${roomCode}`;
-    try {
-      await navigator.clipboard.writeText(link);
-    } catch {
-      const input = document.createElement("input");
-      input.value = link;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand("copy");
-      document.body.removeChild(input);
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  // --- Early returns for status screens ---
 
   if (room === undefined) {
-    return (
-      <div
-        className="bg-background flex h-screen items-center justify-center"
-        data-testid="room-loading"
-      >
-        <div className="flex flex-col items-center gap-3">
-          <div className="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent" />
-          <p className="text-muted-foreground text-[13px]">Loading...</p>
-        </div>
-      </div>
-    );
+    return <RoomLoading />;
   }
 
   if (room === null) {
-    return (
-      <div className="bg-background flex h-screen items-center justify-center">
-        <div className="max-w-xs text-center">
-          <h2 className="mb-1 text-sm font-semibold">Room not found</h2>
-          <p className="text-muted-foreground mb-4 text-[13px]">
-            Code{" "}
-            <code className="bg-muted rounded px-1 py-0.5 font-mono text-[12px]">{roomCode}</code>{" "}
-            is invalid or expired.
-          </p>
-          <Link to="/">
-            <Button variant="secondary" size="sm" className="h-7 text-[13px]">
-              <ArrowLeft className="mr-1.5 h-3 w-3" />
-              Home
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
+    return <RoomNotFound roomCode={roomCode} />;
   }
 
   const handleStartVoting = async () => {
@@ -358,32 +171,7 @@ export default function Room() {
   }
 
   if (wasRemoved) {
-    return (
-      <div className="bg-background flex h-screen items-center justify-center">
-        <div className="max-w-xs space-y-4 text-center">
-          <h2 className="text-sm font-semibold">You were removed from this room</h2>
-          <p className="text-muted-foreground text-[13px]">
-            The host removed you from the session.
-          </p>
-          <div className="flex justify-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-7 text-[13px]"
-              onClick={() => clearIdentity()}
-            >
-              Rejoin
-            </Button>
-            <Link to="/">
-              <Button variant="outline" size="sm" className="h-7 text-[13px]">
-                <ArrowLeft className="mr-1.5 h-3 w-3" />
-                Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return <RoomRemoved onRejoin={() => clearIdentity()} />;
   }
 
   return (
@@ -396,8 +184,8 @@ export default function Room() {
           tasks={tasks || []}
           jiraEnabled={room.jiraEnabled ?? false}
           projectKey={room.jiraProjectKey ?? "BRV"}
-          sprintFilter={room.jiraSprintFilter ?? []}
-          typeFilter={room.jiraTypeFilter ?? []}
+          sprintFilter={room.jiraSprintFilter ?? EMPTY_SPRINT_FILTER}
+          typeFilter={room.jiraTypeFilter ?? EMPTY_TYPE_FILTER}
         />
       </aside>
 
@@ -412,105 +200,23 @@ export default function Room() {
           />
         )}
 
-        <header className="flex h-11 shrink-0 items-center gap-2 px-4">
-          <Link
-            to="/"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Home"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-          </Link>
-          <span className="truncate text-[13px] font-medium">{room.name}</span>
-          {room.jiraProjectKey && (
-            <code className="text-muted-foreground bg-muted shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px]">
-              {room.jiraProjectKey}
-            </code>
-          )}
-          <EditCardSetDialog roomId={room._id} currentCardSet={room.cardSet} />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className={cn(
-                  "text-muted-foreground",
-                  isHost && "text-amber-600 dark:text-amber-500",
-                )}
-                onClick={() => toggleHost({ roomId: room._id }).catch(() => {})}
-              >
-                <Crown className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{isHost ? "Become Voter" : "Become Host"}</TooltipContent>
-          </Tooltip>
-          <div className="ml-auto flex items-center gap-1.5">
-            <code className="text-muted-foreground bg-muted rounded px-1.5 py-0.5 font-mono text-[11px]">
-              {room.roomCode}
-            </code>
-            <button
-              onClick={handleCopyLink}
-              className="text-muted-foreground hover:bg-accent hover:text-foreground flex h-6 items-center gap-1 rounded px-1.5 text-[11px] transition-colors"
-            >
-              {copied ? (
-                <>
-                  <Check className="text-primary h-3 w-3" />
-                  <span className="text-primary">Copied</span>
-                </>
-              ) : (
-                <>
-                  <LinkIcon className="h-3 w-3" />
-                  <span className="hidden sm:inline">Invite</span>
-                </>
-              )}
-            </button>
-            <div className="bg-border mx-0.5 h-4 w-px" />
-            <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
-              <Users className="h-3 w-3" />
-              {participants?.length ?? 0}
-            </div>
-            <div className="bg-border mx-0.5 h-4 w-px" />
-            <ConnectionDot />
-            <ThemeToggle />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground hidden md:flex"
-                  onClick={() => toggleParticipants(!participantsOpen)}
-                >
-                  {participantsOpen ? <PanelRightClose /> : <PanelRightOpen />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {participantsOpen ? "Hide participants" : "Show participants"}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </header>
+        <RoomHeader
+          room={room}
+          isHost={isHost}
+          participantCount={participants?.length ?? 0}
+          participantsOpen={participantsOpen}
+          onToggleHost={() => toggleHost({ roomId: room._id }).catch(() => {})}
+          onToggleParticipants={toggleParticipants}
+        />
 
         <div className="flex flex-1 flex-col overflow-auto">
-          {room.status === "lobby" && (
-            <div className="flex flex-1 items-center justify-center p-6" data-testid="room-lobby">
-              <div className="max-w-xs space-y-4 text-center">
-                <h2 className="text-base font-semibold">Ready to estimate?</h2>
-                <p className="text-muted-foreground text-[13px]">
-                  Share the invite link, add tasks, then start.
-                </p>
-                <Button
-                  className="h-8 w-full text-[13px]"
-                  onClick={handleStartVoting}
-                  disabled={!canStartVoting}
-                >
-                  Start Voting
-                </Button>
-              </div>
-            </div>
-          )}
+          {room.status === "lobby" ? (
+            <RoomLobby canStartVoting={Boolean(canStartVoting)} onStartVoting={handleStartVoting} />
+          ) : null}
 
-          {(room.status === "voting" || room.status === "revealed") && participantId && (
+          {(room.status === "voting" || room.status === "revealed") && participantId ? (
             <>
-              {room.status === "voting" && currentTask && (
+              {room.status === "voting" && currentTask ? (
                 <div className="bg-background/95 sticky top-0 z-10 flex w-full justify-center py-3 backdrop-blur-sm">
                   {isHost ? (
                     <ResultsPanel
@@ -532,11 +238,11 @@ export default function Room() {
                       roomStatus={room.status}
                       taskId={currentTask._id}
                       participantId={participantId}
-                      onVoteChange={setCurrentVote}
+                      onVoteChange={setOptimisticVote}
                     />
                   )}
                 </div>
-              )}
+              ) : null}
               <div
                 data-testid="voting-area"
                 className={cn(
@@ -544,7 +250,7 @@ export default function Room() {
                   room.status === "voting" ? "pb-48" : "pb-6",
                 )}
               >
-                {room.status === "revealed" && currentTask && (
+                {room.status === "revealed" && currentTask ? (
                   <ResultsPanel
                     roomId={room._id}
                     taskId={currentTask._id}
@@ -557,91 +263,17 @@ export default function Room() {
                     projectKey={room.jiraProjectKey}
                     currentSprintName={currentEnriched?.sprintName}
                   />
-                )}
-                {currentTask &&
-                  (() => {
-                    const isLoadingDetails =
-                      jiraLoading && Boolean(currentTask.jiraKey) && !currentEnriched;
-                    return (
-                      <div className="w-full max-w-3xl">
-                        {isLoadingDetails ? (
-                          /* Blurred lorem-ipsum placeholder that mimics a real Jira ticket */
-                          <div className="select-none" aria-hidden="true">
-                            <h2 className="text-lg font-semibold blur-[6px]">
-                              {currentTask.jiraKey && (
-                                <span className="text-muted-foreground font-normal whitespace-nowrap">
-                                  {currentTask.jiraKey}:&nbsp;
-                                </span>
-                              )}
-                              Lorem ipsum dolor sit amet consectetur
-                            </h2>
-                            <div className="mt-5 space-y-4 text-left text-[13px] blur-[6px]">
-                              <div>
-                                <h3 className="mb-1 text-base font-semibold">Description</h3>
-                                <p className="text-muted-foreground leading-relaxed">
-                                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-                                  eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                </p>
-                              </div>
-                              <div>
-                                <h3 className="mb-1 text-base font-semibold">
-                                  Acceptance criteria
-                                </h3>
-                                <ul className="text-muted-foreground list-disc space-y-1 pl-5">
-                                  <li>Ut enim ad minim veniam quis nostrud exercitation</li>
-                                  <li>Duis aute irure dolor in reprehenderit</li>
-                                  <li>Excepteur sint occaecat cupidatat non proident</li>
-                                </ul>
-                              </div>
-                              <div>
-                                <h3 className="mb-1 text-base font-semibold">Stakeholders</h3>
-                                <p className="text-muted-foreground">@Lorem Ipsum @Dolor Sit</p>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          /* Real content — fades in when ready */
-                          <div className="animate-in fade-in duration-300">
-                            <h2 className="text-lg font-semibold">
-                              {currentEnriched?.url ? (
-                                <a
-                                  href={currentEnriched.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="underline-offset-2 hover:underline"
-                                >
-                                  {currentTask.jiraKey && (
-                                    <span className="text-muted-foreground font-normal whitespace-nowrap">
-                                      {currentTask.jiraKey}:&nbsp;
-                                    </span>
-                                  )}
-                                  {currentEnriched?.title ??
-                                    currentTask.title ??
-                                    currentTask.jiraKey}
-                                  <ExternalLink className="text-muted-foreground ml-1 inline size-3.5 align-[-1px]" />
-                                </a>
-                              ) : (
-                                (currentEnriched?.title ??
-                                currentTask.title ??
-                                currentTask.jiraKey ??
-                                "Untitled")
-                              )}
-                            </h2>
-                            {currentEnriched?.description && (
-                              <div className="mt-5 text-left text-[13px]">
-                                <Streamdown mode="static" components={streamdownComponents}>
-                                  {currentEnriched.description}
-                                </Streamdown>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
+                ) : null}
+                {currentTask ? (
+                  <TaskDetails
+                    task={currentTask}
+                    enriched={currentEnriched}
+                    jiraLoading={jiraLoading}
+                  />
+                ) : null}
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </main>
 
@@ -677,38 +309,11 @@ export default function Room() {
             }}
           />
         ) : (
-          <div className="hidden flex-col items-center gap-3 pt-3 md:flex">
-            {(participants || []).map((p) => (
-              <Tooltip key={p._id}>
-                <TooltipTrigger asChild>
-                  <div className="relative">
-                    <Avatar className="size-10">
-                      <AvatarFallback className="text-sm font-medium">
-                        {p.displayName.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span
-                      className={cn(
-                        "absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-[var(--sidebar)]",
-                        p.isConnected ? "bg-emerald-500" : "bg-muted-foreground/40",
-                      )}
-                    />
-                    {p.isHost && (
-                      <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border-2 border-[var(--sidebar)] bg-[var(--sidebar)] text-amber-600 dark:text-amber-500">
-                        <Crown className="size-2.5" />
-                      </span>
-                    )}
-                    {showVoteStatus && votedIds.includes(p._id) && (
-                      <span className="bg-primary absolute -bottom-1 -left-1 flex size-4 items-center justify-center rounded-full border-2 border-[var(--sidebar)]">
-                        <Check className="text-primary-foreground size-2.5" strokeWidth={3} />
-                      </span>
-                    )}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="left">{p.displayName}</TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
+          <CollapsedParticipantList
+            participants={participants || []}
+            showVoteStatus={showVoteStatus}
+            votedIds={votedIds}
+          />
         )}
       </aside>
     </div>

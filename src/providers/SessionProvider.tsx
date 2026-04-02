@@ -1,4 +1,4 @@
-import { type ReactNode, createContext, useContext, useMemo } from "react";
+import { type ReactNode, createContext, useMemo } from "react";
 
 import { getSessionId } from "@/hooks/useSession";
 
@@ -8,8 +8,4 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const sessionId = useMemo(() => getSessionId(), []);
 
   return <SessionContext.Provider value={sessionId}>{children}</SessionContext.Provider>;
-}
-
-export function useSession() {
-  return useContext(SessionContext);
 }
