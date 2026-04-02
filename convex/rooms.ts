@@ -1,29 +1,30 @@
 import { v } from "convex/values";
+import { nanoid } from "nanoid";
+
 import { internalMutation, mutation, query } from "./_generated/server";
 import { sessionMutation, sessionQuery } from "./lib/sessions";
-import { nanoid } from "nanoid";
 
 export const createRoom = sessionMutation({
   args: {
-    name: v.string(),
     cardSet: v.array(v.string()),
-    jiraProjectKey: v.optional(v.string()),
     jiraEnabled: v.optional(v.boolean()),
+    jiraProjectKey: v.optional(v.string()),
+    name: v.string(),
   },
   handler: async (ctx, args) => {
     const roomCode = nanoid(8);
     const roomId = await ctx.db.insert("rooms", {
+      cardSet: args.cardSet,
+      createdAt: Date.now(),
+      createdBy: ctx.sessionId,
+      currentTaskIndex: 0,
+      jiraEnabled: args.jiraEnabled,
+      jiraProjectKey: args.jiraProjectKey,
       name: args.name,
       roomCode,
-      cardSet: args.cardSet,
-      jiraProjectKey: args.jiraProjectKey,
-      jiraEnabled: args.jiraEnabled,
       status: "lobby",
-      currentTaskIndex: 0,
-      createdBy: ctx.sessionId,
-      createdAt: Date.now(),
     });
-    return { roomId, roomCode };
+    return { roomCode, roomId };
   },
 });
 
@@ -40,9 +41,7 @@ export const getRoom = query({
 
 export const getRoomById = query({
   args: { roomId: v.id("rooms") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.roomId);
-  },
+  handler: async (ctx, args) => await ctx.db.get(args.roomId),
 });
 
 export const setSprintFilter = mutation({
@@ -66,7 +65,7 @@ export const enableJiraOnAllRooms = internalMutation({
         count++;
       }
     }
-    return { updated: count, total: rooms.length };
+    return { total: rooms.length, updated: count };
   },
 });
 
@@ -82,12 +81,14 @@ export const setTypeFilter = mutation({
 
 export const updateCardSet = mutation({
   args: {
-    roomId: v.id("rooms"),
     cardSet: v.array(v.string()),
+    roomId: v.id("rooms"),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
-    if (!room) throw new Error("Room not found");
+    if (!room) {
+      throw new Error("Room not found");
+    }
     if (args.cardSet.length === 0) {
       throw new Error("Card set must have at least one card");
     }
@@ -103,9 +104,7 @@ export const listMyRooms = sessionQuery({
       .withIndex("by_session", (q) => q.eq("sessionId", ctx.sessionId))
       .collect();
 
-    const rooms = await Promise.all(
-      participants.map((p) => ctx.db.get(p.roomId))
-    );
+    const rooms = await Promise.all(participants.map((p) => ctx.db.get(p.roomId)));
 
     return rooms
       .filter((r): r is NonNullable<typeof r> => r !== null)

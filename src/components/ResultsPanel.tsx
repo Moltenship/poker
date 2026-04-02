@@ -1,15 +1,17 @@
-import type { Id } from "../../convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+
 import { useSessionMutation } from "@/hooks/useSession";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Separator } from "./ui/separator";
-import { VoteDistribution } from "./VoteDistribution";
+import { findNearestCard } from "@/lib/average";
+
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { JiraEstimateInput } from "./JiraEstimateInput";
 import { JiraSprintSelector } from "./JiraSprintSelector";
-import { findNearestCard } from "@/lib/average";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Progress } from "./ui/progress";
+import { Separator } from "./ui/separator";
+import { VoteDistribution } from "./VoteDistribution";
 
 export interface ResultsPanelProps {
   roomId: Id<"rooms">;
@@ -22,20 +24,31 @@ export interface ResultsPanelProps {
   currentSprintName?: string;
 }
 
-export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantCount, votedCount, projectKey, currentSprintName }: ResultsPanelProps) {
+export function ResultsPanel({
+  roomId,
+  taskId,
+  roomStatus,
+  cardSet,
+  participantCount,
+  votedCount,
+  projectKey,
+  currentSprintName,
+}: ResultsPanelProps) {
   const revealVotes = useSessionMutation(api.voting.revealVotes);
   const resetVoting = useSessionMutation(api.voting.resetVoting);
   const advanceToNextTask = useSessionMutation(api.voting.advanceToNextTask);
 
   const voteResults = useQuery(
     api.voting.getVoteResults,
-    taskId && roomStatus === "revealed" ? { taskId, roomId } : "skip",
+    taskId && roomStatus === "revealed" ? { roomId, taskId } : "skip",
   );
 
   const participants = useQuery(api.participants.getParticipants, { roomId });
   const currentTask = useQuery(api.tasks.getCurrentTask, { roomId });
 
-  if (roomStatus === "lobby" || !taskId) return null;
+  if (roomStatus === "lobby" || !taskId) {
+    return null;
+  }
 
   const progressPct = participantCount > 0 ? (votedCount / participantCount) * 100 : 0;
 
@@ -45,7 +58,7 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
         <CardContent className="flex flex-col items-center gap-4 py-6">
           <div className="flex items-baseline gap-1.5">
             <span className="text-2xl font-bold">{votedCount}</span>
-            <span className="text-sm text-muted-foreground">/ {participantCount} voted</span>
+            <span className="text-muted-foreground text-sm">/ {participantCount} voted</span>
           </div>
           <Progress value={progressPct} className="w-full" />
           <Button size="sm" className="w-full" onClick={() => revealVotes({ roomId })}>
@@ -58,16 +71,18 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
 
   const formattedVotes = (voteResults?.votes ?? []).map((vote) => {
     const participant = participants?.find((p) => p._id === vote.participantId);
-    return { value: vote.value ?? "?", displayName: participant?.displayName ?? "Unknown" };
+    return { displayName: participant?.displayName ?? "Unknown", value: vote.value ?? "?" };
   });
 
-  const averageDisplay = voteResults?.average !== null && voteResults?.average !== undefined
-    ? voteResults.average.toFixed(1)
-    : "N/A";
+  const averageDisplay =
+    voteResults?.average !== null && voteResults?.average !== undefined
+      ? voteResults.average.toFixed(1)
+      : "N/A";
 
-  const suggestedEstimate = voteResults?.average !== null && voteResults?.average !== undefined
-    ? findNearestCard(voteResults.average, cardSet)
-    : null;
+  const suggestedEstimate =
+    voteResults?.average !== null && voteResults?.average !== undefined
+      ? findNearestCard(voteResults.average, cardSet)
+      : null;
 
   return (
     <Card className="w-full max-w-2xl" data-testid="results-area">
@@ -82,7 +97,7 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
               {formattedVotes.map((v, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between rounded-md px-3 py-1.5 text-sm bg-muted/50"
+                  className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-1.5 text-sm"
                 >
                   <span className="text-muted-foreground">{v.displayName}</span>
                   <span className="font-semibold tabular-nums">{v.value}</span>
@@ -92,14 +107,18 @@ export function ResultsPanel({ roomId, taskId, roomStatus, cardSet, participantC
 
             <div className="flex items-stretch gap-6 px-1">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Average</p>
+                <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
+                  Average
+                </p>
                 <p className="text-2xl font-bold tabular-nums">{averageDisplay}</p>
               </div>
               {suggestedEstimate && (
                 <>
                   <Separator orientation="vertical" className="h-auto" />
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Suggested</p>
+                    <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
+                      Suggested
+                    </p>
                     <p className="text-2xl font-bold">{suggestedEstimate}</p>
                   </div>
                 </>

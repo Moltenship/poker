@@ -1,11 +1,20 @@
 import { v } from "convex/values";
-import { action, internalMutation, mutation } from "./_generated/server";
+
 import { api, internal } from "./_generated/api";
-import { BACKLOG_FILTER_ID, type JiraSprint, type JiraIssue, type JiraTaskDetails } from "./jiraTypes";
+import { action, internalMutation, mutation } from "./_generated/server";
+import {
+  BACKLOG_FILTER_ID,
+  type JiraIssue,
+  type JiraSprint,
+  type JiraTaskDetails,
+} from "./jiraTypes";
 export { BACKLOG_FILTER_ID, type JiraSprint, type JiraIssue, type JiraTaskDetails };
 
 const jiraGlobals = globalThis as typeof globalThis & {
-  fetch: (input: string, init?: Record<string, unknown>) => Promise<{
+  fetch: (
+    input: string,
+    init?: Record<string, unknown>,
+  ) => Promise<{
     ok: boolean;
     status: number;
     url: string;
@@ -21,43 +30,52 @@ interface JiraIssueFields {
   status?: { name?: string };
   issuetype?: { name?: string };
   description?: unknown;
-  customfield_10020?: Array<{ name?: string; state?: string }>;
+  customfield_10020?: { name?: string; state?: string }[];
   assignee?: { displayName?: string; accountId?: string } | null;
-  issuelinks?: Array<{
+  issuelinks?: {
     type?: { name?: string; inward?: string; outward?: string };
     inwardIssue?: { key?: string; fields?: { status?: { name?: string } } };
     outwardIssue?: { key?: string; fields?: { status?: { name?: string } } };
-  }>;
-  attachment?: Array<{
+  }[];
+  attachment?: {
     id: string;
     filename: string;
     mimeType: string;
     content: string;
-  }>;
+  }[];
 }
 
 interface JiraSearchResponse {
-  issues: Array<{ key: string; fields: JiraIssueFields }>;
+  issues: { key: string; fields: JiraIssueFields }[];
   nextPageToken?: string;
 }
 
-type AdfMark = { type: string; attrs?: Record<string, string> };
-type AdfNode = {
+interface AdfMark {
+  type: string;
+  attrs?: Record<string, string>;
+}
+interface AdfNode {
   type: string;
   text?: string;
   content?: AdfNode[];
   attrs?: Record<string, unknown>;
   marks?: AdfMark[];
-};
+}
 
 function applyMarks(text: string, marks: AdfMark[]): string {
   let out = text;
   for (const mark of marks) {
-    if (mark.type === "strong") out = `**${out}**`;
-    else if (mark.type === "em") out = `_${out}_`;
-    else if (mark.type === "code") out = `\`${out}\``;
-    else if (mark.type === "strike") out = `~~${out}~~`;
-    else if (mark.type === "link") out = `[${out}](${mark.attrs?.href ?? ""})`;
+    if (mark.type === "strong") {
+      out = `**${out}**`;
+    } else if (mark.type === "em") {
+      out = `_${out}_`;
+    } else if (mark.type === "code") {
+      out = `\`${out}\``;
+    } else if (mark.type === "strike") {
+      out = `~~${out}~~`;
+    } else if (mark.type === "link") {
+      out = `[${out}](${mark.attrs?.href ?? ""})`;
+    }
   }
   return out;
 }
@@ -87,10 +105,14 @@ async function resolveMediaUrls(
   authHeader: string,
 ): Promise<Map<string, string>> {
   const mediaUrlMap = new Map<string, string>();
-  if (!adf || typeof adf !== "object" || !attachments?.length) return mediaUrlMap;
+  if (!adf || typeof adf !== "object" || !attachments?.length) {
+    return mediaUrlMap;
+  }
 
   const mediaIds = collectMediaIds(adf as AdfNode);
-  if (!mediaIds.length) return mediaUrlMap;
+  if (!mediaIds.length) {
+    return mediaUrlMap;
+  }
 
   const imageAttachments = attachments
     .filter((a) => a.mimeType.startsWith("image/"))
@@ -100,10 +122,10 @@ async function resolveMediaUrls(
     try {
       // Follow the redirect to obtain the temporary public CDN URL
       const res = await jiraGlobals.fetch(imageAttachments[i].content, {
-        method: "HEAD",
         headers: { Authorization: authHeader },
+        method: "HEAD",
       });
-      // response.url is the final URL after redirects (standard Fetch API)
+      // Response.url is the final URL after redirects (standard Fetch API)
       if (res.url && res.url !== imageAttachments[i].content) {
         mediaUrlMap.set(mediaIds[i], res.url);
       }
@@ -116,20 +138,29 @@ async function resolveMediaUrls(
 }
 
 function convertInline(nodes: AdfNode[], mediaUrlMap: Map<string, string>): string {
-  return nodes.map(n => {
-    if (n.type === "text") return applyMarks(n.text ?? "", n.marks ?? []);
-    if (n.type === "hardBreak") return "  \n";
-    return convertAdfNode(n, 0, mediaUrlMap);
-  }).join("");
+  return nodes
+    .map((n) => {
+      if (n.type === "text") {
+        return applyMarks(n.text ?? "", n.marks ?? []);
+      }
+      if (n.type === "hardBreak") {
+        return "  \n";
+      }
+      return convertAdfNode(n, 0, mediaUrlMap);
+    })
+    .join("");
 }
 
 function convertListItem(item: AdfNode, depth: number, mediaUrlMap: Map<string, string>): string {
   const parts: string[] = [];
   for (const child of item.content ?? []) {
-    if (child.type === "paragraph") parts.push(convertInline(child.content ?? [], mediaUrlMap));
-    else if (child.type === "bulletList" || child.type === "orderedList") {
+    if (child.type === "paragraph") {
+      parts.push(convertInline(child.content ?? [], mediaUrlMap));
+    } else if (child.type === "bulletList" || child.type === "orderedList") {
       parts.push("\n" + convertAdfNode(child, depth + 1, mediaUrlMap));
-    } else parts.push(convertAdfNode(child, depth, mediaUrlMap));
+    } else {
+      parts.push(convertAdfNode(child, depth, mediaUrlMap));
+    }
   }
   return parts.join("");
 }
@@ -138,7 +169,7 @@ function convertAdfNode(node: AdfNode, depth: number, mediaUrlMap: Map<string, s
   const indent = "  ".repeat(depth);
   switch (node.type) {
     case "doc":
-      return (node.content ?? []).map(n => convertAdfNode(n, 0, mediaUrlMap)).join("\n\n");
+      return (node.content ?? []).map((n) => convertAdfNode(n, 0, mediaUrlMap)).join("\n\n");
     case "paragraph":
       return convertInline(node.content ?? [], mediaUrlMap);
     case "heading": {
@@ -146,20 +177,25 @@ function convertAdfNode(node: AdfNode, depth: number, mediaUrlMap: Map<string, s
       return `${"#".repeat(level)} ${convertInline(node.content ?? [], mediaUrlMap)}`;
     }
     case "bulletList":
-      return (node.content ?? []).map(item =>
-        `${indent}- ${convertListItem(item, depth, mediaUrlMap)}`
-      ).join("\n");
+      return (node.content ?? [])
+        .map((item) => `${indent}- ${convertListItem(item, depth, mediaUrlMap)}`)
+        .join("\n");
     case "orderedList":
-      return (node.content ?? []).map((item, i) =>
-        `${indent}${i + 1}. ${convertListItem(item, depth, mediaUrlMap)}`
-      ).join("\n");
+      return (node.content ?? [])
+        .map((item, i) => `${indent}${i + 1}. ${convertListItem(item, depth, mediaUrlMap)}`)
+        .join("\n");
     case "blockquote":
-      return (node.content ?? []).map(n =>
-        convertAdfNode(n, 0, mediaUrlMap).split("\n").map(l => `> ${l}`).join("\n")
-      ).join("\n>\n");
+      return (node.content ?? [])
+        .map((n) =>
+          convertAdfNode(n, 0, mediaUrlMap)
+            .split("\n")
+            .map((l) => `> ${l}`)
+            .join("\n"),
+        )
+        .join("\n>\n");
     case "codeBlock": {
       const lang = String(node.attrs?.language ?? "");
-      const code = (node.content ?? []).map(n => n.text ?? "").join("");
+      const code = (node.content ?? []).map((n) => n.text ?? "").join("");
       return `\`\`\`${lang}\n${code}\n\`\`\``;
     }
     case "rule":
@@ -181,7 +217,7 @@ function convertAdfNode(node: AdfNode, depth: number, mediaUrlMap: Map<string, s
       return url ? `[${label}](${url.split("#")[0]})` : "";
     }
     case "mediaSingle":
-      return (node.content ?? []).map(n => convertAdfNode(n, 0, mediaUrlMap)).join("");
+      return (node.content ?? []).map((n) => convertAdfNode(n, 0, mediaUrlMap)).join("");
     case "media": {
       const mediaId = String(node.attrs?.id ?? "");
       const resolvedUrl = mediaUrlMap.get(mediaId);
@@ -197,13 +233,17 @@ function convertAdfNode(node: AdfNode, depth: number, mediaUrlMap: Map<string, s
       return `*[${altText}]*`;
     }
     default:
-      if (node.content) return convertInline(node.content, mediaUrlMap);
+      if (node.content) {
+        return convertInline(node.content, mediaUrlMap);
+      }
       return "";
   }
 }
 
 function adfToMarkdown(adf: unknown, mediaUrlMap?: Map<string, string>): string {
-  if (!adf || typeof adf !== "object") return "";
+  if (!adf || typeof adf !== "object") {
+    return "";
+  }
   return convertAdfNode(adf as AdfNode, 0, mediaUrlMap ?? new Map()).trim();
 }
 
@@ -227,24 +267,32 @@ export const fetchJiraSprints = action({
 
     const boardRes = await jiraGlobals.fetch(
       `${baseUrl}/rest/agile/1.0/board?projectKeyOrId=${encodeURIComponent(args.projectKey)}&type=scrum&maxResults=1`,
-      { headers: { Authorization: authHeader, Accept: "application/json" } }
+      { headers: { Accept: "application/json", Authorization: authHeader } },
     );
-    if (!boardRes.ok) throw new Error(`Failed to fetch board: ${boardRes.status}`);
+    if (!boardRes.ok) {
+      throw new Error(`Failed to fetch board: ${boardRes.status}`);
+    }
 
-    const boardData = await boardRes.json() as { values: Array<{ id: number }> };
-    if (!boardData.values.length) return [];
+    const boardData = (await boardRes.json()) as { values: { id: number }[] };
+    if (!boardData.values.length) {
+      return [];
+    }
 
     const boardId = boardData.values[0].id;
 
     const sprintRes = await jiraGlobals.fetch(
       `${baseUrl}/rest/agile/1.0/board/${boardId}/sprint?state=active,future&maxResults=20`,
-      { headers: { Authorization: authHeader, Accept: "application/json" } }
+      { headers: { Accept: "application/json", Authorization: authHeader } },
     );
-    if (!sprintRes.ok) throw new Error(`Failed to fetch sprints: ${sprintRes.status}`);
+    if (!sprintRes.ok) {
+      throw new Error(`Failed to fetch sprints: ${sprintRes.status}`);
+    }
 
-    const sprintData = await sprintRes.json() as { values: Array<{ id: number; name: string; state: string }> };
+    const sprintData = (await sprintRes.json()) as {
+      values: { id: number; name: string; state: string }[];
+    };
 
-    return sprintData.values.map(s => ({
+    return sprintData.values.map((s) => ({
       id: s.id,
       name: s.name,
       state: s.state as JiraSprint["state"],
@@ -254,13 +302,12 @@ export const fetchJiraSprints = action({
 
 /** Check if a Jira issue is blocked based on its issue links. */
 function checkIsBlocked(links: JiraIssueFields["issuelinks"]): boolean {
-  if (!Array.isArray(links)) return false;
+  if (!Array.isArray(links)) {
+    return false;
+  }
   return links.some((link) => {
     // "is blocked by" link — the blocking issue is the inward issue
-    if (
-      link.type?.inward?.toLowerCase().includes("is blocked by") &&
-      link.inwardIssue
-    ) {
+    if (link.type?.inward?.toLowerCase().includes("is blocked by") && link.inwardIssue) {
       const status = link.inwardIssue.fields?.status?.name?.toLowerCase() ?? "";
       // Only blocked if the blocker isn't done
       return !status.includes("done") && !status.includes("closed") && !status.includes("resolved");
@@ -273,7 +320,9 @@ function checkIsBlocked(links: JiraIssueFields["issuelinks"]): boolean {
 export const fetchTaskDetails = action({
   args: { jiraKeys: v.array(v.string()) },
   handler: async (_ctx, args): Promise<Record<string, JiraTaskDetails>> => {
-    if (args.jiraKeys.length === 0) return {};
+    if (args.jiraKeys.length === 0) {
+      return {};
+    }
     const { authHeader, baseUrl } = getJiraEnv();
     const result: Record<string, JiraTaskDetails> = {};
 
@@ -282,20 +331,31 @@ export const fetchTaskDetails = action({
       const chunk = args.jiraKeys.slice(i, i + 50);
       const jql = `key in (${chunk.join(", ")})`;
       const res = await jiraGlobals.fetch(`${baseUrl}/rest/api/3/search/jql`, {
-        method: "POST",
-        headers: {
-          Authorization: authHeader,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
         body: JSON.stringify({
           jql,
           maxResults: 50,
-          fields: ["summary", "status", "issuetype", "description", "customfield_10020", "assignee", "issuelinks", "attachment"],
+          fields: [
+            "summary",
+            "status",
+            "issuetype",
+            "description",
+            "customfield_10020",
+            "assignee",
+            "issuelinks",
+            "attachment",
+          ],
         }),
+        headers: {
+          Accept: "application/json",
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
       });
-      if (!res.ok) continue;
-      const data = await res.json() as JiraSearchResponse;
+      if (!res.ok) {
+        continue;
+      }
+      const data = (await res.json()) as JiraSearchResponse;
       for (const issue of data.issues) {
         const sprints = issue.fields.customfield_10020;
         let sprintName: string | undefined;
@@ -314,14 +374,14 @@ export const fetchTaskDetails = action({
         );
 
         result[issue.key] = {
-          title: String(issue.fields.summary || issue.key),
-          description: adfToMarkdown(issue.fields.description, mediaUrlMap),
-          status: String(issue.fields.status?.name ?? ""),
-          type: String(issue.fields.issuetype?.name ?? ""),
-          sprintName,
-          url: `${baseUrl}/browse/${issue.key}`,
           assignee,
+          description: adfToMarkdown(issue.fields.description, mediaUrlMap),
           isBlocked,
+          sprintName,
+          status: String(issue.fields.status?.name ?? ""),
+          title: String(issue.fields.summary || issue.key),
+          type: String(issue.fields.issuetype?.name ?? ""),
+          url: `${baseUrl}/browse/${issue.key}`,
         };
       }
     }
@@ -338,13 +398,9 @@ export const fetchJiraBacklog = action({
   handler: async (_ctx, args): Promise<JiraIssue[]> => {
     const { authHeader, baseUrl } = getJiraEnv();
 
-    const realSprintIds = (args.sprintIds ?? []).filter(
-      (id) => id !== BACKLOG_FILTER_ID
-    );
+    const realSprintIds = (args.sprintIds ?? []).filter((id) => id !== BACKLOG_FILTER_ID);
     const includeBacklog =
-      !args.sprintIds ||
-      args.sprintIds.length === 0 ||
-      args.sprintIds.includes(BACKLOG_FILTER_ID);
+      !args.sprintIds || args.sprintIds.length === 0 || args.sprintIds.includes(BACKLOG_FILTER_ID);
 
     let sprintClause: string;
     if (realSprintIds.length > 0 && includeBacklog) {
@@ -364,27 +420,37 @@ export const fetchJiraBacklog = action({
 
     do {
       const body: Record<string, unknown> = {
+        fields: [
+          "summary",
+          "status",
+          "issuetype",
+          "description",
+          "customfield_10020",
+          "assignee",
+          "issuelinks",
+        ],
         jql: effectiveJql,
         maxResults: 50,
-        fields: ["summary", "status", "issuetype", "description", "customfield_10020", "assignee", "issuelinks"],
       };
-      if (nextPageToken) body.nextPageToken = nextPageToken;
+      if (nextPageToken) {
+        body.nextPageToken = nextPageToken;
+      }
 
       const res = await jiraGlobals.fetch(`${baseUrl}/rest/api/3/search/jql`, {
-        method: "POST",
+        body: JSON.stringify(body),
         headers: {
+          Accept: "application/json",
           Authorization: authHeader,
           "Content-Type": "application/json",
-          Accept: "application/json",
         },
-        body: JSON.stringify(body),
+        method: "POST",
       });
 
       if (!res.ok) {
         throw new Error(`Jira API error: ${res.status} ${await res.text()}`);
       }
 
-      const data = await res.json() as JiraSearchResponse;
+      const data = (await res.json()) as JiraSearchResponse;
 
       for (const issue of data.issues) {
         const sprints = issue.fields.customfield_10020;
@@ -395,19 +461,19 @@ export const fetchJiraBacklog = action({
         }
 
         allIssues.push({
+          assignee: issue.fields.assignee?.displayName ?? undefined,
+          description: adfToMarkdown(issue.fields.description),
+          isBlocked: checkIsBlocked(issue.fields.issuelinks),
           key: issue.key,
-          title: String(issue.fields.summary || issue.key),
+          sprintName,
           status: String(issue.fields.status?.name ?? ""),
+          title: String(issue.fields.summary || issue.key),
           type: String(issue.fields.issuetype?.name ?? ""),
           url: `${baseUrl}/browse/${issue.key}`,
-          description: adfToMarkdown(issue.fields.description),
-          sprintName,
-          assignee: issue.fields.assignee?.displayName ?? undefined,
-          isBlocked: checkIsBlocked(issue.fields.issuelinks),
         });
       }
 
-      nextPageToken = data.nextPageToken;
+      ({ nextPageToken } = data);
     } while (nextPageToken && allIssues.length < 200);
 
     return allIssues;
@@ -416,9 +482,9 @@ export const fetchJiraBacklog = action({
 
 export const importSelectedTasks = mutation({
   args: {
-    roomId: v.id("rooms"),
-    keys: v.array(v.string()),
     fetchedKeys: v.array(v.string()),
+    keys: v.array(v.string()),
+    roomId: v.id("rooms"),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -426,16 +492,16 @@ export const importSelectedTasks = mutation({
       .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
       .collect();
 
-    const existingByKey = new Map(
-      existing.filter((t) => t.jiraKey).map((t) => [t.jiraKey!, t])
-    );
+    const existingByKey = new Map(existing.filter((t) => t.jiraKey).map((t) => [t.jiraKey!, t]));
 
     // Remove Jira tasks that were fetched (in scope) but not selected
     const selectedKeys = new Set(args.keys);
     for (const key of args.fetchedKeys) {
       if (!selectedKeys.has(key)) {
         const toDelete = existingByKey.get(key);
-        if (toDelete) await ctx.db.delete(toDelete._id);
+        if (toDelete) {
+          await ctx.db.delete(toDelete._id);
+        }
       }
     }
 
@@ -445,11 +511,10 @@ export const importSelectedTasks = mutation({
     for (const key of args.keys) {
       if (!existingByKey.has(key)) {
         await ctx.db.insert("tasks", {
-          roomId: args.roomId,
+          isManual: false,
           jiraKey: key,
           order: nextOrder++,
-          isManual: false,
-
+          roomId: args.roomId,
         });
       }
     }
@@ -458,44 +523,46 @@ export const importSelectedTasks = mutation({
 
 export const setJiraEstimateSyncStatus = internalMutation({
   args: {
-    taskId: v.id("tasks"),
-    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
     error: v.optional(v.string()),
+    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
+    taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, {
-      jiraEstimateSyncStatus: args.status,
       jiraEstimateSyncError: args.error,
+      jiraEstimateSyncStatus: args.status,
     });
   },
 });
 
 export const setJiraSprintSyncStatus = internalMutation({
   args: {
-    taskId: v.id("tasks"),
-    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
     error: v.optional(v.string()),
+    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
+    taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, {
-      jiraSprintSyncStatus: args.status,
       jiraSprintSyncError: args.error,
+      jiraSprintSyncStatus: args.status,
     });
   },
 });
 
 export const moveIssueToSprint = action({
   args: {
-    taskId: v.id("tasks"),
     sprintId: v.number(),
+    taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
     const task = await ctx.runQuery(api.tasks.getTask, { taskId: args.taskId });
-    if (!task || !task.jiraKey) return;
+    if (!task || !task.jiraKey) {
+      return;
+    }
 
     await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
-      taskId: args.taskId,
       status: "syncing",
+      taskId: args.taskId,
     });
 
     try {
@@ -503,13 +570,13 @@ export const moveIssueToSprint = action({
       const res = await jiraGlobals.fetch(
         `${baseUrl}/rest/agile/1.0/sprint/${args.sprintId}/issue`,
         {
-          method: "POST",
+          body: JSON.stringify({ issues: [task.jiraKey] }),
           headers: {
+            Accept: "application/json",
             Authorization: authHeader,
             "Content-Type": "application/json",
-            Accept: "application/json",
           },
-          body: JSON.stringify({ issues: [task.jiraKey] }),
+          method: "POST",
         },
       );
 
@@ -519,14 +586,14 @@ export const moveIssueToSprint = action({
       }
 
       await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
-        taskId: args.taskId,
         status: "synced",
+        taskId: args.taskId,
       });
     } catch (err: unknown) {
       await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
-        taskId: args.taskId,
-        status: "error",
         error: err instanceof Error ? err.message : "Failed to move issue to sprint",
+        status: "error",
+        taskId: args.taskId,
       });
       throw err;
     }
@@ -535,36 +602,35 @@ export const moveIssueToSprint = action({
 
 export const updateJiraEstimate = action({
   args: {
-    taskId: v.id("tasks"),
     estimate: v.string(),
+    taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
     const task = await ctx.runQuery(api.tasks.getTask, { taskId: args.taskId });
-    if (!task || !task.jiraKey) return;
+    if (!task || !task.jiraKey) {
+      return;
+    }
 
     await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
-      taskId: args.taskId,
       status: "syncing",
+      taskId: args.taskId,
     });
 
     try {
       const { authHeader, baseUrl } = getJiraEnv();
-      const res = await jiraGlobals.fetch(
-        `${baseUrl}/rest/api/3/issue/${task.jiraKey}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: authHeader,
-            "Content-Type": "application/json",
-            Accept: "application/json",
+      const res = await jiraGlobals.fetch(`${baseUrl}/rest/api/3/issue/${task.jiraKey}`, {
+        body: JSON.stringify({
+          fields: {
+            timetracking: { originalEstimate: args.estimate },
           },
-          body: JSON.stringify({
-            fields: {
-              timetracking: { originalEstimate: args.estimate },
-            },
-          }),
+        }),
+        headers: {
+          Accept: "application/json",
+          Authorization: authHeader,
+          "Content-Type": "application/json",
         },
-      );
+        method: "PUT",
+      });
 
       if (!res.ok) {
         const text = await res.text();
@@ -572,14 +638,14 @@ export const updateJiraEstimate = action({
       }
 
       await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
-        taskId: args.taskId,
         status: "synced",
+        taskId: args.taskId,
       });
     } catch (err: unknown) {
       await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
-        taskId: args.taskId,
-        status: "error",
         error: err instanceof Error ? err.message : "Failed to sync estimate",
+        status: "error",
+        taskId: args.taskId,
       });
       throw err;
     }

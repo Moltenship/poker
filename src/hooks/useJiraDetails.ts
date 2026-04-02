@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
 import { useAction } from "convex/react";
+import { useEffect, useRef, useState } from "react";
+
 import { api } from "../../convex/_generated/api";
 import type { JiraTaskDetails } from "../../convex/jiraTypes";
 
@@ -11,7 +12,9 @@ export function useJiraDetails(jiraKeys: string[]) {
 
   useEffect(() => {
     const keysStr = [...jiraKeys].sort().join(",");
-    if (keysStr === prevKeysRef.current || jiraKeys.length === 0) return;
+    if (keysStr === prevKeysRef.current || jiraKeys.length === 0) {
+      return;
+    }
     prevKeysRef.current = keysStr;
 
     setLoading(true);

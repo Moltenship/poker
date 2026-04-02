@@ -1,11 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Id } from "../../convex/_generated/dataModel";
-import { api } from "../../convex/_generated/api";
-import { useIdentity } from "@/hooks/useIdentity";
 import { useQuery } from "convex/react";
-import { useSessionMutation } from "@/hooks/useSession";
+import { useEffect, useMemo, useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,21 +18,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useIdentity } from "@/hooks/useIdentity";
+import { useSessionMutation } from "@/hooks/useSession";
 
-type IdentityFlowProps = {
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
+
+interface IdentityFlowProps {
   roomId: Id<"rooms">;
   roomCode: string;
   onIdentitySet: (participantId: Id<"participants">, displayName: string) => void;
-};
+}
 
 export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowProps) {
   const { participantId, displayName } = useIdentity(roomCode);
   const joinRoom = useSessionMutation(api.participants.joinRoom);
   const takeoverSession = useSessionMutation(api.participants.takeoverSession);
-  const roomParticipants = useQuery(
-    api.participants.getParticipants,
-    { roomId },
-  );
+  const roomParticipants = useQuery(api.participants.getParticipants, { roomId });
 
   const [joinName, setJoinName] = useState(displayName ?? "");
   const [isReturningUser, setIsReturningUser] = useState(false);
@@ -44,7 +43,9 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (displayName) setJoinName(displayName);
+    if (displayName) {
+      setJoinName(displayName);
+    }
   }, [displayName]);
 
   const selectedParticipant = useMemo(
@@ -54,10 +55,12 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
 
   const handleJoin = async () => {
     const trimmedName = joinName.trim();
-    if (!trimmedName) return;
+    if (!trimmedName) {
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const nextParticipantId = await joinRoom({ roomId, displayName: trimmedName });
+      const nextParticipantId = await joinRoom({ displayName: trimmedName, roomId });
       onIdentitySet(nextParticipantId, trimmedName);
     } catch (error) {
       console.error("Failed to join room:", error);
@@ -67,7 +70,9 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
   };
 
   const handleTakeover = async () => {
-    if (!selectedParticipant) return;
+    if (!selectedParticipant) {
+      return;
+    }
     setIsSubmitting(true);
     try {
       await takeoverSession({ roomId, targetParticipantId: selectedParticipant._id });
@@ -80,13 +85,15 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
     }
   };
 
-  if (participantId) return null;
+  if (participantId) {
+    return null;
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-lg bg-card p-5 shadow-2xl shadow-black/30">
-        <h2 className="text-sm font-semibold mb-1">Join Room</h2>
-        <p className="text-[13px] text-muted-foreground mb-5">
+    <div className="bg-background/90 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-card w-full max-w-sm rounded-lg p-5 shadow-2xl shadow-black/30">
+        <h2 className="mb-1 text-sm font-semibold">Join Room</h2>
+        <p className="text-muted-foreground mb-5 text-[13px]">
           Enter your name to join the session.
         </p>
 
@@ -107,11 +114,17 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
                   disabled={isSubmitting}
                   className="h-8 text-[13px]"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && joinName.trim()) handleJoin();
+                    if (e.key === "Enter" && joinName.trim()) {
+                      handleJoin();
+                    }
                   }}
                 />
               </div>
-              <Button className="w-full h-8 text-[13px]" onClick={handleJoin} disabled={!joinName.trim() || isSubmitting}>
+              <Button
+                className="h-8 w-full text-[13px]"
+                onClick={handleJoin}
+                disabled={!joinName.trim() || isSubmitting}
+              >
                 Join
               </Button>
             </>
@@ -123,25 +136,39 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
                 <label htmlFor="participant-select" className="text-[13px] font-medium">
                   Select your name
                 </label>
-                <Select value={selectedParticipantId} onValueChange={(value: string | null) => setSelectedParticipantId(value ?? "")}>
-                  <SelectTrigger id="participant-select" aria-label="Your name" className="h-8 text-[13px]">
+                <Select
+                  value={selectedParticipantId}
+                  onValueChange={(value: string | null) => setSelectedParticipantId(value ?? "")}
+                >
+                  <SelectTrigger
+                    id="participant-select"
+                    aria-label="Your name"
+                    className="h-8 text-[13px]"
+                  >
                     <SelectValue placeholder="Select identity" />
                   </SelectTrigger>
                   <SelectContent>
                     {(roomParticipants ?? []).map((p) => (
-                      <SelectItem key={p._id} value={p._id as string}>{p.displayName}</SelectItem>
+                      <SelectItem key={p._id} value={p._id as string}>
+                        {p.displayName}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full h-8 text-[13px]" onClick={() => setIsConfirmOpen(true)} disabled={!selectedParticipantId || isSubmitting}>
+              <Button
+                className="h-8 w-full text-[13px]"
+                onClick={() => setIsConfirmOpen(true)}
+                disabled={!selectedParticipantId || isSubmitting}
+              >
                 Rejoin
               </Button>
             </>
           )}
 
           <button
-            className="w-full text-center text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+            type="button"
+            className="text-muted-foreground hover:text-foreground w-full text-center text-[12px] transition-colors"
             onClick={() => setIsReturningUser(!isReturningUser)}
             disabled={isSubmitting}
           >
@@ -159,10 +186,21 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" size="sm" className="h-7 text-[13px]" onClick={() => setIsConfirmOpen(false)} disabled={isSubmitting}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 text-[13px]"
+              onClick={() => setIsConfirmOpen(false)}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
-            <Button size="sm" className="h-7 text-[13px]" onClick={handleTakeover} disabled={isSubmitting || !selectedParticipant}>
+            <Button
+              size="sm"
+              className="h-7 text-[13px]"
+              onClick={handleTakeover}
+              disabled={isSubmitting || !selectedParticipant}
+            >
               Continue
             </Button>
           </DialogFooter>

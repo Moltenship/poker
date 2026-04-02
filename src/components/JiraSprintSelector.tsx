@@ -1,17 +1,13 @@
-import { useState, useEffect } from "react";
 import { useAction } from "convex/react";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { cn } from "@/lib/utils";
+
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { JiraSprint } from "../../convex/jiraTypes";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Loader2, Check, AlertTriangle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface JiraSprintSelectorProps {
   taskId: Id<"tasks">;
@@ -39,26 +35,34 @@ export function JiraSprintSelector({
     setLoading(true);
     fetchSprints({ projectKey })
       .then((result) => {
-        if (!cancelled) setSprints(result);
+        if (!cancelled) {
+          setSprints(result);
+        }
       })
       .catch(() => {})
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [projectKey, fetchSprints]);
 
   // Sync from prop when sprints are loaded and no local selection yet
   useEffect(() => {
     if (!selectedId && currentSprintName && sprints.length > 0) {
       const match = sprints.find((s) => s.name === currentSprintName);
-      if (match) setSelectedId(String(match.id));
+      if (match) {
+        setSelectedId(String(match.id));
+      }
     }
   }, [currentSprintName, sprints, selectedId]);
 
   const handleChange = (sprintId: string) => {
     setSelectedId(sprintId);
-    moveToSprint({ taskId, sprintId: Number(sprintId) }).catch(() => {});
+    moveToSprint({ sprintId: Number(sprintId), taskId }).catch(() => {});
   };
 
   return (
@@ -78,7 +82,7 @@ export function JiraSprintSelector({
               <SelectItem key={s.id} value={String(s.id)}>
                 <span className="flex items-center gap-2">
                   {s.state === "active" && (
-                    <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />
                   )}
                   {s.name}
                 </span>
@@ -89,15 +93,11 @@ export function JiraSprintSelector({
         {syncStatus === "syncing" && (
           <Loader2 className={cn("size-4 animate-spin text-muted-foreground shrink-0")} />
         )}
-        {syncStatus === "synced" && (
-          <Check className={cn("size-4 text-emerald-500 shrink-0")} />
-        )}
-        {syncStatus === "error" && (
-          <AlertTriangle className="size-4 text-destructive shrink-0" />
-        )}
+        {syncStatus === "synced" && <Check className={cn("size-4 text-emerald-500 shrink-0")} />}
+        {syncStatus === "error" && <AlertTriangle className="text-destructive size-4 shrink-0" />}
       </div>
       {syncStatus === "error" && syncError && (
-        <p className="text-xs text-destructive truncate">{syncError}</p>
+        <p className="text-destructive truncate text-xs">{syncError}</p>
       )}
     </div>
   );

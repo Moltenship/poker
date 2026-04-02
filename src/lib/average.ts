@@ -1,10 +1,10 @@
 import { parseCardValue } from "./cards";
 
-export type AverageResult = {
+export interface AverageResult {
   average: number | null;
   numericCount: number;
   totalCount: number;
-};
+}
 
 export function calculateAverage(votes: string[]): AverageResult {
   const totalCount = votes.length;
@@ -19,9 +19,11 @@ export function calculateAverage(votes: string[]): AverageResult {
 
 export function findNearestCard(average: number, cardSet: string[]): string | null {
   const numericCards = cardSet
-    .map((v) => ({ value: v, numeric: parseCardValue(v) }))
+    .map((v) => ({ numeric: parseCardValue(v), value: v }))
     .filter((c): c is { value: string; numeric: number } => c.numeric !== null);
-  if (numericCards.length === 0) return null;
+  if (numericCards.length === 0) {
+    return null;
+  }
   let nearest = numericCards[0];
   for (const card of numericCards) {
     if (Math.abs(card.numeric - average) < Math.abs(nearest.numeric - average)) {

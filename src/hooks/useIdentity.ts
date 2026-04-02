@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import type { Id } from "../../convex/_generated/dataModel";
 
-type StoredIdentity = {
+interface StoredIdentity {
   participantId: Id<"participants">;
   displayName: string;
-};
+}
 
 function getStorageKey(roomCode: string) {
   return `poker_room_${roomCode}`;
@@ -22,13 +23,10 @@ function readIdentity(roomCode: string): StoredIdentity | null {
 
   try {
     const parsed = JSON.parse(rawIdentity) as Partial<StoredIdentity>;
-    if (
-      typeof parsed?.participantId === "string" &&
-      typeof parsed?.displayName === "string"
-    ) {
+    if (typeof parsed?.participantId === "string" && typeof parsed?.displayName === "string") {
       return {
-        participantId: parsed.participantId as Id<"participants">,
         displayName: parsed.displayName,
+        participantId: parsed.participantId as Id<"participants">,
       };
     }
   } catch {
@@ -50,7 +48,7 @@ export function useIdentity(roomCode: string) {
 
   const setIdentity = useCallback(
     (participantId: Id<"participants">, displayName: string) => {
-      const nextIdentity = { participantId, displayName };
+      const nextIdentity = { displayName, participantId };
       window.localStorage.setItem(storageKey, JSON.stringify(nextIdentity));
       setIdentityState(nextIdentity);
     },
@@ -63,9 +61,9 @@ export function useIdentity(roomCode: string) {
   }, [storageKey]);
 
   return {
-    participantId: identity?.participantId ?? null,
-    displayName: identity?.displayName ?? null,
-    setIdentity,
     clearIdentity,
+    displayName: identity?.displayName ?? null,
+    participantId: identity?.participantId ?? null,
+    setIdentity,
   };
 }

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+
 import { query } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
 
@@ -15,10 +16,10 @@ export const addTask = sessionMutation({
     const maxOrder = existing.length > 0 ? Math.max(...existing.map((t) => t.order)) : 0;
 
     return await ctx.db.insert("tasks", {
+      isManual: true,
+      order: maxOrder + 1,
       roomId: args.roomId,
       title: args.title,
-      order: maxOrder + 1,
-      isManual: true,
     });
   },
 });
@@ -43,7 +44,9 @@ export const getCurrentTask = query({
   args: { roomId: v.id("rooms") },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
-    if (!room) return null;
+    if (!room) {
+      return null;
+    }
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
@@ -55,8 +58,8 @@ export const getCurrentTask = query({
 
 export const setHoursEstimate = sessionMutation({
   args: {
-    taskId: v.id("tasks"),
     hours: v.number(),
+    taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, { hoursEstimate: args.hours });
@@ -70,7 +73,9 @@ export const setCurrentTask = sessionMutation({
   },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
-    if (!room) throw new Error("Room not found");
+    if (!room) {
+      throw new Error("Room not found");
+    }
 
     const tasks = await ctx.db
       .query("tasks")
@@ -103,8 +108,8 @@ export const setCurrentTask = sessionMutation({
 
 export const reorderTask = sessionMutation({
   args: {
-    taskId: v.id("tasks"),
     newOrder: v.number(),
+    taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, { order: args.newOrder });
@@ -131,14 +136,20 @@ export const deleteTask = sessionMutation({
   },
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.taskId);
-    if (!task) throw new Error("Task not found");
-    if (!task.isManual) throw new Error("Cannot delete imported tasks");
+    if (!task) {
+      throw new Error("Task not found");
+    }
+    if (!task.isManual) {
+      throw new Error("Cannot delete imported tasks");
+    }
 
-    const roomId = task.roomId;
+    const { roomId } = task;
     await ctx.db.delete(args.taskId);
 
     const room = await ctx.db.get(roomId);
-    if (!room) return;
+    if (!room) {
+      return;
+    }
 
     if (room.status === "voting" || room.status === "revealed") {
       const remaining = await ctx.db

@@ -4,7 +4,9 @@ type Theme = "light" | "dark";
 
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
+    if (typeof window === "undefined") {
+      return "dark";
+    }
     return (localStorage.getItem("poker_theme") as Theme) || "dark";
   });
 
@@ -19,5 +21,5 @@ export function useTheme() {
     [],
   );
 
-  return { theme, setTheme, toggleTheme };
+  return { setTheme, theme, toggleTheme };
 }

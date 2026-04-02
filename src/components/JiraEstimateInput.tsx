@@ -1,11 +1,13 @@
-import { useState } from "react";
 import { useAction } from "convex/react";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { useState } from "react";
+
+import { cn } from "@/lib/utils";
+
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Loader2, Check, AlertTriangle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Input } from "./ui/input";
 
 interface JiraEstimateInputProps {
   taskId: Id<"tasks">;
@@ -20,8 +22,10 @@ export function JiraEstimateInput({ taskId, syncStatus, syncError }: JiraEstimat
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = value.trim();
-    if (!trimmed) return;
-    updateEstimate({ taskId, estimate: trimmed }).catch(() => {});
+    if (!trimmed) {
+      return;
+    }
+    updateEstimate({ estimate: trimmed, taskId }).catch(() => {});
   };
 
   return (
@@ -35,26 +39,18 @@ export function JiraEstimateInput({ taskId, syncStatus, syncError }: JiraEstimat
           className="flex-1"
           disabled={syncStatus === "syncing"}
         />
-        <Button
-          type="submit"
-          size="sm"
-          disabled={!value.trim() || syncStatus === "syncing"}
-        >
+        <Button type="submit" size="sm" disabled={!value.trim() || syncStatus === "syncing"}>
           {syncStatus === "syncing" ? (
             <Loader2 className="animate-spin" data-icon="inline-start" />
           ) : (
             "Set"
           )}
         </Button>
-        {syncStatus === "synced" && (
-          <Check className={cn("size-4 text-emerald-500 shrink-0")} />
-        )}
-        {syncStatus === "error" && (
-          <AlertTriangle className="size-4 text-destructive shrink-0" />
-        )}
+        {syncStatus === "synced" && <Check className={cn("size-4 text-emerald-500 shrink-0")} />}
+        {syncStatus === "error" && <AlertTriangle className="text-destructive size-4 shrink-0" />}
       </form>
       {syncStatus === "error" && syncError && (
-        <p className="text-xs text-destructive truncate">{syncError}</p>
+        <p className="text-destructive truncate text-xs">{syncError}</p>
       )}
     </div>
   );

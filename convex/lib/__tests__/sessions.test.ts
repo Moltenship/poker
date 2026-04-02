@@ -1,9 +1,9 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { v } from "convex/values";
+
 import * as api from "../../_generated/api";
 import schema from "../../schema";
 import { sessionMutation } from "../sessions";
-import { v } from "convex/values";
 
 function createTestContext() {
   return convexTest(schema, {
@@ -16,8 +16,8 @@ const rejectBlankSessionMutation = sessionMutation({
   handler: async (_ctx, args) => args.value,
 });
 
-describe("sessionMutation", () => {
-  test("sessions module exports sessionMutation and sessionQuery", async () => {
+describe(sessionMutation, () => {
+  it("sessions module exports sessionMutation and sessionQuery", async () => {
     expect(createTestContext).toBeDefined();
 
     const { sessionMutation, sessionQuery } = await import("../sessions");
@@ -26,7 +26,7 @@ describe("sessionMutation", () => {
     expect(sessionQuery).toBeDefined();
   });
 
-  test("rejects an empty sessionId", async () => {
+  it("rejects an empty sessionId", async () => {
     const t = createTestContext();
 
     await expect(

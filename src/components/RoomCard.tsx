@@ -1,5 +1,6 @@
-import { Id } from "../../convex/_generated/dataModel"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight } from "lucide-react";
+
+import type { Id } from "../../convex/_generated/dataModel";
 
 interface RoomCardProps {
   room: {
@@ -15,31 +16,32 @@ interface RoomCardProps {
 
 export function RoomCard({ room, onClick }: RoomCardProps) {
   const formattedDate = new Date(room._creationTime).toLocaleDateString("en-US", {
-    month: "short",
     day: "numeric",
-  })
+    month: "short",
+  });
 
-  const statusLabel = { lobby: "Lobby", voting: "Voting", revealed: "Done" }[room.status]
+  const statusLabel = { lobby: "Lobby", revealed: "Done", voting: "Voting" }[room.status];
   const statusColor = {
     lobby: "text-muted-foreground",
-    voting: "text-primary",
     revealed: "text-emerald-500",
-  }[room.status]
+    voting: "text-primary",
+  }[room.status];
 
   return (
     <button
-      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent group"
+      type="button"
+      className="hover:bg-accent group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
       onClick={onClick}
     >
-      <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-medium truncate">{room.name}</div>
-        <div className="flex items-center gap-2 mt-0.5">
-          <code className="text-[11px] text-muted-foreground font-mono">{room.roomCode}</code>
-          <span className="text-[11px] text-muted-foreground">{formattedDate}</span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-medium">{room.name}</div>
+        <div className="mt-0.5 flex items-center gap-2">
+          <code className="text-muted-foreground font-mono text-[11px]">{room.roomCode}</code>
+          <span className="text-muted-foreground text-[11px]">{formattedDate}</span>
         </div>
       </div>
       <span className={`text-[11px] font-medium ${statusColor}`}>{statusLabel}</span>
-      <ChevronRight className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground shrink-0 transition-colors" />
+      <ChevronRight className="text-muted-foreground/40 group-hover:text-muted-foreground h-3 w-3 shrink-0 transition-colors" />
     </button>
-  )
+  );
 }

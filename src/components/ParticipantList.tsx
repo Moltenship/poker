@@ -1,11 +1,12 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle2 } from "lucide-react";
 
-type Participant = {
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface Participant {
   _id: string;
   displayName: string;
   isConnected: boolean;
-};
+}
 
 interface ParticipantListProps {
   participants: Participant[];
@@ -13,16 +14,20 @@ interface ParticipantListProps {
   showVoteStatus?: boolean;
 }
 
-export function ParticipantList({ participants, votedIds = [], showVoteStatus = false }: ParticipantListProps) {
+export function ParticipantList({
+  participants,
+  votedIds = [],
+  showVoteStatus = false,
+}: ParticipantListProps) {
   return (
-    <div className="flex flex-col h-full" data-testid="participant-list">
-      <div className="h-11 px-4 flex items-center justify-between shrink-0">
+    <div className="flex h-full flex-col" data-testid="participant-list">
+      <div className="flex h-11 shrink-0 items-center justify-between px-4">
         <span className="text-[13px] font-medium">Participants</span>
-        <span className="text-[11px] text-muted-foreground font-mono">{participants.length}</span>
+        <span className="text-muted-foreground font-mono text-[11px]">{participants.length}</span>
       </div>
       <ScrollArea className="flex-1">
         {participants.length === 0 ? (
-          <div className="p-4 text-center text-[12px] text-muted-foreground">
+          <div className="text-muted-foreground p-4 text-center text-[12px]">
             Waiting for participants...
           </div>
         ) : (
@@ -31,14 +36,18 @@ export function ParticipantList({ participants, votedIds = [], showVoteStatus = 
               const hasVoted = votedIds.includes(p._id);
               return (
                 <div key={p._id} className="flex items-center justify-between px-4 py-1.5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.isConnected ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
-                    <span className={`text-[13px] truncate ${p.isConnected ? "text-foreground/80" : "text-muted-foreground"}`}>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${p.isConnected ? "bg-emerald-500" : "bg-muted-foreground/30"}`}
+                    />
+                    <span
+                      className={`truncate text-[13px] ${p.isConnected ? "text-foreground/80" : "text-muted-foreground"}`}
+                    >
                       {p.displayName}
                     </span>
                   </div>
                   {showVoteStatus && hasVoted && (
-                    <CheckCircle2 className="w-3 h-3 text-primary shrink-0" />
+                    <CheckCircle2 className="text-primary h-3 w-3 shrink-0" />
                   )}
                 </div>
               );

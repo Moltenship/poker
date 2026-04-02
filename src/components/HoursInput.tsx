@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
-import { Id } from "../../convex/_generated/dataModel";
+import { useEffect, useState } from "react";
+
 import { useSessionMutation } from "@/hooks/useSession";
+
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { Input } from "./ui/input";
 
 interface HoursInputProps {
@@ -23,7 +25,7 @@ export function HoursInput({ taskId, currentHours }: HoursInputProps) {
     const handler = setTimeout(() => {
       const numValue = parseFloat(value);
       if (!isNaN(numValue) && numValue !== currentHours) {
-        setHoursEstimate({ taskId, hours: numValue });
+        setHoursEstimate({ hours: numValue, taskId });
       }
     }, 500);
 

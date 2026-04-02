@@ -1,8 +1,10 @@
-import { Id } from "../../convex/_generated/dataModel";
-import { VoteCard } from "./VoteCard";
-import { useSessionMutation } from "@/hooks/useSession";
-import { api } from "../../convex/_generated/api";
 import { useCallback } from "react";
+
+import { useSessionMutation } from "@/hooks/useSession";
+
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
+import { VoteCard } from "./VoteCard";
 
 interface CardDeckProps {
   cardSet: string[];
@@ -13,21 +15,28 @@ interface CardDeckProps {
   onVoteChange?: (value: string | null) => void;
 }
 
-export function CardDeck({ cardSet, currentVote, roomStatus, taskId, participantId, onVoteChange }: CardDeckProps) {
+export function CardDeck({
+  cardSet,
+  currentVote,
+  roomStatus,
+  taskId,
+  participantId,
+  onVoteChange,
+}: CardDeckProps) {
   const castVote = useSessionMutation(api.voting.castVote);
   const removeVote = useSessionMutation(api.voting.removeVote);
 
   const handleVote = useCallback(
     (value: string) => {
       if (value === currentVote) {
-        removeVote({ taskId, participantId }).catch(console.error);
+        removeVote({ participantId, taskId }).catch(console.error);
         onVoteChange?.(null);
       } else {
-        castVote({ taskId, participantId, value }).catch(console.error);
+        castVote({ participantId, taskId, value }).catch(console.error);
         onVoteChange?.(value);
       }
     },
-    [castVote, removeVote, taskId, participantId, currentVote, onVoteChange]
+    [castVote, removeVote, taskId, participantId, currentVote, onVoteChange],
   );
 
   return (
