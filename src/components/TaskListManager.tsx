@@ -460,6 +460,18 @@ export function TaskListManager({
                                   <span className="truncate">{enriched.assignee}</span>
                                 </span>
                               )}
+                              {enriched?.labels && enriched.labels.length > 0 && (
+                                <div className="mt-0.5 flex flex-wrap gap-1">
+                                  {enriched.labels.map((label) => (
+                                    <span
+                                      key={label}
+                                      className="bg-primary/10 text-primary rounded px-1 py-px text-[10px] leading-tight"
+                                    >
+                                      {label}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                             {estimateText && (
                               <Badge

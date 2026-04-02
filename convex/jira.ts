@@ -43,6 +43,7 @@ interface JiraIssueFields {
     mimeType: string;
     content: string;
   }[];
+  labels?: string[];
 }
 
 interface JiraSearchResponse {
@@ -343,6 +344,7 @@ export const fetchTaskDetails = action({
             "assignee",
             "issuelinks",
             "attachment",
+            "labels",
           ],
         }),
         headers: {
@@ -377,6 +379,7 @@ export const fetchTaskDetails = action({
           assignee,
           description: adfToMarkdown(issue.fields.description, mediaUrlMap),
           isBlocked,
+          labels: issue.fields.labels ?? [],
           sprintName,
           status: String(issue.fields.status?.name ?? ""),
           title: String(issue.fields.summary || issue.key),
@@ -428,6 +431,7 @@ export const fetchJiraBacklog = action({
           "customfield_10020",
           "assignee",
           "issuelinks",
+          "labels",
         ],
         jql: effectiveJql,
         maxResults: 50,
@@ -465,6 +469,7 @@ export const fetchJiraBacklog = action({
           description: adfToMarkdown(issue.fields.description),
           isBlocked: checkIsBlocked(issue.fields.issuelinks),
           key: issue.key,
+          labels: issue.fields.labels ?? [],
           sprintName,
           status: String(issue.fields.status?.name ?? ""),
           title: String(issue.fields.summary || issue.key),
