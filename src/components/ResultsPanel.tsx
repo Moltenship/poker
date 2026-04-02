@@ -59,7 +59,7 @@ export function ResultsPanel({
 
   if (roomStatus === "voting") {
     return (
-      <Card className="w-full max-w-md border-none bg-transparent">
+      <Card className="w-full max-w-md border-none bg-transparent py-0 shadow-none">
         <CardContent className="flex items-center gap-3 px-4 py-1.5">
           <div className="flex shrink-0 items-baseline gap-1">
             <span className="text-base font-bold">{votedCount}</span>
