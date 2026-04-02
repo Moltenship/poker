@@ -1,6 +1,7 @@
 import { CheckCircle2, Crown, X } from "lucide-react";
 import { useState } from "react";
 
+import { RemoveParticipantDialog } from "@/components/RemoveParticipantDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Participant {
@@ -32,6 +33,7 @@ export function ParticipantList({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<Participant | null>(null);
 
   const handleStartEdit = (id: string, currentName: string) => {
     setEditingId(id);
@@ -113,7 +115,7 @@ export function ParticipantList({
                       !isCurrentUser &&
                       (hoveredId === p._id || editingId === p._id) && (
                         <button
-                          onClick={() => onRemoveParticipant?.(p._id)}
+                          onClick={() => setRemoveTarget(p)}
                           className="text-muted-foreground hover:text-destructive transition-colors"
                         >
                           <X className="h-3.5 w-3.5" />
@@ -126,6 +128,18 @@ export function ParticipantList({
           </div>
         )}
       </ScrollArea>
+
+      <RemoveParticipantDialog
+        participantName={removeTarget?.displayName}
+        open={removeTarget !== null}
+        onOpenChange={(open) => !open && setRemoveTarget(null)}
+        onConfirm={() => {
+          if (removeTarget) {
+            onRemoveParticipant?.(removeTarget._id);
+          }
+          setRemoveTarget(null);
+        }}
+      />
     </div>
   );
 }
