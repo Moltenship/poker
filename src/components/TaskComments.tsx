@@ -1,4 +1,3 @@
-import { MessageSquare } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 import { streamdownComponents } from "@/components/DescriptionImage";
