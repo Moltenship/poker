@@ -16,6 +16,7 @@ import { TaskListManager } from "@/components/TaskListManager";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { useIdentity } from "@/hooks/useIdentity";
+import { useJiraComments } from "@/hooks/useJiraComments";
 import { useJiraDetails } from "@/hooks/useJiraDetails";
 import { removeRecentRoom, useTrackRoom } from "@/hooks/useRecentRooms";
 import { useSessionId, useSessionMutation } from "@/hooks/useSession";
@@ -56,6 +57,7 @@ export default function Room() {
   const { details: jiraDetails, loading: jiraLoading } = useJiraDetails(jiraKeys);
 
   const currentTask = tasks && room ? tasks[room.currentTaskIndex] : null;
+  const { comments } = useJiraComments(currentTask?.jiraKey);
   const taskIdentifier = currentTask?.jiraKey ?? currentTask?._id ?? null;
   const currentEnriched = currentTask?.jiraKey ? jiraDetails[currentTask.jiraKey] : undefined;
   const voteStatus = useQuery(
@@ -276,6 +278,7 @@ export default function Room() {
                     task={currentTask}
                     enriched={currentEnriched}
                     jiraLoading={jiraLoading}
+                    comments={comments}
                   />
                 ) : null}
               </div>
