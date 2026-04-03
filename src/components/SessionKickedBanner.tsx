@@ -1,4 +1,5 @@
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,9 @@ export function SessionKickedBanner({
   onReclaim,
 }: SessionKickedBannerProps) {
   const navigate = useNavigate();
-  const participants = useQuery(api.participants.getParticipants, { roomId });
+  const { data: participants } = useQuery(
+    convexQuery(api.participants.getParticipants, { roomId }),
+  );
 
   const participant = participants?.find((entry) => entry._id === participantId);
 

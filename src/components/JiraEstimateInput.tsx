@@ -1,4 +1,4 @@
-import { useAction } from "convex/react";
+import { useConvexAction } from "@convex-dev/react-query";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 
@@ -17,9 +17,9 @@ interface JiraEstimateInputProps {
 
 export function JiraEstimateInput({ taskId, syncStatus, syncError }: JiraEstimateInputProps) {
   const [value, setValue] = useState("");
-  const updateEstimate = useAction(api.jira.updateJiraEstimate);
+  const updateEstimate = useConvexAction(api.jira.updateJiraEstimate);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = value.trim();
     if (!trimmed) {

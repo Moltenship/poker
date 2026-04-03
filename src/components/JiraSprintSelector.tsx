@@ -1,4 +1,5 @@
-import { useAction } from "convex/react";
+import { convexAction, useConvexAction } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -6,7 +7,6 @@ import { cn } from "@/lib/utils";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import type { JiraSprint } from "../../convex/jiraTypes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface JiraSprintSelectorProps {
@@ -24,31 +24,13 @@ export function JiraSprintSelector({
   syncStatus,
   syncError,
 }: JiraSprintSelectorProps) {
-  const [sprints, setSprints] = useState<JiraSprint[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
-  const fetchSprints = useAction(api.jira.fetchJiraSprints);
-  const moveToSprint = useAction(api.jira.moveIssueToSprint);
+  const { data: sprints = [], isPending: loading } = useQuery({
+    ...convexAction(api.jira.fetchJiraSprints, { projectKey }),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetchSprints({ projectKey })
-      .then((result) => {
-        if (!cancelled) {
-          setSprints(result);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [projectKey, fetchSprints]);
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+  const moveToSprint = useConvexAction(api.jira.moveIssueToSprint);
 
   // Sync from prop when sprints are loaded and no local selection yet
   useEffect(() => {

@@ -1,4 +1,5 @@
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,9 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
   const { participantId, displayName } = useIdentity(roomCode);
   const joinRoom = useSessionMutation(api.participants.joinRoom);
   const takeoverSession = useSessionMutation(api.participants.takeoverSession);
-  const roomParticipants = useQuery(api.participants.getParticipants, { roomId });
+  const { data: roomParticipants } = useQuery(
+    convexQuery(api.participants.getParticipants, { roomId }),
+  );
 
   const [joinName, setJoinName] = useState(displayName ?? "");
   const [isReturningUser, setIsReturningUser] = useState(false);

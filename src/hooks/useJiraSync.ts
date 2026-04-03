@@ -1,9 +1,10 @@
-import { useAction, useMutation } from "convex/react";
+import { convexAction, useConvexAction, useConvexMutation } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import { BACKLOG_FILTER_ID, type JiraSprint } from "../../convex/jiraTypes";
+import { BACKLOG_FILTER_ID } from "../../convex/jiraTypes";
 
 interface Task {
   jiraKey?: string;
@@ -26,7 +27,6 @@ export function useJiraSync({
   typeFilter,
   tasks,
 }: UseJiraSyncOptions) {
-  const [jiraSprints, setJiraSprints] = useState<JiraSprint[]>([]);
   const [localSprintFilter, setLocalSprintFilter] = useState<number[]>(
     sprintFilter.length === 0 ? [BACKLOG_FILTER_ID] : sprintFilter,
   );
@@ -35,11 +35,15 @@ export function useJiraSync({
   const [syncError, setSyncError] = useState<string | null>(null);
   const hasSyncedRef = useRef(false);
 
-  const fetchJiraSprints = useAction(api.jira.fetchJiraSprints);
-  const fetchJiraBacklog = useAction(api.jira.fetchJiraBacklog);
-  const importSelectedTasks = useMutation(api.jira.importSelectedTasks);
-  const saveSprintFilter = useMutation(api.rooms.setSprintFilter);
-  const saveTypeFilter = useMutation(api.rooms.setTypeFilter);
+  const { data: jiraSprints = [] } = useQuery({
+    ...convexAction(api.jira.fetchJiraSprints, jiraEnabled ? { projectKey } : "skip"),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const fetchJiraBacklog = useConvexAction(api.jira.fetchJiraBacklog);
+  const importSelectedTasks = useConvexMutation(api.jira.importSelectedTasks);
+  const saveSprintFilter = useConvexMutation(api.rooms.setSprintFilter);
+  const saveTypeFilter = useConvexMutation(api.rooms.setTypeFilter);
 
   // Stable string keys for shallow array comparison (avoids JSON.stringify in deps)
   const sprintFilterKey = useMemo(() => sprintFilter.join(","), [sprintFilter]);
@@ -78,12 +82,11 @@ export function useJiraSync({
     }
   };
 
-  // On mount: fetch sprints + auto-sync (once)
+  // On mount: auto-sync (once)
   useEffect(() => {
     if (!jiraEnabled) {
       return;
     }
-    fetchJiraSprints({ projectKey }).then(setJiraSprints).catch(console.error);
     if (!hasSyncedRef.current) {
       hasSyncedRef.current = true;
       doSync(sprintFilter);

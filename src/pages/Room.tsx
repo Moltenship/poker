@@ -1,4 +1,5 @@
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery as useTanStackQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -46,11 +47,14 @@ export default function Room() {
   const deleteRoom = useSessionMutation(api.rooms.deleteRoom);
   const updateDisplayName = useSessionMutation(api.participants.updateDisplayName);
 
-  const room = useQuery(api.rooms.getRoom, roomCode ? { roomCode } : "skip");
-  const tasks = useQuery(api.tasks.getTasksForRoom, room?._id ? { roomId: room._id } : "skip");
-  const participants = useQuery(
-    api.participants.getParticipants,
-    room?._id ? { roomId: room._id } : "skip",
+  const { data: room, isPending: roomPending } = useTanStackQuery(
+    convexQuery(api.rooms.getRoom, roomCode ? { roomCode } : "skip"),
+  );
+  const { data: tasks } = useTanStackQuery(
+    convexQuery(api.tasks.getTasksForRoom, room?._id ? { roomId: room._id } : "skip"),
+  );
+  const { data: participants, isPending: participantsPending } = useTanStackQuery(
+    convexQuery(api.participants.getParticipants, room?._id ? { roomId: room._id } : "skip"),
   );
 
   const jiraKeys = (tasks || []).filter((t) => t.jiraKey).map((t) => t.jiraKey!);
@@ -60,13 +64,14 @@ export default function Room() {
   const { comments } = useJiraComments(currentTask?.jiraKey);
   const taskIdentifier = currentTask?.jiraKey ?? currentTask?._id ?? null;
   const currentEnriched = currentTask?.jiraKey ? jiraDetails[currentTask.jiraKey] : undefined;
-  const voteStatus = useQuery(
-    api.voting.getVoteStatus,
-    currentTask?._id ? { taskId: currentTask._id } : "skip",
+  const { data: voteStatus } = useTanStackQuery(
+    convexQuery(api.voting.getVoteStatus, currentTask?._id ? { taskId: currentTask._id } : "skip"),
   );
-  const myVote = useQuery(
-    api.voting.getMyVote,
-    currentTask?._id && participantId ? { participantId, taskId: currentTask._id } : "skip",
+  const { data: myVote } = useTanStackQuery(
+    convexQuery(
+      api.voting.getMyVote,
+      currentTask?._id && participantId ? { participantId, taskId: currentTask._id } : "skip",
+    ),
   );
 
   // Derive host status and filter voters (exclude hosts from vote counting)
@@ -81,7 +86,8 @@ export default function Room() {
   // Detect removal: participantId is set but not found in loaded participants list
   const wasRemoved =
     Boolean(participantId) &&
-    participants !== undefined &&
+    !participantsPending &&
+    participants &&
     !participants.some((p) => p._id === participantId);
 
   const showVoteStatus = room?.status === "voting";
@@ -124,7 +130,7 @@ export default function Room() {
 
     joinRoom({ displayName, roomId: room._id })
       .then((nextParticipantId) => setIdentity(nextParticipantId, displayName))
-      .catch((error) => {
+      .catch((error: unknown) => {
         autoRejoinKeyRef.current = null;
         console.error("Failed to restore room identity:", error);
       });
@@ -135,11 +141,11 @@ export default function Room() {
 
   // --- Early returns for status screens ---
 
-  if (room === undefined) {
+  if (roomPending) {
     return <RoomLoading />;
   }
 
-  if (room === null) {
+  if (!room) {
     return <RoomNotFound roomCode={roomCode} />;
   }
 
