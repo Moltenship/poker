@@ -2,6 +2,9 @@ import { ExternalLink } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 import { streamdownComponents } from "@/components/DescriptionImage";
+import { TaskComments } from "@/components/TaskComments";
+
+import type { JiraComment } from "../../convex/jiraTypes";
 
 interface EnrichedDetails {
   title?: string;
@@ -19,9 +22,10 @@ interface TaskDetailsProps {
   task: TaskSummary;
   enriched: EnrichedDetails | undefined;
   jiraLoading: boolean;
+  comments?: JiraComment[];
 }
 
-export function TaskDetails({ task, enriched, jiraLoading }: TaskDetailsProps) {
+export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: TaskDetailsProps) {
   const isLoadingDetails = jiraLoading && Boolean(task.jiraKey) && !enriched;
 
   return (
@@ -89,6 +93,7 @@ export function TaskDetails({ task, enriched, jiraLoading }: TaskDetailsProps) {
               </Streamdown>
             </div>
           )}
+          <TaskComments comments={comments} />
         </div>
       )}
     </div>

@@ -4,11 +4,18 @@ import { api, internal } from "./_generated/api";
 import { action, internalMutation, mutation } from "./_generated/server";
 import {
   BACKLOG_FILTER_ID,
+  type JiraComment,
   type JiraIssue,
   type JiraSprint,
   type JiraTaskDetails,
 } from "./jiraTypes";
-export { BACKLOG_FILTER_ID, type JiraSprint, type JiraIssue, type JiraTaskDetails };
+export {
+  BACKLOG_FILTER_ID,
+  type JiraComment,
+  type JiraSprint,
+  type JiraIssue,
+  type JiraTaskDetails,
+};
 
 const jiraGlobals = globalThis as typeof globalThis & {
   fetch: (
@@ -653,6 +660,55 @@ export const updateJiraEstimate = action({
         taskId: args.taskId,
       });
       throw err;
+    }
+  },
+});
+
+export const fetchTaskComments = action({
+  args: { jiraKey: v.string() },
+  handler: async (_ctx, args): Promise<JiraComment[]> => {
+    try {
+      const { authHeader, baseUrl } = getJiraEnv();
+
+      const res = await jiraGlobals.fetch(
+        `${baseUrl}/rest/api/3/issue/${encodeURIComponent(args.jiraKey)}/comment?maxResults=50&orderBy=created`,
+        {
+          headers: {
+            Accept: "application/json",
+            Authorization: authHeader,
+          },
+        },
+      );
+
+      if (!res.ok) {
+        return [];
+      }
+
+      const data = (await res.json()) as {
+        comments?: {
+          id: string;
+          author?: { displayName?: string; avatarUrls?: Record<string, string> };
+          body?: unknown;
+          created?: string;
+        }[];
+      };
+
+      if (!data.comments || !Array.isArray(data.comments)) {
+        return [];
+      }
+
+      return data.comments
+        .map((comment) => ({
+          id: comment.id,
+          authorName: comment.author?.displayName ?? "Anonymous",
+          avatarUrl: comment.author?.avatarUrls?.["48x48"] ?? "",
+          body: adfToMarkdown(comment.body),
+          created: comment.created ?? new Date().toISOString(),
+        }))
+        .filter((c) => c.body.length > 0);
+    } catch {
+      // Graceful degradation: return empty array on error
+      return [];
     }
   },
 });

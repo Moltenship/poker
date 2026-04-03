@@ -31,3 +31,11 @@ export interface JiraTaskDetails {
   isBlocked: boolean;
   labels: string[];
 }
+
+export interface JiraComment {
+  id: string;
+  authorName: string;
+  avatarUrl: string;
+  body: string;
+  created: string;
+}
