@@ -1,10 +1,5 @@
-import { type OptionalRestArgsOrSkip, useMutation, useQuery } from "convex/react";
-import type {
-  FunctionArgs,
-  FunctionReference,
-  FunctionReturnType,
-  OptionalRestArgs,
-} from "convex/server";
+import { useConvexMutation } from "@convex-dev/react-query";
+import type { FunctionArgs, FunctionReference, OptionalRestArgs } from "convex/server";
 
 const SESSION_KEY = "poker_session_id";
 
@@ -35,20 +30,11 @@ export function useSessionId(): string {
 export function useSessionMutation<Ref extends FunctionReference<"mutation", "public">>(
   mutationRef: FunctionArgs<Ref> extends { sessionId: string } ? Ref : never,
 ) {
-  const mutate = useMutation(mutationRef as Ref);
+  const mutate = useConvexMutation(mutationRef as Ref);
   const sessionId = useSessionId();
 
   return (args: Omit<FunctionArgs<Ref>, "sessionId">) => {
     const fullArgs = [{ ...args, sessionId } as FunctionArgs<Ref>] as OptionalRestArgs<Ref>;
     return mutate(...fullArgs);
   };
-}
-
-export function useSessionQuery<Ref extends FunctionReference<"query", "public">>(
-  queryRef: FunctionArgs<Ref> extends { sessionId: string } ? Ref : never,
-  args: Omit<FunctionArgs<Ref>, "sessionId">,
-): FunctionReturnType<Ref> | undefined {
-  const sessionId = useSessionId();
-  const fullArgs = [{ ...args, sessionId } as FunctionArgs<Ref>] as OptionalRestArgsOrSkip<Ref>;
-  return useQuery(queryRef as Ref, ...fullArgs);
 }

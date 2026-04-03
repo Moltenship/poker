@@ -1,4 +1,4 @@
-import { useMutation } from "convex/react";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { Plus, Settings2 } from "lucide-react";
 import { useCallback, useState } from "react";
 
@@ -34,7 +34,7 @@ interface EditCardSetDialogProps {
 }
 
 export function EditCardSetDialog({ roomId, currentCardSet }: EditCardSetDialogProps) {
-  const updateCardSet = useMutation(api.rooms.updateCardSet);
+  const updateCardSet = useConvexMutation(api.rooms.updateCardSet);
 
   const [open, setOpen] = useState(false);
   const [cards, setCards] = useState<string[]>(currentCardSet);

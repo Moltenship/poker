@@ -1,4 +1,4 @@
-import { useAction, useMutation } from "convex/react";
+import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
 import { AlertTriangle, CheckCircle2, ExternalLink, Loader2, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -39,10 +39,10 @@ export function JiraImportModal({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
 
-  const fetchSprints = useAction(api.jira.fetchJiraSprints);
-  const fetchBacklog = useAction(api.jira.fetchJiraBacklog);
-  const importTasks = useMutation(api.jira.importSelectedTasks);
-  const saveSprintFilter = useMutation(api.rooms.setSprintFilter);
+  const fetchSprints = useConvexAction(api.jira.fetchJiraSprints);
+  const fetchBacklog = useConvexAction(api.jira.fetchJiraBacklog);
+  const importTasks = useConvexMutation(api.jira.importSelectedTasks);
+  const saveSprintFilter = useConvexMutation(api.rooms.setSprintFilter);
 
   const loadIssues = useCallback(
     (ids: number[]) =>

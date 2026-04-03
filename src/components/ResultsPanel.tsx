@@ -1,4 +1,5 @@
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { useSessionMutation } from "@/hooks/useSession";
 import { findNearestCard } from "@/lib/average";
@@ -42,13 +43,17 @@ export function ResultsPanel({
   const resetVoting = useSessionMutation(api.voting.resetVoting);
   const advanceToNextTask = useSessionMutation(api.voting.advanceToNextTask);
 
-  const voteResults = useQuery(
-    api.voting.getVoteResults,
-    taskId && roomStatus === "revealed" ? { roomId, taskId } : "skip",
+  const { data: voteResults } = useQuery(
+    convexQuery(
+      api.voting.getVoteResults,
+      taskId && roomStatus === "revealed" ? { roomId, taskId } : "skip",
+    ),
   );
 
-  const participants = useQuery(api.participants.getParticipants, { roomId });
-  const currentTask = useQuery(api.tasks.getCurrentTask, { roomId });
+  const { data: participants } = useQuery(
+    convexQuery(api.participants.getParticipants, { roomId }),
+  );
+  const { data: currentTask } = useQuery(convexQuery(api.tasks.getCurrentTask, { roomId }));
 
   if (roomStatus === "lobby" || !taskId) {
     return null;
