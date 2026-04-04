@@ -37,7 +37,7 @@ export function TaskComments({ comments }: TaskCommentsProps) {
   return (
     <>
       <Separator className="mt-5 mb-5" />
-      <div className="mt-5 text-left text-[13px]">
+      <div className="mt-5 text-left text-sm">
         <div className="space-y-4">
           {comments.map((comment) => (
             <div key={comment.id} className="flex gap-3">
@@ -49,7 +49,7 @@ export function TaskComments({ comments }: TaskCommentsProps) {
               </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-[13px] font-medium">{comment.authorName}</span>
+                  <span className="text-sm font-medium">{comment.authorName}</span>
                   <span className="text-muted-foreground text-xs">
                     {formatTimestamp(comment.created)}
                   </span>

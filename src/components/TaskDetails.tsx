@@ -86,7 +86,7 @@ export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: Task
             )}
           </h2>
           {enriched?.description && (
-            <div className="mt-5 text-left text-[13px]">
+            <div className="mt-5 text-left text-sm">
               <Streamdown mode="static" components={streamdownComponents}>
                 {enriched.description}
               </Streamdown>
