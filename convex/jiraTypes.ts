@@ -24,6 +24,8 @@ export interface JiraBlocker {
   key: string;
   summary: string;
   status: string;
+  statusColor?: string;
+  typeIconUrl?: string;
   url: string;
 }
 

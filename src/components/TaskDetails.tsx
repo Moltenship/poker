@@ -7,6 +7,22 @@ import { TaskComments } from "@/components/TaskComments";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+/** Map Jira statusCategory colorName to badge styles. */
+function statusColorClass(colorName?: string): string {
+  switch (colorName) {
+    case "blue-gray":
+      return "border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300";
+    case "blue":
+      return "border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-900 dark:text-blue-300";
+    case "yellow":
+      return "border-yellow-300 bg-yellow-100 text-yellow-700 dark:border-yellow-600 dark:bg-yellow-900 dark:text-yellow-300";
+    case "green":
+      return "border-green-300 bg-green-100 text-green-700 dark:border-green-600 dark:bg-green-900 dark:text-green-300";
+    default:
+      return "";
+  }
+}
+
 interface EnrichedDetails {
   title?: string;
   description?: string;
@@ -111,11 +127,17 @@ export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: Task
                     rel="noopener noreferrer"
                     className="border-border bg-card hover:bg-accent flex items-center justify-between rounded-md border px-3 py-2 transition-colors"
                   >
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1.5">
+                      {blocker.typeIconUrl && (
+                        <img src={blocker.typeIconUrl} alt="" className="size-4 shrink-0" />
+                      )}
                       {blocker.key}: {blocker.summary}
-                      <ExternalLink className="text-muted-foreground size-3" />
+                      <ExternalLink className="text-muted-foreground size-3 shrink-0" />
                     </span>
-                    <Badge variant="outline" className="text-[10px] leading-tight">
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] leading-tight ${statusColorClass(blocker.statusColor)}`}
+                    >
                       {blocker.status}
                     </Badge>
                   </a>

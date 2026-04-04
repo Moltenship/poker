@@ -42,8 +42,22 @@ interface JiraIssueFields {
   assignee?: { displayName?: string; accountId?: string } | null;
   issuelinks?: {
     type?: { name?: string; inward?: string; outward?: string };
-    inwardIssue?: { key?: string; fields?: { summary?: string; status?: { name?: string } } };
-    outwardIssue?: { key?: string; fields?: { summary?: string; status?: { name?: string } } };
+    inwardIssue?: {
+      key?: string;
+      fields?: {
+        summary?: string;
+        status?: { name?: string; statusCategory?: { colorName?: string } };
+        issuetype?: { name?: string; iconUrl?: string };
+      };
+    };
+    outwardIssue?: {
+      key?: string;
+      fields?: {
+        summary?: string;
+        status?: { name?: string; statusCategory?: { colorName?: string } };
+        issuetype?: { name?: string; iconUrl?: string };
+      };
+    };
   }[];
   attachment?: {
     id: string;
@@ -382,7 +396,9 @@ function getBlockers(links: JiraIssueFields["issuelinks"], baseUrl: string): Jir
     .map((link) => ({
       key: link.inwardIssue!.key!,
       status: String(link.inwardIssue!.fields?.status?.name ?? ""),
+      statusColor: link.inwardIssue!.fields?.status?.statusCategory?.colorName ?? undefined,
       summary: String(link.inwardIssue!.fields?.summary ?? link.inwardIssue!.key!),
+      typeIconUrl: link.inwardIssue!.fields?.issuetype?.iconUrl ?? undefined,
       url: `${baseUrl}/browse/${link.inwardIssue!.key!}`,
     }));
 }
