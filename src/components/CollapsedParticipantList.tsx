@@ -25,7 +25,7 @@ export function CollapsedParticipantList({
   votedIds,
 }: CollapsedParticipantListProps) {
   return (
-    <div className="hidden flex-col items-center gap-3 pt-3 md:flex">
+    <div className="hidden flex-col items-center gap-4 pt-3 md:flex">
       {participants.map((p) => (
         <Tooltip key={p._id}>
           <TooltipTrigger asChild>
