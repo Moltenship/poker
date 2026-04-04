@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import { describe, expect, it } from "vitest";
 
 import * as api from "../_generated/api";
 import * as roomsFns from "../rooms";

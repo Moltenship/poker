@@ -1,5 +1,6 @@
 import { convexTest } from "convex-test";
 import { v } from "convex/values";
+import { describe, expect, it } from "vitest";
 
 import * as api from "../../_generated/api";
 import schema from "../../schema";
@@ -30,7 +31,8 @@ describe(sessionMutation, () => {
     const t = createTestContext();
 
     await expect(
-      t.mutation(rejectBlankSessionMutation, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RegisteredMutation is compatible at runtime
+      t.mutation(rejectBlankSessionMutation as any, {
         sessionId: "   ",
         value: "hello",
       }),

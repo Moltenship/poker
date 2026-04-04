@@ -1,11 +1,12 @@
-import { convexTest } from "convex-test";
+import { type TestConvex, convexTest } from "convex-test";
+import { describe, expect, it } from "vitest";
 
 import { api } from "../_generated/api";
 import schema from "../schema";
 
 const modules = import.meta.glob("../**/*.ts");
 
-async function createTestRoom(t: ReturnType<typeof convexTest>) {
+async function createTestRoom(t: TestConvex<typeof schema>) {
   return await t.run(
     async (ctx) =>
       await ctx.db.insert("rooms", {

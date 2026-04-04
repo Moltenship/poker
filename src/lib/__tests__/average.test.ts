@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import { calculateAverage, findNearestCard } from "../average";
 
 describe(calculateAverage, () => {

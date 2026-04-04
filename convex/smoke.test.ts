@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import { expect, test } from "vitest";
 
 import * as api from "./_generated/api";
 import schema from "./schema";

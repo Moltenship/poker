@@ -12,11 +12,6 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    environmentMatchGlobs: [
-      ["convex/**/*.test.ts", "node"],
-      ["src/lib/**/*.test.ts", "node"],
-    ],
-    globals: true,
     include: [
       "src/test/**/*.test.{ts,tsx}",
       "convex/**/*.test.ts",

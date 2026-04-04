@@ -2,6 +2,7 @@
  * This test file validates ADF to Markdown conversion for Jira descriptions.
  * It mirrors the convertAdfNode logic to test link rendering without importing internals.
  */
+import { describe, expect, it } from "vitest";
 
 interface AdfMark {
   type: string;

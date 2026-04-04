@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import { FIBONACCI, FIBONACCI_EXTENDED, isNumericCard, parseCardValue } from "../cards";
 
 describe("fIBONACCI presets", () => {

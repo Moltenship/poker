@@ -14,17 +14,8 @@
     "browser": true,
     "es2024": true
   },
-  "globals": {
-    "vi": "readonly",
-    "describe": "readonly",
-    "it": "readonly",
-    "expect": "readonly",
-    "beforeEach": "readonly",
-    "afterEach": "readonly",
-    "beforeAll": "readonly",
-    "afterAll": "readonly"
-  },
   "rules": {
+    "no-importing-vitest-globals": "off",
     "react-in-jsx-scope": "off",
     "no-ternary": "off",
     "no-magic-numbers": "off",
