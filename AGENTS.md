@@ -12,7 +12,7 @@ Convex agent skills for common tasks can be installed by running `npx convex ai-
 
 ## Task Completion Requirements
 
-- All of `npm run format:check`, `npm run lint`, and `npm run typecheck` must pass before considering tasks completed.
+- All of `npm run format:check`, `npm run lint`, and `npm run typecheck:tsgo` must pass before considering tasks completed.
 
 ## Commit message style
 
