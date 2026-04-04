@@ -41,7 +41,6 @@ export default function Room() {
   const leaveRoom = useSessionMutation(api.participants.leaveRoom);
   const heartbeat = useSessionMutation(api.participants.heartbeat);
   const takeoverSession = useSessionMutation(api.participants.takeoverSession);
-  const startVoting = useSessionMutation(api.voting.startVoting);
   const toggleHost = useSessionMutation(api.participants.toggleHost);
   const removeParticipant = useSessionMutation(api.participants.removeParticipant);
   const deleteRoom = useSessionMutation(api.rooms.deleteRoom);
@@ -149,20 +148,6 @@ export default function Room() {
     return <RoomNotFound roomCode={roomCode} />;
   }
 
-  const handleStartVoting = async () => {
-    if (!room._id) {
-      return;
-    }
-    try {
-      await startVoting({ roomId: room._id });
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const hasParticipants = participants && participants.length > 0;
-  const canStartVoting = hasParticipants;
-
   const handleReclaim = async () => {
     if (!room._id || !participantId) {
       return;
@@ -225,9 +210,7 @@ export default function Room() {
         />
 
         <div className="flex flex-1 flex-col overflow-auto">
-          {room.status === "lobby" ? (
-            <RoomLobby canStartVoting={Boolean(canStartVoting)} onStartVoting={handleStartVoting} />
-          ) : null}
+          {room.status === "lobby" ? <RoomLobby /> : null}
 
           {(room.status === "voting" || room.status === "revealed") && participantId ? (
             <>
