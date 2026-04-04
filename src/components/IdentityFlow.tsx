@@ -1,4 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
@@ -21,9 +23,6 @@ import {
 } from "@/components/ui/select";
 import { useIdentity } from "@/hooks/useIdentity";
 import { useSessionMutation } from "@/hooks/useSession";
-
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 
 interface IdentityFlowProps {
   roomId: Id<"rooms">;
@@ -63,7 +62,10 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
     }
     setIsSubmitting(true);
     try {
-      const nextParticipantId = await joinRoom({ displayName: trimmedName, roomId });
+      const nextParticipantId = await joinRoom({
+        displayName: trimmedName,
+        roomId,
+      });
       onIdentitySet(nextParticipantId, trimmedName);
     } catch (error) {
       console.error("Failed to join room:", error);
@@ -78,7 +80,10 @@ export function IdentityFlow({ roomId, roomCode, onIdentitySet }: IdentityFlowPr
     }
     setIsSubmitting(true);
     try {
-      await takeoverSession({ roomId, targetParticipantId: selectedParticipant._id });
+      await takeoverSession({
+        roomId,
+        targetParticipantId: selectedParticipant._id,
+      });
       onIdentitySet(selectedParticipant._id, selectedParticipant.displayName);
       setIsConfirmOpen(false);
     } catch (error) {

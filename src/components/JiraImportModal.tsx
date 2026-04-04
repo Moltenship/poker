@@ -1,4 +1,7 @@
 import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import { BACKLOG_FILTER_ID, type JiraIssue, type JiraSprint } from "@convex/jiraTypes";
 import { AlertTriangle, CheckCircle2, ExternalLink, Loader2, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -9,10 +12,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
-import { BACKLOG_FILTER_ID, type JiraIssue, type JiraSprint } from "../../convex/jiraTypes";
 
 interface JiraImportModalProps {
   roomId: Id<"rooms">;
@@ -46,7 +45,10 @@ export function JiraImportModal({
 
   const loadIssues = useCallback(
     (ids: number[]) =>
-      fetchBacklog({ jiraProjectKey: projectKey, sprintIds: ids.length > 0 ? ids : undefined }),
+      fetchBacklog({
+        jiraProjectKey: projectKey,
+        sprintIds: ids.length > 0 ? ids : undefined,
+      }),
     [fetchBacklog, projectKey],
   );
 

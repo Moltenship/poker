@@ -1,3 +1,4 @@
+import { api } from "@convex/_generated/api";
 import { ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,8 +15,6 @@ import {
 import { useRecentRooms } from "@/hooks/useRecentRooms";
 import { useSessionMutation } from "@/hooks/useSession";
 import { FIBONACCI, FIBONACCI_EXTENDED } from "@/lib/cards";
-
-import { api } from "../../convex/_generated/api";
 
 function extractRoomCode(input: string): string | null {
   const trimmed = input.trim();

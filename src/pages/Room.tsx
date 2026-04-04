@@ -1,4 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { useQuery as useTanStackQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -23,9 +25,6 @@ import { removeRecentRoom, useTrackRoom } from "@/hooks/useRecentRooms";
 import { useSessionId, useSessionMutation } from "@/hooks/useSession";
 import { useTaskUrlSync } from "@/hooks/useTaskUrlSync";
 import { cn } from "@/lib/utils";
-
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 
 /** Stable empty arrays to avoid re-render from new references each render. */
 const EMPTY_SPRINT_FILTER: number[] = [];
@@ -153,7 +152,10 @@ export default function Room() {
       return;
     }
     try {
-      await takeoverSession({ roomId: room._id, targetParticipantId: participantId });
+      await takeoverSession({
+        roomId: room._id,
+        targetParticipantId: participantId,
+      });
       const p = participants?.find((entry) => entry._id === participantId);
       setIdentity(participantId, p?.displayName ?? displayName ?? "");
     } catch (error) {

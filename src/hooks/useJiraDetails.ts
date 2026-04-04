@@ -1,8 +1,7 @@
 import { convexAction } from "@convex-dev/react-query";
+import { api } from "@convex/_generated/api";
+import type { JiraTaskDetails } from "@convex/jiraTypes";
 import { useQuery } from "@tanstack/react-query";
-
-import { api } from "../../convex/_generated/api";
-import type { JiraTaskDetails } from "../../convex/jiraTypes";
 
 export function useJiraDetails(jiraKeys: string[]) {
   const sortedKeys = [...jiraKeys].sort();

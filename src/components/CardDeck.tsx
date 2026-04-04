@@ -1,9 +1,9 @@
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { useCallback } from "react";
 
 import { useSessionMutation } from "@/hooks/useSession";
 
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 import { VoteCard } from "./VoteCard";
 
 interface CardDeckProps {

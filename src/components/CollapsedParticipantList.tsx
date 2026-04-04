@@ -1,10 +1,9 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { Check, Crown } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-
-import type { Id } from "../../convex/_generated/dataModel";
 
 interface Participant {
   _id: Id<"participants">;

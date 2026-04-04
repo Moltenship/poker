@@ -1,6 +1,6 @@
-import { FilterChip } from "@/components/FilterChip";
+import { BACKLOG_FILTER_ID, type JiraSprint } from "@convex/jiraTypes";
 
-import { BACKLOG_FILTER_ID, type JiraSprint } from "../../convex/jiraTypes";
+import { FilterChip } from "@/components/FilterChip";
 
 interface SprintFilterChipsProps {
   sprints: JiraSprint[];

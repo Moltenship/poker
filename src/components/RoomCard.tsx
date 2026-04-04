@@ -1,6 +1,5 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { ChevronRight } from "lucide-react";
-
-import type { Id } from "../../convex/_generated/dataModel";
 
 interface RoomCardProps {
   room: {

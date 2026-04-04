@@ -1,3 +1,5 @@
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 /**
  * Query key factory for TanStack Query + Convex adapter.
  *
@@ -14,9 +16,6 @@
  * @see https://tkdodo.eu/blog/effective-react-query-keys
  */
 import { getFunctionName } from "convex/server";
-
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 
 // ---------------------------------------------------------------------------
 // Rooms

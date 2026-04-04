@@ -1,10 +1,9 @@
 import { convexAction, useConvexAction, useConvexMutation } from "@convex-dev/react-query";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import { BACKLOG_FILTER_ID } from "@convex/jiraTypes";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
-import { BACKLOG_FILTER_ID } from "../../convex/jiraTypes";
 
 interface Task {
   jiraKey?: string;

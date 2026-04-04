@@ -1,10 +1,9 @@
+import type { JiraComment } from "@convex/jiraTypes";
 import { Streamdown } from "streamdown";
 
 import { streamdownComponents } from "@/components/DescriptionImage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-
-import type { JiraComment } from "../../convex/jiraTypes";
 
 interface TaskCommentsProps {
   comments: JiraComment[];

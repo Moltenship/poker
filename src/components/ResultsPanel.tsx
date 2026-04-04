@@ -1,11 +1,11 @@
 import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { useQuery } from "@tanstack/react-query";
 
 import { useSessionMutation } from "@/hooks/useSession";
 import { findNearestCard } from "@/lib/average";
 
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 import { JiraEstimateInput } from "./JiraEstimateInput";
 import { JiraSprintSelector } from "./JiraSprintSelector";
 import { Button } from "./ui/button";
@@ -86,7 +86,10 @@ export function ResultsPanel({
 
   const formattedVotes = (voteResults?.votes ?? []).map((vote) => {
     const participant = participants?.find((p) => p._id === vote.participantId);
-    return { displayName: participant?.displayName ?? "Unknown", value: vote.value ?? "?" };
+    return {
+      displayName: participant?.displayName ?? "Unknown",
+      value: vote.value ?? "?",
+    };
   });
 
   const averageDisplay =

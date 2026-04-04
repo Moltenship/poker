@@ -1,6 +1,5 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { useEffect } from "react";
-
-import type { Id } from "../../convex/_generated/dataModel";
 
 /** How often (ms) to send a heartbeat to keep the participant connected. */
 const HEARTBEAT_INTERVAL_MS = 25_000;

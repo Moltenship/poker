@@ -1,3 +1,4 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { Check, User, X } from "lucide-react";
 import React from "react";
 import { NavLink } from "react-router-dom";
@@ -6,8 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-
-import type { Id } from "../../convex/_generated/dataModel";
 
 interface EnrichedTask {
   title?: string;

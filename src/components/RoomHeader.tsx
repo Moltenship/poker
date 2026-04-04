@@ -1,3 +1,4 @@
+import type { Id } from "@convex/_generated/dataModel";
 import {
   ArrowLeft,
   Check,
@@ -19,8 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { cn } from "@/lib/utils";
-
-import type { Id } from "../../convex/_generated/dataModel";
 
 interface RoomHeaderProps {
   room: {

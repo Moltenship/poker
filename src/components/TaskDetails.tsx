@@ -1,10 +1,9 @@
+import type { JiraComment } from "@convex/jiraTypes";
 import { ExternalLink } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 import { streamdownComponents } from "@/components/DescriptionImage";
 import { TaskComments } from "@/components/TaskComments";
-
-import type { JiraComment } from "../../convex/jiraTypes";
 
 interface EnrichedDetails {
   title?: string;

@@ -1,4 +1,6 @@
 import { useConvexMutation } from "@convex-dev/react-query";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { Plus, Settings2 } from "lucide-react";
 import { useCallback, useState } from "react";
 
@@ -24,9 +26,6 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { detectPreset, FIBONACCI, FIBONACCI_EXTENDED } from "@/lib/cards";
-
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 
 interface EditCardSetDialogProps {
   roomId: Id<"rooms">;

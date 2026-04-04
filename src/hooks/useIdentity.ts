@@ -1,6 +1,5 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-import type { Id } from "../../convex/_generated/dataModel";
 
 interface StoredIdentity {
   participantId: Id<"participants">;

@@ -1,7 +1,6 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
-import type { Id } from "../../convex/_generated/dataModel";
 
 /**
  * Keeps the browser URL in sync with the server's current task.

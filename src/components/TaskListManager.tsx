@@ -1,3 +1,5 @@
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { RotateCw, SlidersHorizontal, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 
@@ -12,9 +14,6 @@ import { useJiraDetails } from "@/hooks/useJiraDetails";
 import { useJiraSync } from "@/hooks/useJiraSync";
 import { useSessionMutation } from "@/hooks/useSession";
 import { cn } from "@/lib/utils";
-
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 
 export interface Task {
   _id: Id<"tasks">;
@@ -69,7 +68,14 @@ export function TaskListManager({
     toggleSprint,
     toggleType,
     updateSprintFilter,
-  } = useJiraSync({ jiraEnabled, projectKey, roomId, sprintFilter, tasks, typeFilter });
+  } = useJiraSync({
+    jiraEnabled,
+    projectKey,
+    roomId,
+    sprintFilter,
+    tasks,
+    typeFilter,
+  });
 
   // Derive unique types from enriched Jira details
   const availableTypes = [

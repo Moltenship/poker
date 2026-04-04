@@ -1,11 +1,11 @@
 import { useConvexAction } from "@convex-dev/react-query";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
