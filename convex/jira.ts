@@ -4,6 +4,7 @@ import { api, internal } from "./_generated/api";
 import { action, internalMutation, mutation } from "./_generated/server";
 import {
   BACKLOG_FILTER_ID,
+  type JiraBlocker,
   type JiraComment,
   type JiraIssue,
   type JiraSprint,
@@ -41,8 +42,22 @@ interface JiraIssueFields {
   assignee?: { displayName?: string; accountId?: string } | null;
   issuelinks?: {
     type?: { name?: string; inward?: string; outward?: string };
-    inwardIssue?: { key?: string; fields?: { status?: { name?: string } } };
-    outwardIssue?: { key?: string; fields?: { status?: { name?: string } } };
+    inwardIssue?: {
+      key?: string;
+      fields?: {
+        summary?: string;
+        status?: { name?: string; statusCategory?: { colorName?: string } };
+        issuetype?: { name?: string; iconUrl?: string };
+      };
+    };
+    outwardIssue?: {
+      key?: string;
+      fields?: {
+        summary?: string;
+        status?: { name?: string; statusCategory?: { colorName?: string } };
+        issuetype?: { name?: string; iconUrl?: string };
+      };
+    };
   }[];
   attachment?: {
     id: string;
@@ -363,6 +378,31 @@ function checkIsBlocked(links: JiraIssueFields["issuelinks"]): boolean {
   });
 }
 
+/** Extract blocker details (key, summary, url) from issue links. */
+function getBlockers(links: JiraIssueFields["issuelinks"], baseUrl: string): JiraBlocker[] {
+  if (!Array.isArray(links)) {
+    return [];
+  }
+  return links
+    .filter((link) => {
+      if (link.type?.inward?.toLowerCase().includes("is blocked by") && link.inwardIssue?.key) {
+        const status = link.inwardIssue.fields?.status?.name?.toLowerCase() ?? "";
+        return (
+          !status.includes("done") && !status.includes("closed") && !status.includes("resolved")
+        );
+      }
+      return false;
+    })
+    .map((link) => ({
+      key: link.inwardIssue!.key!,
+      status: String(link.inwardIssue!.fields?.status?.name ?? ""),
+      statusColor: link.inwardIssue!.fields?.status?.statusCategory?.colorName ?? undefined,
+      summary: String(link.inwardIssue!.fields?.summary ?? link.inwardIssue!.key!),
+      typeIconUrl: link.inwardIssue!.fields?.issuetype?.iconUrl ?? undefined,
+      url: `${baseUrl}/browse/${link.inwardIssue!.key!}`,
+    }));
+}
+
 export const fetchTaskDetails = action({
   args: { jiraKeys: v.array(v.string()) },
   handler: async (_ctx, args): Promise<Record<string, JiraTaskDetails>> => {
@@ -411,7 +451,8 @@ export const fetchTaskDetails = action({
           sprintName = String(active.name ?? "");
         }
         const assignee = issue.fields.assignee?.displayName ?? undefined;
-        const isBlocked = checkIsBlocked(issue.fields.issuelinks);
+        const blockedBy = getBlockers(issue.fields.issuelinks, baseUrl);
+        const isBlocked = blockedBy.length > 0;
 
         // Resolve embedded image URLs from attachments
         const mediaUrlMap = await resolveMediaUrls(
@@ -422,6 +463,7 @@ export const fetchTaskDetails = action({
 
         result[issue.key] = {
           assignee,
+          blockedBy,
           description: adfToMarkdown(issue.fields.description, mediaUrlMap),
           isBlocked,
           labels: issue.fields.labels ?? [],
