@@ -20,6 +20,13 @@ export interface JiraIssue {
   labels: string[];
 }
 
+export interface JiraBlocker {
+  key: string;
+  summary: string;
+  status: string;
+  url: string;
+}
+
 export interface JiraTaskDetails {
   title: string;
   description: string;
@@ -29,6 +36,7 @@ export interface JiraTaskDetails {
   url: string;
   assignee?: string;
   isBlocked: boolean;
+  blockedBy: JiraBlocker[];
   labels: string[];
 }
 

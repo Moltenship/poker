@@ -1,15 +1,18 @@
-import type { JiraComment } from "@convex/jiraTypes";
-import { ExternalLink } from "lucide-react";
+import type { JiraBlocker, JiraComment } from "@convex/jiraTypes";
+import { ExternalLink, OctagonAlert } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 import { streamdownComponents } from "@/components/DescriptionImage";
 import { TaskComments } from "@/components/TaskComments";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 interface EnrichedDetails {
   title?: string;
   description?: string;
   url?: string;
   sprintName?: string;
+  blockedBy?: JiraBlocker[];
 }
 
 interface TaskSummary {
@@ -90,6 +93,34 @@ export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: Task
               <Streamdown mode="static" components={streamdownComponents}>
                 {enriched.description}
               </Streamdown>
+            </div>
+          )}
+          {enriched?.blockedBy && enriched.blockedBy.length > 0 && (
+            <div className="mt-5 text-sm">
+              <Separator className="mb-5" />
+              <div className="text-destructive flex items-center gap-1.5 font-medium">
+                <OctagonAlert className="size-4" />
+                Blocked by
+              </div>
+              <div className="mt-2 space-y-2">
+                {enriched.blockedBy.map((blocker) => (
+                  <a
+                    key={blocker.key}
+                    href={blocker.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border-border bg-card hover:bg-accent flex items-center justify-between rounded-md border px-3 py-2 transition-colors"
+                  >
+                    <span className="flex items-center gap-1">
+                      {blocker.key}: {blocker.summary}
+                      <ExternalLink className="text-muted-foreground size-3" />
+                    </span>
+                    <Badge variant="outline" className="text-[10px] leading-tight">
+                      {blocker.status}
+                    </Badge>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
           <TaskComments comments={comments} />
