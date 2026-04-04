@@ -224,6 +224,44 @@ function convertAdfNode(node: AdfNode, depth: number, mediaUrlMap: Map<string, s
       const label = browseMatch ? browseMatch[1] : url;
       return url ? `[${label}](${url.split("#")[0]})` : "";
     }
+    case "table": {
+      const rows = (node.content ?? []).filter((r) => r.type === "tableRow");
+      if (rows.length === 0) {
+        return "";
+      }
+
+      const processedRows: string[][] = rows.map((row) => {
+        const cells = (row.content ?? []).filter(
+          (c) => c.type === "tableHeader" || c.type === "tableCell",
+        );
+        return cells.map((cell) => {
+          const text = (cell.content ?? [])
+            .map((child) => convertAdfNode(child, 0, mediaUrlMap))
+            .join(" ");
+          // Escape pipes and collapse newlines to keep table syntax intact
+          return text.replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+        });
+      });
+
+      // Determine column count from widest row
+      const colCount = Math.max(...processedRows.map((r) => r.length));
+
+      // Pad rows to uniform width
+      for (const row of processedRows) {
+        while (row.length < colCount) {
+          row.push("");
+        }
+      }
+
+      const lines: string[] = [];
+      lines.push(`| ${processedRows[0].join(" | ")} |`);
+      lines.push(`| ${Array.from({ length: colCount }, () => "---").join(" | ")} |`);
+      for (let i = 1; i < processedRows.length; i++) {
+        lines.push(`| ${processedRows[i].join(" | ")} |`);
+      }
+
+      return lines.join("\n");
+    }
     case "mediaSingle":
       return (node.content ?? []).map((n) => convertAdfNode(n, 0, mediaUrlMap)).join("");
     case "media": {
