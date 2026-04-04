@@ -1,9 +1,0 @@
-
- RUN  v4.1.2 /Users/tmaksimov/pgm/poker
-
-
- Test Files  3 passed (3)
-      Tests  25 passed (25)
-   Start at  18:51:52
-   Duration  155ms (transform 61ms, setup 152ms, import 64ms, tests 7ms, environment 0ms)
-
