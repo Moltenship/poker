@@ -11,7 +11,8 @@ interface TaskCommentsProps {
 
 function formatTimestamp(isoString: string): string {
   const date = new Date(isoString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleString("en-US", {
+    year: "numeric",
     month: "short",
     day: "numeric",
     hour: "2-digit",
