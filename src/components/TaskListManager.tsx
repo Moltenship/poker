@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { SprintFilterChips } from "@/components/SprintFilterChips";
 import { TaskRow } from "@/components/TaskRow";
 import { TypeFilterChips } from "@/components/TypeFilterChips";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
@@ -123,7 +124,12 @@ export function TaskListManager({
     <div className="flex h-full flex-col" data-testid="task-list-manager">
       {/* Header */}
       <div className="flex h-11 shrink-0 items-center justify-between px-4">
-        <span className="text-[13px] font-medium">Tasks</span>
+        <span className="flex items-center gap-1.5 text-[13px] font-medium">
+          Tasks
+          <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+            {import.meta.env.DEV ? "Dev" : "Alpha"}
+          </Badge>
+        </span>
         {confirmClear ? (
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground text-[11px]">Clear all?</span>
