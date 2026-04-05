@@ -2,7 +2,7 @@
 
 A real-time planning poker app for agile teams. Estimate tasks together using configurable card sets, with optional Jira Cloud integration for importing backlog items.
 
-## Features
+## Feature Set
 
 - **Real-time voting** — see who has voted and reveal results together
 - **Configurable card sets** — Fibonacci, extended Fibonacci, or custom values
@@ -128,4 +128,4 @@ Set `VITE_CONVEX_URL` in your Vercel environment variables pointing to your prod
 
 ## License
 
-ISC
+MIT
