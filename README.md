@@ -54,6 +54,7 @@ A real-time planning poker app for agile teams. Estimate tasks together using co
    ```
 
    On first run this will create a new Convex project and generate a `.env.local` file with your `VITE_CONVEX_URL`.
+   If you already have a Convex deployment, copy `.env.example` to `.env.local` and set `VITE_CONVEX_URL` manually instead.
 
 4. **Start development**
 
@@ -82,9 +83,12 @@ Generate an API token at [id.atlassian.com/manage-profile/security/api-tokens](h
 | `npm run dev`          | Start frontend + backend in development mode |
 | `npm run dev:frontend` | Start Vite dev server only                   |
 | `npm run dev:backend`  | Start Convex dev server only                 |
+| `npm run dashboard`    | Open the Convex dashboard                    |
 | `npm run build`        | Type-check and build for production          |
 | `npm run preview`      | Preview production build locally             |
 | `npm test`             | Run tests                                    |
+| `npm run typecheck`    | Type-check with TypeScript                   |
+| `npm run typecheck:tsgo` | Type-check with TSGo                       |
 | `npm run lint`         | Lint with OxLint                             |
 | `npm run lint:fix`     | Lint and auto-fix                            |
 | `npm run format`       | Format with OxFmt                            |
