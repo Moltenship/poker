@@ -10,7 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 
 import { ConnectionDot } from "@/components/ConnectionBanner";
 import { DeleteRoomDialog } from "@/components/DeleteRoomDialog";

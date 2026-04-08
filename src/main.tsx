@@ -1,16 +1,16 @@
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { RouterProvider } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider } from "react-router-dom";
 
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SessionProvider } from "@/providers/SessionProvider";
-
-import router from "./router";
+import router from "@/router";
 
 import "./index.css";
 
@@ -33,6 +33,7 @@ const App = () => (
       <SessionProvider>
         <TooltipProvider>
           <RouterProvider router={router} />
+          <TanStackRouterDevtools router={router} />
           <Toaster />
         </TooltipProvider>
       </SessionProvider>

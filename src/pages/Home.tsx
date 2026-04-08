@@ -1,7 +1,7 @@
 import { api } from "@convex/_generated/api";
 import { ChevronRight } from "lucide-react";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +81,7 @@ export default function Home() {
         jiraProjectKey: projectKey.trim().toUpperCase() || undefined,
         name: roomName.trim(),
       });
-      navigate(`/room/${roomCode}`);
+      navigate({ to: "/room/$roomCode", params: { roomCode } });
     } catch {
       setCreateError("ERROR! Failed to create room. Please try again. ");
     }
@@ -90,7 +90,7 @@ export default function Home() {
   const handleJoinRoom = (e: React.FormEvent) => {
     e.preventDefault();
     if (joinCode) {
-      navigate(`/room/${joinCode}`);
+      navigate({ to: "/room/$roomCode", params: { roomCode: joinCode } });
     }
   };
 
@@ -132,7 +132,9 @@ export default function Home() {
               <button
                 key={room.roomCode}
                 className={`hover:bg-accent group flex w-full items-center justify-between px-3 py-2 text-left transition-colors ${i > 0 ? "border-border/30 border-t" : ""}`}
-                onClick={() => navigate(`/room/${room.roomCode}`)}
+                onClick={() =>
+                  navigate({ to: "/room/$roomCode", params: { roomCode: room.roomCode } })
+                }
               >
                 <span className="text-foreground/90 truncate text-[13px]">{room.name}</span>
                 <div className="ml-3 flex shrink-0 items-center gap-2">

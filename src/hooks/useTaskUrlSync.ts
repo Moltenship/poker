@@ -1,6 +1,6 @@
 import type { Id } from "@convex/_generated/dataModel";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 
 /**
  * Keeps the browser URL in sync with the server's current task.
@@ -20,7 +20,7 @@ export function useTaskUrlSync(
 
   useEffect(() => {
     // Don't navigate until data is loaded
-    if (room === undefined || tasks === undefined) {
+    if (room === undefined || tasks === undefined || !roomCode) {
       return;
     }
 
@@ -32,10 +32,18 @@ export function useTaskUrlSync(
     }
     prevTaskIdRef.current = currentId;
 
-    const targetPath = taskIdentifier
-      ? `/room/${roomCode}/task/${taskIdentifier}`
-      : `/room/${roomCode}`;
-
-    navigate(targetPath, { replace: true });
+    if (taskIdentifier) {
+      navigate({
+        to: "/room/$roomCode/task/$taskId",
+        params: { roomCode, taskId: taskIdentifier },
+        replace: true,
+      });
+    } else {
+      navigate({
+        to: "/room/$roomCode",
+        params: { roomCode },
+        replace: true,
+      });
+    }
   }, [currentTaskId, taskIdentifier, roomCode, navigate, room, tasks]);
 }

@@ -1,14 +1,20 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import type { ReactNode } from "react";
+
+import { Link, useLocation } from "@tanstack/react-router";
 
 import { ConnectionDot } from "./ConnectionBanner";
 import { ThemeToggle } from "./ThemeToggle";
 
-export default function Layout() {
+interface LayoutProps {
+  children: ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const isRoom = location.pathname.startsWith("/room/");
 
   if (isRoom) {
-    return <Outlet />;
+    return <>{children}</>;
   }
 
   return (
@@ -21,11 +27,10 @@ export default function Layout() {
           <nav className="ml-6 flex items-center gap-0.5">
             <Link
               to="/"
-              className={`rounded-md px-2.5 py-1 text-[13px] transition-colors ${
-                location.pathname === "/"
-                  ? "text-foreground font-medium"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              activeProps={{ className: "text-foreground font-medium" }}
+              inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
+              className="rounded-md px-2.5 py-1 text-[13px] transition-colors"
+              activeOptions={{ exact: true }}
             >
               Home
             </Link>
@@ -36,9 +41,7 @@ export default function Layout() {
           </div>
         </div>
       </header>
-      <main>
-        <Outlet />
-      </main>
+      <main>{children}</main>
     </div>
   );
 }
