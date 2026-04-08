@@ -3,6 +3,8 @@ import { api } from "@convex/_generated/api";
 import type { JiraTaskDetails } from "@convex/jiraTypes";
 import { useQuery } from "@tanstack/react-query";
 
+import { JIRA_QUERY_OPTIONS } from "@/lib/persister";
+
 export function useJiraDetails(jiraKeys: string[]) {
   const sortedKeys = [...jiraKeys].sort();
   const { data: details = {} as Record<string, JiraTaskDetails>, isPending: loading } = useQuery({
@@ -10,7 +12,7 @@ export function useJiraDetails(jiraKeys: string[]) {
       api.jira.fetchTaskDetails,
       sortedKeys.length > 0 ? { jiraKeys: sortedKeys } : "skip",
     ),
-    staleTime: 5 * 60 * 1000,
+    ...JIRA_QUERY_OPTIONS,
   });
 
   return { details, loading };

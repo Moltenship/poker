@@ -5,6 +5,8 @@ import { BACKLOG_FILTER_ID } from "@convex/jiraTypes";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { JIRA_QUERY_OPTIONS } from "@/lib/persister";
+
 interface Task {
   jiraKey?: string;
 }
@@ -36,7 +38,7 @@ export function useJiraSync({
 
   const { data: jiraSprints = [] } = useQuery({
     ...convexAction(api.jira.fetchJiraSprints, jiraEnabled ? { projectKey } : "skip"),
-    staleTime: 5 * 60 * 1000,
+    ...JIRA_QUERY_OPTIONS,
   });
 
   const fetchJiraBacklog = useConvexAction(api.jira.fetchJiraBacklog);

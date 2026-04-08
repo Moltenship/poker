@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { JIRA_QUERY_OPTIONS } from "@/lib/persister";
 import { cn } from "@/lib/utils";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -26,7 +27,7 @@ export function JiraSprintSelector({
 }: JiraSprintSelectorProps) {
   const { data: sprints = [], isPending: loading } = useQuery({
     ...convexAction(api.jira.fetchJiraSprints, { projectKey }),
-    staleTime: 5 * 60 * 1000,
+    ...JIRA_QUERY_OPTIONS,
   });
 
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
