@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
-
 import { Link, useLocation } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
 import { ConnectionDot } from "./ConnectionBanner";
 import { ThemeToggle } from "./ThemeToggle";
@@ -14,7 +13,7 @@ export default function Layout({ children }: LayoutProps) {
   const isRoom = location.pathname.startsWith("/room/");
 
   if (isRoom) {
-    return <>{children}</>;
+    return children;
   }
 
   return (

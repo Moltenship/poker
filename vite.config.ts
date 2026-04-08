@@ -10,12 +10,7 @@ import { defineConfig } from "vite";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [
-    tanstackRouter(),
-    tailwindcss(),
-    react(),
-    babel({ presets: [reactCompilerPreset()] }),
-  ],
+  plugins: [tanstackRouter(), tailwindcss(), react(), babel({ presets: [reactCompilerPreset()] })],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

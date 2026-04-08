@@ -2,8 +2,8 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useQuery as useTanStackQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 
 import { CardDeck } from "@/components/CardDeck";
 import { CollapsedParticipantList } from "@/components/CollapsedParticipantList";

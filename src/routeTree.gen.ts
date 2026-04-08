@@ -8,124 +8,113 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as RoomRoomCodeRouteImport } from './routes/room.$roomCode'
-import { Route as RoomRoomCodeIndexRouteImport } from './routes/room.$roomCode.index'
-import { Route as RoomRoomCodeTaskTaskIdRouteImport } from './routes/room.$roomCode.task.$taskId'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as RoomRoomCodeRouteImport } from "./routes/room.$roomCode";
+import { Route as RoomRoomCodeIndexRouteImport } from "./routes/room.$roomCode.index";
+import { Route as RoomRoomCodeTaskTaskIdRouteImport } from "./routes/room.$roomCode.task.$taskId";
 
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const RoomRoomCodeRoute = RoomRoomCodeRouteImport.update({
-  id: '/room/$roomCode',
-  path: '/room/$roomCode',
+  id: "/room/$roomCode",
+  path: "/room/$roomCode",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const RoomRoomCodeIndexRoute = RoomRoomCodeIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => RoomRoomCodeRoute,
-} as any)
+} as any);
 const RoomRoomCodeTaskTaskIdRoute = RoomRoomCodeTaskTaskIdRouteImport.update({
-  id: '/task/$taskId',
-  path: '/task/$taskId',
+  id: "/task/$taskId",
+  path: "/task/$taskId",
   getParentRoute: () => RoomRoomCodeRoute,
-} as any)
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/room/$roomCode': typeof RoomRoomCodeRouteWithChildren
-  '/room/$roomCode/': typeof RoomRoomCodeIndexRoute
-  '/room/$roomCode/task/$taskId': typeof RoomRoomCodeTaskTaskIdRoute
+  "/": typeof IndexRoute;
+  "/room/$roomCode": typeof RoomRoomCodeRouteWithChildren;
+  "/room/$roomCode/": typeof RoomRoomCodeIndexRoute;
+  "/room/$roomCode/task/$taskId": typeof RoomRoomCodeTaskTaskIdRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/room/$roomCode': typeof RoomRoomCodeIndexRoute
-  '/room/$roomCode/task/$taskId': typeof RoomRoomCodeTaskTaskIdRoute
+  "/": typeof IndexRoute;
+  "/room/$roomCode": typeof RoomRoomCodeIndexRoute;
+  "/room/$roomCode/task/$taskId": typeof RoomRoomCodeTaskTaskIdRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/room/$roomCode': typeof RoomRoomCodeRouteWithChildren
-  '/room/$roomCode/': typeof RoomRoomCodeIndexRoute
-  '/room/$roomCode/task/$taskId': typeof RoomRoomCodeTaskTaskIdRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/room/$roomCode": typeof RoomRoomCodeRouteWithChildren;
+  "/room/$roomCode/": typeof RoomRoomCodeIndexRoute;
+  "/room/$roomCode/task/$taskId": typeof RoomRoomCodeTaskTaskIdRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/room/$roomCode'
-    | '/room/$roomCode/'
-    | '/room/$roomCode/task/$taskId'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/room/$roomCode' | '/room/$roomCode/task/$taskId'
-  id:
-    | '__root__'
-    | '/'
-    | '/room/$roomCode'
-    | '/room/$roomCode/'
-    | '/room/$roomCode/task/$taskId'
-  fileRoutesById: FileRoutesById
+  fileRoutesByFullPath: FileRoutesByFullPath;
+  fullPaths: "/" | "/room/$roomCode" | "/room/$roomCode/" | "/room/$roomCode/task/$taskId";
+  fileRoutesByTo: FileRoutesByTo;
+  to: "/" | "/room/$roomCode" | "/room/$roomCode/task/$taskId";
+  id: "__root__" | "/" | "/room/$roomCode" | "/room/$roomCode/" | "/room/$roomCode/task/$taskId";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  RoomRoomCodeRoute: typeof RoomRoomCodeRouteWithChildren
+  IndexRoute: typeof IndexRoute;
+  RoomRoomCodeRoute: typeof RoomRoomCodeRouteWithChildren;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/room/$roomCode': {
-      id: '/room/$roomCode'
-      path: '/room/$roomCode'
-      fullPath: '/room/$roomCode'
-      preLoaderRoute: typeof RoomRoomCodeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/room/$roomCode/': {
-      id: '/room/$roomCode/'
-      path: '/'
-      fullPath: '/room/$roomCode/'
-      preLoaderRoute: typeof RoomRoomCodeIndexRouteImport
-      parentRoute: typeof RoomRoomCodeRoute
-    }
-    '/room/$roomCode/task/$taskId': {
-      id: '/room/$roomCode/task/$taskId'
-      path: '/task/$taskId'
-      fullPath: '/room/$roomCode/task/$taskId'
-      preLoaderRoute: typeof RoomRoomCodeTaskTaskIdRouteImport
-      parentRoute: typeof RoomRoomCodeRoute
-    }
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/room/$roomCode": {
+      id: "/room/$roomCode";
+      path: "/room/$roomCode";
+      fullPath: "/room/$roomCode";
+      preLoaderRoute: typeof RoomRoomCodeRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/room/$roomCode/": {
+      id: "/room/$roomCode/";
+      path: "/";
+      fullPath: "/room/$roomCode/";
+      preLoaderRoute: typeof RoomRoomCodeIndexRouteImport;
+      parentRoute: typeof RoomRoomCodeRoute;
+    };
+    "/room/$roomCode/task/$taskId": {
+      id: "/room/$roomCode/task/$taskId";
+      path: "/task/$taskId";
+      fullPath: "/room/$roomCode/task/$taskId";
+      preLoaderRoute: typeof RoomRoomCodeTaskTaskIdRouteImport;
+      parentRoute: typeof RoomRoomCodeRoute;
+    };
   }
 }
 
 interface RoomRoomCodeRouteChildren {
-  RoomRoomCodeIndexRoute: typeof RoomRoomCodeIndexRoute
-  RoomRoomCodeTaskTaskIdRoute: typeof RoomRoomCodeTaskTaskIdRoute
+  RoomRoomCodeIndexRoute: typeof RoomRoomCodeIndexRoute;
+  RoomRoomCodeTaskTaskIdRoute: typeof RoomRoomCodeTaskTaskIdRoute;
 }
 
 const RoomRoomCodeRouteChildren: RoomRoomCodeRouteChildren = {
   RoomRoomCodeIndexRoute: RoomRoomCodeIndexRoute,
   RoomRoomCodeTaskTaskIdRoute: RoomRoomCodeTaskTaskIdRoute,
-}
+};
 
-const RoomRoomCodeRouteWithChildren = RoomRoomCodeRoute._addFileChildren(
-  RoomRoomCodeRouteChildren,
-)
+const RoomRoomCodeRouteWithChildren = RoomRoomCodeRoute._addFileChildren(RoomRoomCodeRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RoomRoomCodeRoute: RoomRoomCodeRouteWithChildren,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
