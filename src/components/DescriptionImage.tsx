@@ -82,5 +82,3 @@ export function DescriptionImage({
     </>
   );
 }
-
-export const streamdownComponents = { img: DescriptionImage };

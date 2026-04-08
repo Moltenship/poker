@@ -2,10 +2,10 @@ import type { JiraBlocker, JiraComment } from "@convex/jiraTypes";
 import { ExternalLink, OctagonAlert } from "lucide-react";
 import { Streamdown } from "streamdown";
 
-import { streamdownComponents } from "@/components/DescriptionImage";
 import { TaskComments } from "@/components/TaskComments";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { streamdownComponents, streamdownPlugins } from "@/lib/streamdown";
 
 /** Map Jira statusCategory colorName to badge styles. */
 function statusColorClass(colorName?: string): string {
@@ -106,7 +106,11 @@ export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: Task
           </h2>
           {enriched?.description && (
             <div className="mt-5 text-left text-sm">
-              <Streamdown mode="static" components={streamdownComponents}>
+              <Streamdown
+                mode="static"
+                components={streamdownComponents}
+                plugins={streamdownPlugins}
+              >
                 {enriched.description}
               </Streamdown>
             </div>

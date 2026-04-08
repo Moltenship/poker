@@ -1,9 +1,9 @@
 import type { JiraComment } from "@convex/jiraTypes";
 import { Streamdown } from "streamdown";
 
-import { streamdownComponents } from "@/components/DescriptionImage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { streamdownComponents, streamdownPlugins } from "@/lib/streamdown";
 
 interface TaskCommentsProps {
   comments: JiraComment[];
@@ -56,7 +56,11 @@ export function TaskComments({ comments }: TaskCommentsProps) {
                   </span>
                 </div>
                 <div className="text-muted-foreground mt-1">
-                  <Streamdown mode="static" components={streamdownComponents}>
+                  <Streamdown
+                    mode="static"
+                    components={streamdownComponents}
+                    plugins={streamdownPlugins}
+                  >
                     {comment.body}
                   </Streamdown>
                 </div>
