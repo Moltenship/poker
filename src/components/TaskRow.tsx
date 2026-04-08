@@ -1,5 +1,5 @@
 import type { Id } from "@convex/_generated/dataModel";
-import { useRouterState } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Check, User, X } from "lucide-react";
 import React from "react";
 
@@ -20,7 +20,8 @@ interface EnrichedTask {
 
 interface TaskRowProps {
   taskId: Id<"tasks">;
-  taskPath: string;
+  roomCode: string;
+  taskIdentifier: string;
   displayTitle: string;
   jiraKey?: string;
   enriched: EnrichedTask | undefined;
@@ -35,7 +36,8 @@ interface TaskRowProps {
 
 export function TaskRow({
   taskId,
-  taskPath,
+  roomCode,
+  taskIdentifier,
   displayTitle,
   jiraKey,
   enriched,
@@ -47,25 +49,15 @@ export function TaskRow({
   onTaskClick,
   onDelete,
 }: TaskRowProps) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isActive = pathname === taskPath;
-
   return (
-    <div
+    <Link
       key={taskId}
-      role="button"
-      tabIndex={0}
+      to="/room/$roomCode/task/$taskId"
+      params={{ roomCode, taskId: taskIdentifier }}
       onClick={onTaskClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onTaskClick();
-        }
-      }}
-      className={cn(
-        "group relative block cursor-pointer transition-colors",
-        isActive ? "bg-accent" : "hover:bg-accent/50",
-      )}
+      activeProps={{ className: "bg-accent" }}
+      inactiveProps={{ className: "hover:bg-accent/50" }}
+      className="group relative block cursor-pointer no-underline transition-colors"
     >
       {/* Blocked strip on the left edge */}
       {enriched?.isBlocked ? (
@@ -100,12 +92,7 @@ export function TaskRow({
         ) : (
           <div className="flex items-start justify-between gap-2 overflow-hidden">
             <div className="flex min-w-0 flex-col overflow-hidden">
-              <p
-                className={cn(
-                  "text-[13px] leading-snug truncate",
-                  isActive ? "text-foreground font-medium" : "text-foreground/70",
-                )}
-              >
+              <p className="text-foreground/70 group-data-[status=active]:text-foreground truncate text-[13px] leading-snug group-data-[status=active]:font-medium">
                 {displayTitle}
               </p>
               {jiraKey ? (
@@ -175,6 +162,6 @@ export function TaskRow({
           <TooltipContent>Delete task</TooltipContent>
         </Tooltip>
       ) : null}
-    </div>
+    </Link>
   );
 }
