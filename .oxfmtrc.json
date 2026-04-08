@@ -11,5 +11,5 @@
   "sortImports": true,
   "sortTailwindcss": true,
   "sortPackageJson": true,
-  "ignorePatterns": ["convex/_generated/**", "dist/**", "*.md"]
+  "ignorePatterns": ["convex/_generated/**", "dist/**", "*.md", "src/routeTree.gen.ts"]
 }

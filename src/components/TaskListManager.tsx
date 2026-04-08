@@ -247,7 +247,8 @@ export function TaskListManager({
                 <TaskRow
                   key={task._id}
                   taskId={task._id}
-                  taskPath={`/room/${roomCode}/task/${task.jiraKey ?? task._id}`}
+                  roomCode={roomCode}
+                  taskIdentifier={task.jiraKey ?? task._id}
                   displayTitle={enriched?.title ?? task.title ?? task.jiraKey ?? "Untitled"}
                   jiraKey={task.jiraKey}
                   enriched={enriched}

@@ -2,8 +2,8 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useQuery as useTanStackQuery } from "@tanstack/react-query";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 
 import { CardDeck } from "@/components/CardDeck";
 import { CollapsedParticipantList } from "@/components/CollapsedParticipantList";
@@ -26,12 +26,14 @@ import { useSessionId, useSessionMutation } from "@/hooks/useSession";
 import { useTaskUrlSync } from "@/hooks/useTaskUrlSync";
 import { cn } from "@/lib/utils";
 
+const routeApi = getRouteApi("/room/$roomCode");
+
 /** Stable empty arrays to avoid re-render from new references each render. */
 const EMPTY_SPRINT_FILTER: number[] = [];
 const EMPTY_TYPE_FILTER: string[] = [];
 
 export default function Room() {
-  const { roomCode } = useParams<{ roomCode: string }>();
+  const { roomCode } = routeApi.useParams();
   const navigate = useNavigate();
   const sessionId = useSessionId();
   const { participantId, displayName, setIdentity, clearIdentity } = useIdentity(roomCode ?? "");
@@ -207,7 +209,7 @@ export default function Room() {
           onDeleteRoom={async () => {
             await deleteRoom({ roomId: room._id, confirmName: room.name });
             removeRecentRoom(room.roomCode);
-            navigate("/");
+            navigate({ to: "/" });
           }}
         />
 
