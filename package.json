@@ -7,7 +7,7 @@
   "author": "",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
+    "dev": "concurrently \"bun:dev:frontend\" \"bun:dev:backend\"",
     "dev:frontend": "vite",
     "dev:backend": "convex dev --typecheck=disable",
     "dashboard": "convex dashboard",
