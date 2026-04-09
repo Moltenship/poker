@@ -207,7 +207,6 @@ export function TaskListManager({
                       <SprintFilterChips
                         sprints={jiraSprints}
                         selectedIds={localSprintFilter}
-                        syncing={syncing}
                         syncError={syncError}
                         onToggle={toggleSprint}
                         onClear={() => updateSprintFilter([])}
@@ -232,13 +231,9 @@ export function TaskListManager({
       {/* Task list */}
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         {visibleTasks.length === 0 ? (
-          <div className="text-muted-foreground p-4 text-center text-[12px]">
-            {syncing ? "Syncing from Jira\u2026" : "No tasks yet."}
-          </div>
+          <div className="text-muted-foreground p-4 text-center text-[12px]">No tasks yet.</div>
         ) : (
-          <div
-            className={cn("w-full py-0.5 transition-opacity duration-150", syncing && "opacity-50")}
-          >
+          <div className="w-full py-0.5">
             {visibleTasks.map((task) => {
               const realIndex = tasks.indexOf(task);
               const enriched = task.jiraKey ? jiraDetails[task.jiraKey] : undefined;

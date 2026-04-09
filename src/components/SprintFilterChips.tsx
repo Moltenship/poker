@@ -5,7 +5,6 @@ import { FilterChip } from "@/components/FilterChip";
 interface SprintFilterChipsProps {
   sprints: JiraSprint[];
   selectedIds: number[];
-  syncing?: boolean;
   syncError?: string | null;
   onToggle: (id: number) => void;
   onClear: () => void;
@@ -14,7 +13,6 @@ interface SprintFilterChipsProps {
 export function SprintFilterChips({
   sprints,
   selectedIds,
-  syncing,
   syncError,
   onToggle,
   onClear,
@@ -54,11 +52,7 @@ export function SprintFilterChips({
           </FilterChip>
         ))}
       </div>
-      {sprints.length === 0 && (
-        <p className="text-muted-foreground text-xs">
-          {syncing ? "Loading sprints\u2026" : "No sprints found"}
-        </p>
-      )}
+      {sprints.length === 0 && <p className="text-muted-foreground text-xs">No sprints found</p>}
       {syncError ? <p className="text-destructive truncate text-xs">{syncError}</p> : null}
     </div>
   );
