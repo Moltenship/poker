@@ -30,7 +30,7 @@ A real-time planning poker app for agile teams. Estimate tasks together using co
 ### Prerequisites
 
 - Node.js 18+
-- npm
+- [Bun](https://bun.sh/)
 
 ### Setup
 
@@ -44,13 +44,13 @@ A real-time planning poker app for agile teams. Estimate tasks together using co
 2. **Install dependencies**
 
    ```bash
-   npm install
+   bun install
    ```
 
 3. **Set up Convex**
 
    ```bash
-   npx convex dev
+   bunx convex dev
    ```
 
    On first run this will create a new Convex project and generate a `.env.local` file with your `VITE_CONVEX_URL`.
@@ -59,7 +59,7 @@ A real-time planning poker app for agile teams. Estimate tasks together using co
 4. **Start development**
 
    ```bash
-   npm run dev
+   bun run dev
    ```
 
    This runs the Vite dev server and Convex backend concurrently. Open [http://localhost:5173](http://localhost:5173).
@@ -69,31 +69,31 @@ A real-time planning poker app for agile teams. Estimate tasks together using co
 Set server-side environment variables on your Convex deployment:
 
 ```bash
-npx convex env set JIRA_BASE_URL "https://your-org.atlassian.net"
-npx convex env set JIRA_EMAIL "you@example.com"
-npx convex env set JIRA_API_TOKEN "your-api-token"
+bunx convex env set JIRA_BASE_URL "https://your-org.atlassian.net"
+bunx convex env set JIRA_EMAIL "you@example.com"
+bunx convex env set JIRA_API_TOKEN "your-api-token"
 ```
 
 Generate an API token at [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
 
 ## Scripts
 
-| Command                | Description                                  |
-| ---------------------- | -------------------------------------------- |
-| `npm run dev`          | Start frontend + backend in development mode |
-| `npm run dev:frontend` | Start Vite dev server only                   |
-| `npm run dev:backend`  | Start Convex dev server only                 |
-| `npm run dashboard`    | Open the Convex dashboard                    |
-| `npm run build`        | Type-check and build for production          |
-| `npm run preview`      | Preview production build locally             |
-| `npm test`             | Run tests                                    |
-| `npm run typecheck`    | Type-check with TypeScript                   |
-| `npm run typecheck:tsgo` | Type-check with TSGo                       |
-| `npm run lint`         | Lint with OxLint                             |
-| `npm run lint:fix`     | Lint and auto-fix                            |
-| `npm run format`       | Format with OxFmt                            |
-| `npm run format:check` | Check formatting                             |
-| `npm run check`        | Lint + format check                          |
+| Command                  | Description                                  |
+| ------------------------ | -------------------------------------------- |
+| `bun run dev`            | Start frontend + backend in development mode |
+| `bun run dev:frontend`   | Start Vite dev server only                   |
+| `bun run dev:backend`    | Start Convex dev server only                 |
+| `bun run dashboard`      | Open the Convex dashboard                    |
+| `bun run build`          | Type-check and build for production          |
+| `bun run preview`        | Preview production build locally             |
+| `bun test`               | Run tests                                    |
+| `bun run typecheck`      | Type-check with TypeScript                   |
+| `bun run typecheck:tsgo` | Type-check with TSGo                         |
+| `bun run lint`           | Lint with OxLint                             |
+| `bun run lint:fix`       | Lint and auto-fix                            |
+| `bun run format`         | Format with OxFmt                            |
+| `bun run format:check`   | Check formatting                             |
+| `bun run check`          | Lint + format check                          |
 
 ## Project Structure
 
@@ -121,7 +121,7 @@ convex/
 The app is configured for deployment on **Vercel**:
 
 ```bash
-npx convex deploy --cmd 'npm run build'
+bunx convex deploy --cmd 'bun run build'
 ```
 
 Set `VITE_CONVEX_URL` in your Vercel environment variables pointing to your production Convex deployment, and set the Jira env vars on the Convex dashboard if needed.
