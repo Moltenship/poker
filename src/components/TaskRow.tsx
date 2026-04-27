@@ -12,7 +12,6 @@ interface EnrichedTask {
   title?: string;
   type?: string;
   status?: string;
-  sprintName?: string;
   assignee?: string;
   labels?: string[];
   isBlocked?: boolean;
@@ -25,6 +24,7 @@ interface TaskRowProps {
   displayTitle: string;
   jiraKey?: string;
   enriched: EnrichedTask | undefined;
+  sprintLabel?: string;
   isLoadingRow: boolean;
   isManual: boolean;
   isEstimated?: boolean;
@@ -41,6 +41,7 @@ export function TaskRow({
   displayTitle,
   jiraKey,
   enriched,
+  sprintLabel,
   isLoadingRow,
   isManual,
   isEstimated,
@@ -100,7 +101,7 @@ export function TaskRow({
                   {jiraKey}
                   {enriched?.type ? <> · {enriched.type}</> : null}
                   {enriched?.status ? <> · {enriched.status}</> : null}
-                  {enriched?.sprintName ? <> · {enriched.sprintName}</> : null}
+                  {sprintLabel ? <> · {sprintLabel}</> : null}
                 </span>
               ) : null}
               {enriched?.assignee ? (
