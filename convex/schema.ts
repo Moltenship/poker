@@ -39,17 +39,10 @@ export default defineSchema({
     jiraKey: v.optional(v.string()),
     title: v.optional(v.string()),
     order: v.number(),
-    hoursEstimate: v.optional(v.number()),
-    jiraEstimateSyncStatus: v.optional(
-      v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
-    ),
-    jiraEstimateSyncError: v.optional(v.string()),
-    jiraSprintSyncStatus: v.optional(
-      v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
-    ),
-    jiraSprintSyncError: v.optional(v.string()),
     isManual: v.boolean(),
-    isEstimated: v.optional(v.boolean()),
+    savedJiraEstimate: v.optional(v.string()),
+    savedJiraSprintId: v.optional(v.number()),
+    savedJiraSprintName: v.optional(v.string()),
   })
     .index("by_room", ["roomId"])
     .index("by_room_jira_key", ["roomId", "jiraKey"]),

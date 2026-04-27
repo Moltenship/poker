@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
 
 export const addTask = sessionMutation({
@@ -56,13 +56,19 @@ export const getCurrentTask = query({
   },
 });
 
-export const setHoursEstimate = sessionMutation({
+export const setSavedJiraFields = mutation({
   args: {
-    hours: v.number(),
     taskId: v.id("tasks"),
+    savedJiraEstimate: v.optional(v.string()),
+    savedJiraSprintId: v.optional(v.number()),
+    savedJiraSprintName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.taskId, { hoursEstimate: args.hours });
+    await ctx.db.patch(args.taskId, {
+      savedJiraEstimate: args.savedJiraEstimate,
+      savedJiraSprintId: args.savedJiraSprintId,
+      savedJiraSprintName: args.savedJiraSprintName,
+    });
   },
 });
 

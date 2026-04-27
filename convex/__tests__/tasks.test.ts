@@ -58,23 +58,32 @@ describe("tasks", () => {
     expect(orders).toStrictEqual([...orders].sort((a, b) => a - b));
   });
 
-  it("setHoursEstimate persists hours", async () => {
+  it("persists saved Jira estimate and sprint values", async () => {
     const t = convexTest(schema, modules);
     const roomId = await createTestRoom(t);
-    const taskId = await t.mutation(api.tasks.addTask, {
-      roomId,
-      sessionId: "s1",
-      title: "Task",
-    });
 
-    await t.mutation(api.tasks.setHoursEstimate, {
-      hours: 4,
-      sessionId: "s1",
+    const taskId = await t.run(
+      async (ctx) =>
+        await ctx.db.insert("tasks", {
+          roomId,
+          jiraKey: "PROJ-1",
+          title: "Jira Story",
+          order: 1,
+          isManual: false,
+        }),
+    );
+
+    await t.mutation(api.tasks.setSavedJiraFields, {
       taskId,
+      savedJiraEstimate: "4h",
+      savedJiraSprintId: 12,
+      savedJiraSprintName: "Sprint 12",
     });
 
-    const tasks = await t.query(api.tasks.getTasksForRoom, { roomId });
-    expect(tasks[0].hoursEstimate).toBe(4);
+    const task = await t.run(async (ctx) => ctx.db.get(taskId));
+    expect(task?.savedJiraEstimate).toBe("4h");
+    expect(task?.savedJiraSprintId).toBe(12);
+    expect(task?.savedJiraSprintName).toBe("Sprint 12");
   });
 
   it("setCurrentTask updates room currentTaskIndex", async () => {

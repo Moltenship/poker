@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 
-import { api, internal } from "./_generated/api";
-import { action, internalMutation, mutation } from "./_generated/server";
+import { action, mutation } from "./_generated/server";
 import {
   BACKLOG_FILTER_ID,
   type JiraBlocker,
@@ -613,136 +612,7 @@ export const importSelectedTasks = mutation({
   },
 });
 
-export const setJiraEstimateSyncStatus = internalMutation({
-  args: {
-    error: v.optional(v.string()),
-    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
-    taskId: v.id("tasks"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.taskId, {
-      jiraEstimateSyncError: args.error,
-      jiraEstimateSyncStatus: args.status,
-    });
-  },
-});
-
-export const setJiraSprintSyncStatus = internalMutation({
-  args: {
-    error: v.optional(v.string()),
-    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
-    taskId: v.id("tasks"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.taskId, {
-      jiraSprintSyncError: args.error,
-      jiraSprintSyncStatus: args.status,
-    });
-  },
-});
-
-export const moveIssueToSprint = action({
-  args: {
-    sprintId: v.number(),
-    taskId: v.id("tasks"),
-  },
-  handler: async (ctx, args) => {
-    const task = await ctx.runQuery(api.tasks.getTask, { taskId: args.taskId });
-    if (!task || !task.jiraKey) {
-      return;
-    }
-
-    await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
-      status: "syncing",
-      taskId: args.taskId,
-    });
-
-    try {
-      const { authHeader, baseUrl } = getJiraEnv();
-      const res = await jiraGlobals.fetch(
-        `${baseUrl}/rest/agile/1.0/sprint/${args.sprintId}/issue`,
-        {
-          body: JSON.stringify({ issues: [task.jiraKey] }),
-          headers: {
-            Accept: "application/json",
-            Authorization: authHeader,
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-        },
-      );
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Jira API error: ${res.status} ${text}`);
-      }
-
-      await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
-        status: "synced",
-        taskId: args.taskId,
-      });
-    } catch (err: unknown) {
-      await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
-        error: err instanceof Error ? err.message : "Failed to move issue to sprint",
-        status: "error",
-        taskId: args.taskId,
-      });
-      throw err;
-    }
-  },
-});
-
-export const updateJiraEstimate = action({
-  args: {
-    estimate: v.string(),
-    taskId: v.id("tasks"),
-  },
-  handler: async (ctx, args) => {
-    const task = await ctx.runQuery(api.tasks.getTask, { taskId: args.taskId });
-    if (!task || !task.jiraKey) {
-      return;
-    }
-
-    await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
-      status: "syncing",
-      taskId: args.taskId,
-    });
-
-    try {
-      const { authHeader, baseUrl } = getJiraEnv();
-      const res = await jiraGlobals.fetch(`${baseUrl}/rest/api/3/issue/${task.jiraKey}`, {
-        body: JSON.stringify({
-          fields: {
-            timetracking: { originalEstimate: args.estimate },
-          },
-        }),
-        headers: {
-          Accept: "application/json",
-          Authorization: authHeader,
-          "Content-Type": "application/json",
-        },
-        method: "PUT",
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Jira API error: ${res.status} ${text}`);
-      }
-
-      await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
-        status: "synced",
-        taskId: args.taskId,
-      });
-    } catch (err: unknown) {
-      await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
-        error: err instanceof Error ? err.message : "Failed to sync estimate",
-        status: "error",
-        taskId: args.taskId,
-      });
-      throw err;
-    }
-  },
-});
+// removed in Task 2
 
 export const fetchTaskComments = action({
   args: { jiraKey: v.string() },
