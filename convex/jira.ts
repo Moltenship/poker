@@ -820,14 +820,20 @@ export const saveJiraTaskUpdates = action({
     const estimateChanged =
       trimmedEstimate !== "" && trimmedEstimate !== (task.savedJiraEstimate ?? "");
 
-    const sprintChanged = args.sprintId !== undefined && args.sprintId !== task.savedJiraSprintId;
-    if (sprintChanged && (args.sprintName === undefined || args.sprintName.trim() === "")) {
+    const nextSprintId =
+      args.sprintId !== undefined && args.sprintId !== task.savedJiraSprintId
+        ? args.sprintId
+        : undefined;
+    const nextSprintName = args.sprintName?.trim() ?? "";
+    if (nextSprintId !== undefined && nextSprintName === "") {
       /*
        * The form must always submit name alongside id — fail loudly so we
        * don't store a sprintId without its display name.
        */
       throw new Error("sprintName is required when sprintId is provided");
     }
+
+    const sprintChanged = nextSprintId !== undefined;
 
     // Short-circuit if nothing dirty: zero Jira calls, zero patches.
     if (!estimateChanged && !sprintChanged) {
@@ -844,9 +850,10 @@ export const saveJiraTaskUpdates = action({
       ? await attemptUpdateEstimate(authHeader, baseUrl, jiraKey, trimmedEstimate)
       : { attempted: false, success: false };
 
-    const sprintResult: SaveFieldResult = sprintChanged
-      ? await attemptMoveSprint(authHeader, baseUrl, jiraKey, args.sprintId!)
-      : { attempted: false, success: false };
+    const sprintResult: SaveFieldResult =
+      nextSprintId !== undefined
+        ? await attemptMoveSprint(authHeader, baseUrl, jiraKey, nextSprintId)
+        : { attempted: false, success: false };
 
     /*
      * Build a single patch containing only successful fields. Skipped/failed
@@ -863,9 +870,9 @@ export const saveJiraTaskUpdates = action({
     if (estimateResult.attempted && estimateResult.success) {
       patch.savedJiraEstimate = trimmedEstimate;
     }
-    if (sprintResult.attempted && sprintResult.success) {
-      patch.savedJiraSprintId = args.sprintId;
-      patch.savedJiraSprintName = args.sprintName;
+    if (sprintResult.attempted && sprintResult.success && nextSprintId !== undefined) {
+      patch.savedJiraSprintId = nextSprintId;
+      patch.savedJiraSprintName = nextSprintName;
     }
 
     if (

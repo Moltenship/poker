@@ -294,7 +294,7 @@ describe("saveJiraTaskUpdates", () => {
       sprintName: "Sprint 9",
     });
 
-    // oxlint-disable-next-line prefer-called-once
+    // oxlint-disable-next-line prefer-called-once -- conflicts with prefer-called-times for n=1
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(result).toStrictEqual({
       estimate: { attempted: false, success: false },
