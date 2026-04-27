@@ -18,8 +18,6 @@ const PENDING_RESULT: SaveFieldResult = { attempted: false, success: false };
 interface JiraEstimateSaveFormProps {
   taskId: Id<"tasks">;
   projectKey: string;
-  isHost: boolean;
-  hasAnyHost: boolean;
   savedEstimate?: string;
   savedSprintId?: number;
   savedSprintName?: string;

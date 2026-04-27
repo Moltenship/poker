@@ -150,10 +150,9 @@ export function ResultsPanel({
               projectKey &&
               (isHost && hasAnyHost ? (
                 <JiraEstimateSaveForm
+                  key={taskId}
                   taskId={taskId}
                   projectKey={projectKey}
-                  isHost={isHost}
-                  hasAnyHost={hasAnyHost}
                   savedEstimate={currentTask.savedJiraEstimate}
                   savedSprintId={currentTask.savedJiraSprintId}
                   savedSprintName={currentTask.savedJiraSprintName}
