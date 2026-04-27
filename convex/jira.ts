@@ -612,8 +612,6 @@ export const importSelectedTasks = mutation({
   },
 });
 
-// removed in Task 2
-
 export const fetchTaskComments = action({
   args: { jiraKey: v.string() },
   handler: async (_ctx, args): Promise<JiraComment[]> => {
