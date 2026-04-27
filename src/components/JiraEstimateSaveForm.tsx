@@ -1,9 +1,10 @@
 import { convexAction } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import type { SaveFieldResult } from "@convex/jira";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { useSessionAction } from "@/hooks/useSession";
 import { JIRA_QUERY_OPTIONS } from "@/lib/persister";
@@ -12,10 +13,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
-type SaveFieldResult =
-  | { attempted: false; success: false }
-  | { attempted: true; success: true }
-  | { attempted: true; success: false; error: string };
+const PENDING_RESULT: SaveFieldResult = { attempted: false, success: false };
 
 interface JiraEstimateSaveFormProps {
   taskId: Id<"tasks">;
@@ -31,13 +29,14 @@ interface JiraEstimateSaveFormProps {
 export function JiraEstimateSaveForm({
   taskId,
   projectKey,
-  isHost,
-  hasAnyHost,
   savedEstimate,
   savedSprintId,
   savedSprintName,
   currentSprintName,
 }: JiraEstimateSaveFormProps) {
+  const estimateInputId = useId();
+  const sprintSelectId = useId();
+
   const { data: sprints = [], isPending: sprintsLoading } = useQuery({
     ...convexAction(api.jira.fetchJiraSprints, { projectKey }),
     ...JIRA_QUERY_OPTIONS,
@@ -48,14 +47,8 @@ export function JiraEstimateSaveForm({
     savedSprintId !== undefined ? String(savedSprintId) : "",
   );
   const [saving, setSaving] = useState(false);
-  const [estimateResult, setEstimateResult] = useState<SaveFieldResult>({
-    attempted: false,
-    success: false,
-  });
-  const [sprintResult, setSprintResult] = useState<SaveFieldResult>({
-    attempted: false,
-    success: false,
-  });
+  const [estimateResult, setEstimateResult] = useState<SaveFieldResult>(PENDING_RESULT);
+  const [sprintResult, setSprintResult] = useState<SaveFieldResult>(PENDING_RESULT);
 
   const saveJira = useSessionAction(api.jira.saveJiraTaskUpdates);
 
@@ -73,19 +66,29 @@ export function JiraEstimateSaveForm({
   const estimateChanged = trimmedEstimate !== "" && trimmedEstimate !== (savedEstimate ?? "");
   const sprintIdNum = sprintDraft ? Number(sprintDraft) : undefined;
   const sprintChanged = sprintIdNum !== undefined && sprintIdNum !== savedSprintId;
-  const canSave = isHost && hasAnyHost && (estimateChanged || sprintChanged) && !saving;
+  const canSave = (estimateChanged || sprintChanged) && !saving;
 
-  if (!hasAnyHost || !isHost) {
-    return null;
-  }
+  const handleEstimateChange = (value: string) => {
+    setEstimateDraft(value);
+    if (estimateResult.attempted) {
+      setEstimateResult(PENDING_RESULT);
+    }
+  };
+
+  const handleSprintChange = (value: string) => {
+    setSprintDraft(value);
+    if (sprintResult.attempted) {
+      setSprintResult(PENDING_RESULT);
+    }
+  };
 
   const handleSave = async () => {
     if (!canSave) {
       return;
     }
     setSaving(true);
-    setEstimateResult({ attempted: false, success: false });
-    setSprintResult({ attempted: false, success: false });
+    setEstimateResult(PENDING_RESULT);
+    setSprintResult(PENDING_RESULT);
 
     let sprintName: string | undefined;
     if (sprintChanged && sprintIdNum !== undefined) {
@@ -116,13 +119,22 @@ export function JiraEstimateSaveForm({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSave().catch(() => {});
+      }}
+    >
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium">Original Estimate (Jira)</label>
+        <label htmlFor={estimateInputId} className="text-sm font-medium">
+          Original Estimate (Jira)
+        </label>
         <div className="flex items-center gap-2">
           <Input
+            id={estimateInputId}
             value={estimateDraft}
-            onChange={(e) => setEstimateDraft(e.target.value)}
+            onChange={(e) => handleEstimateChange(e.target.value)}
             placeholder="e.g. 4h, 4h 30m"
             className="flex-1"
             disabled={saving}
@@ -140,14 +152,16 @@ export function JiraEstimateSaveForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium">Sprint (Jira)</label>
+        <label htmlFor={sprintSelectId} className="text-sm font-medium">
+          Sprint (Jira)
+        </label>
         <div className="flex items-center gap-2">
           <Select
             value={sprintDraft || undefined}
-            onValueChange={setSprintDraft}
+            onValueChange={handleSprintChange}
             disabled={sprintsLoading || saving}
           >
-            <SelectTrigger className="flex-1">
+            <SelectTrigger id={sprintSelectId} className="flex-1">
               <SelectValue placeholder={sprintsLoading ? "Loading..." : "Select sprint"} />
             </SelectTrigger>
             <SelectContent>
@@ -176,11 +190,18 @@ export function JiraEstimateSaveForm({
       </div>
 
       <div>
-        <Button type="button" size="sm" disabled={!canSave} onClick={handleSave}>
-          {saving ? <Loader2 className="animate-spin" data-icon="inline-start" /> : "Save"}
+        <Button type="submit" size="sm" disabled={!canSave}>
+          {saving ? (
+            <>
+              <Loader2 className="animate-spin" data-icon="inline-start" />
+              Saving
+            </>
+          ) : (
+            "Save"
+          )}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }
 
