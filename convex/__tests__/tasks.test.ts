@@ -1,7 +1,7 @@
 import { type TestConvex, convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import schema from "../schema";
 
 const modules = import.meta.glob("../**/*.ts");
@@ -73,7 +73,7 @@ describe("tasks", () => {
         }),
     );
 
-    await t.mutation(api.tasks.setSavedJiraFields, {
+    await t.mutation(internal.tasks.setSavedJiraFields, {
       taskId,
       savedJiraEstimate: "4h",
       savedJiraSprintId: 12,
@@ -84,6 +84,35 @@ describe("tasks", () => {
     expect(task?.savedJiraEstimate).toBe("4h");
     expect(task?.savedJiraSprintId).toBe(12);
     expect(task?.savedJiraSprintName).toBe("Sprint 12");
+  });
+
+  it("setSavedJiraFields preserves existing fields when args are undefined", async () => {
+    const t = convexTest(schema, modules);
+    const roomId = await createTestRoom(t);
+
+    const taskId = await t.run(
+      async (ctx) =>
+        await ctx.db.insert("tasks", {
+          roomId,
+          jiraKey: "PROJ-2",
+          title: "Jira Story 2",
+          order: 1,
+          isManual: false,
+          savedJiraSprintId: 7,
+          savedJiraSprintName: "Sprint 7",
+        }),
+    );
+
+    // Caller patches estimate only — sprint fields must NOT be cleared.
+    await t.mutation(internal.tasks.setSavedJiraFields, {
+      taskId,
+      savedJiraEstimate: "2h",
+    });
+
+    const task = await t.run(async (ctx) => ctx.db.get(taskId));
+    expect(task?.savedJiraEstimate).toBe("2h");
+    expect(task?.savedJiraSprintId).toBe(7);
+    expect(task?.savedJiraSprintName).toBe("Sprint 7");
   });
 
   it("setCurrentTask updates room currentTaskIndex", async () => {

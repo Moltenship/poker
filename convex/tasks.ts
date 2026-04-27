@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 import { sessionMutation } from "./lib/sessions";
 
 export const addTask = sessionMutation({
@@ -56,7 +56,7 @@ export const getCurrentTask = query({
   },
 });
 
-export const setSavedJiraFields = mutation({
+export const setSavedJiraFields = internalMutation({
   args: {
     taskId: v.id("tasks"),
     savedJiraEstimate: v.optional(v.string()),
@@ -64,11 +64,21 @@ export const setSavedJiraFields = mutation({
     savedJiraSprintName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.taskId, {
-      savedJiraEstimate: args.savedJiraEstimate,
-      savedJiraSprintId: args.savedJiraSprintId,
-      savedJiraSprintName: args.savedJiraSprintName,
-    });
+    const patch: {
+      savedJiraEstimate?: string;
+      savedJiraSprintId?: number;
+      savedJiraSprintName?: string;
+    } = {};
+    if (args.savedJiraEstimate !== undefined) {
+      patch.savedJiraEstimate = args.savedJiraEstimate;
+    }
+    if (args.savedJiraSprintId !== undefined) {
+      patch.savedJiraSprintId = args.savedJiraSprintId;
+    }
+    if (args.savedJiraSprintName !== undefined) {
+      patch.savedJiraSprintName = args.savedJiraSprintName;
+    }
+    await ctx.db.patch(args.taskId, patch);
   },
 });
 
