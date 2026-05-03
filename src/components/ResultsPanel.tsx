@@ -6,8 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSessionMutation } from "@/hooks/useSession";
 import { findNearestCard } from "@/lib/average";
 
-import { JiraEstimateInput } from "./JiraEstimateInput";
-import { JiraSprintSelector } from "./JiraSprintSelector";
+import { JiraEstimateSaveForm, JiraSavedSummary } from "./JiraEstimateSaveForm";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Progress } from "./ui/progress";
@@ -147,24 +146,24 @@ export function ResultsPanel({
           {/* Right: distribution + estimate controls */}
           <div className="flex flex-col gap-4 border-t pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-6">
             <VoteDistribution votes={formattedVotes} cardSet={cardSet} />
-            {currentTask?.jiraKey && (
-              <>
-                <JiraEstimateInput
+            {currentTask?.jiraKey &&
+              projectKey &&
+              (isHost && hasAnyHost ? (
+                <JiraEstimateSaveForm
+                  key={taskId}
                   taskId={taskId}
-                  syncStatus={currentTask?.jiraEstimateSyncStatus}
-                  syncError={currentTask?.jiraEstimateSyncError}
+                  projectKey={projectKey}
+                  savedEstimate={currentTask.savedJiraEstimate}
+                  savedSprintId={currentTask.savedJiraSprintId}
+                  savedSprintName={currentTask.savedJiraSprintName}
+                  currentSprintName={currentSprintName}
                 />
-                {projectKey && (
-                  <JiraSprintSelector
-                    taskId={taskId}
-                    projectKey={projectKey}
-                    currentSprintName={currentSprintName}
-                    syncStatus={currentTask?.jiraSprintSyncStatus}
-                    syncError={currentTask?.jiraSprintSyncError}
-                  />
-                )}
-              </>
-            )}
+              ) : (
+                <JiraSavedSummary
+                  savedEstimate={currentTask.savedJiraEstimate}
+                  savedSprintName={currentTask.savedJiraSprintName ?? currentSprintName}
+                />
+              ))}
           </div>
         </div>
 

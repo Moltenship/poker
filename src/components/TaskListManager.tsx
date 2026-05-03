@@ -20,10 +20,10 @@ export interface Task {
   _id: Id<"tasks">;
   title?: string;
   jiraKey?: string;
-  hoursEstimate?: number;
+  savedJiraEstimate?: string;
+  savedJiraSprintId?: number;
+  savedJiraSprintName?: string;
   isManual: boolean;
-  isEstimated?: boolean;
-
   order: number;
 }
 
@@ -237,6 +237,7 @@ export function TaskListManager({
             {visibleTasks.map((task) => {
               const realIndex = tasks.indexOf(task);
               const enriched = task.jiraKey ? jiraDetails[task.jiraKey] : undefined;
+              const sprintLabel = task.savedJiraSprintName ?? enriched?.sprintName;
 
               return (
                 <TaskRow
@@ -247,10 +248,11 @@ export function TaskListManager({
                   displayTitle={enriched?.title ?? task.title ?? task.jiraKey ?? "Untitled"}
                   jiraKey={task.jiraKey}
                   enriched={enriched}
+                  sprintLabel={sprintLabel}
                   isLoadingRow={jiraLoading && Boolean(task.jiraKey) && !enriched}
                   isManual={task.isManual}
-                  isEstimated={task.isEstimated}
-                  estimateText={task.hoursEstimate ? `${task.hoursEstimate}h` : undefined}
+                  isEstimated={Boolean(task.savedJiraEstimate)}
+                  estimateText={task.savedJiraEstimate}
                   title={task.title}
                   onTaskClick={() => handleTaskClick(realIndex)}
                   onDelete={(e) => handleDeleteTask(e, task._id)}

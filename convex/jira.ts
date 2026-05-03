@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 
-import { api, internal } from "./_generated/api";
-import { action, internalMutation, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
+import { action, internalQuery, mutation } from "./_generated/server";
 import {
   BACKLOG_FILTER_ID,
   type JiraBlocker,
@@ -17,6 +18,20 @@ export {
   type JiraIssue,
   type JiraTaskDetails,
 };
+
+/**
+ * Per-field outcome for a single Jira save attempt. Returned for each of the
+ * estimate and sprint slots so the host UI can show partial-success feedback.
+ */
+export type SaveFieldResult =
+  | { attempted: false; success: false }
+  | { attempted: true; success: true }
+  | { attempted: true; success: false; error: string };
+
+export interface SaveJiraTaskUpdatesResult {
+  estimate: SaveFieldResult;
+  sprint: SaveFieldResult;
+}
 
 const jiraGlobals = globalThis as typeof globalThis & {
   fetch: (
@@ -613,137 +628,6 @@ export const importSelectedTasks = mutation({
   },
 });
 
-export const setJiraEstimateSyncStatus = internalMutation({
-  args: {
-    error: v.optional(v.string()),
-    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
-    taskId: v.id("tasks"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.taskId, {
-      jiraEstimateSyncError: args.error,
-      jiraEstimateSyncStatus: args.status,
-    });
-  },
-});
-
-export const setJiraSprintSyncStatus = internalMutation({
-  args: {
-    error: v.optional(v.string()),
-    status: v.union(v.literal("syncing"), v.literal("synced"), v.literal("error")),
-    taskId: v.id("tasks"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.taskId, {
-      jiraSprintSyncError: args.error,
-      jiraSprintSyncStatus: args.status,
-    });
-  },
-});
-
-export const moveIssueToSprint = action({
-  args: {
-    sprintId: v.number(),
-    taskId: v.id("tasks"),
-  },
-  handler: async (ctx, args) => {
-    const task = await ctx.runQuery(api.tasks.getTask, { taskId: args.taskId });
-    if (!task || !task.jiraKey) {
-      return;
-    }
-
-    await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
-      status: "syncing",
-      taskId: args.taskId,
-    });
-
-    try {
-      const { authHeader, baseUrl } = getJiraEnv();
-      const res = await jiraGlobals.fetch(
-        `${baseUrl}/rest/agile/1.0/sprint/${args.sprintId}/issue`,
-        {
-          body: JSON.stringify({ issues: [task.jiraKey] }),
-          headers: {
-            Accept: "application/json",
-            Authorization: authHeader,
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-        },
-      );
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Jira API error: ${res.status} ${text}`);
-      }
-
-      await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
-        status: "synced",
-        taskId: args.taskId,
-      });
-    } catch (err: unknown) {
-      await ctx.runMutation(internal.jira.setJiraSprintSyncStatus, {
-        error: err instanceof Error ? err.message : "Failed to move issue to sprint",
-        status: "error",
-        taskId: args.taskId,
-      });
-      throw err;
-    }
-  },
-});
-
-export const updateJiraEstimate = action({
-  args: {
-    estimate: v.string(),
-    taskId: v.id("tasks"),
-  },
-  handler: async (ctx, args) => {
-    const task = await ctx.runQuery(api.tasks.getTask, { taskId: args.taskId });
-    if (!task || !task.jiraKey) {
-      return;
-    }
-
-    await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
-      status: "syncing",
-      taskId: args.taskId,
-    });
-
-    try {
-      const { authHeader, baseUrl } = getJiraEnv();
-      const res = await jiraGlobals.fetch(`${baseUrl}/rest/api/3/issue/${task.jiraKey}`, {
-        body: JSON.stringify({
-          fields: {
-            timetracking: { originalEstimate: args.estimate },
-          },
-        }),
-        headers: {
-          Accept: "application/json",
-          Authorization: authHeader,
-          "Content-Type": "application/json",
-        },
-        method: "PUT",
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Jira API error: ${res.status} ${text}`);
-      }
-
-      await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
-        status: "synced",
-        taskId: args.taskId,
-      });
-    } catch (err: unknown) {
-      await ctx.runMutation(internal.jira.setJiraEstimateSyncStatus, {
-        error: err instanceof Error ? err.message : "Failed to sync estimate",
-        status: "error",
-        taskId: args.taskId,
-      });
-      throw err;
-    }
-  },
-});
-
 export const fetchTaskComments = action({
   args: { jiraKey: v.string() },
   handler: async (_ctx, args): Promise<JiraComment[]> => {
@@ -790,5 +674,215 @@ export const fetchTaskComments = action({
       // Graceful degradation: return empty array on error
       return [];
     }
+  },
+});
+
+/**
+ * Internal query used by `saveJiraTaskUpdates` to atomically read the task and
+ * its room participants. Co-located here because it is exclusively consumed by
+ * the save flow.
+ */
+export const getRoomParticipantsAndTaskInternal = internalQuery({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      return null;
+    }
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_room", (q) => q.eq("roomId", task.roomId))
+      .collect();
+    return { task, participants };
+  },
+});
+
+async function attemptUpdateEstimate(
+  authHeader: string,
+  baseUrl: string,
+  jiraKey: string,
+  estimate: string,
+): Promise<SaveFieldResult> {
+  try {
+    const res = await jiraGlobals.fetch(
+      `${baseUrl}/rest/api/3/issue/${encodeURIComponent(jiraKey)}`,
+      {
+        body: JSON.stringify({
+          fields: { timetracking: { originalEstimate: estimate } },
+        }),
+        headers: {
+          Accept: "application/json",
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+        method: "PUT",
+      },
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      return { attempted: true, success: false, error: `${res.status}: ${text}` };
+    }
+    return { attempted: true, success: true };
+  } catch (e) {
+    return {
+      attempted: true,
+      success: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
+async function attemptMoveSprint(
+  authHeader: string,
+  baseUrl: string,
+  jiraKey: string,
+  sprintId: number,
+): Promise<SaveFieldResult> {
+  try {
+    const res = await jiraGlobals.fetch(`${baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue`, {
+      body: JSON.stringify({ issues: [jiraKey] }),
+      headers: {
+        Accept: "application/json",
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      return { attempted: true, success: false, error: `${res.status}: ${text}` };
+    }
+    return { attempted: true, success: true };
+  } catch (e) {
+    return {
+      attempted: true,
+      success: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
+/**
+ * Host-only batched save of Jira-side fields for a single task.
+ *
+ * Dirty-field rules (see plan):
+ * - estimate: attempted only if non-empty (after trim) AND different from saved value
+ * - sprint:   attempted only if sprintId provided AND different from saved sprintId
+ * - estimate runs first, sprint runs second; failure of one does NOT skip the other
+ * - patches `tasks` once at the end with only the successful fields
+ *   (the underlying mutation skips undefined keys so failed/skipped fields keep
+ *   their prior saved values).
+ */
+export const saveJiraTaskUpdates = action({
+  args: {
+    sessionId: v.string(),
+    taskId: v.id("tasks"),
+    estimate: v.optional(v.string()),
+    sprintId: v.optional(v.number()),
+    sprintName: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<SaveJiraTaskUpdatesResult> => {
+    if (args.sessionId.trim() === "") {
+      throw new Error("sessionId is required");
+    }
+
+    const data: { task: Doc<"tasks">; participants: Doc<"participants">[] } | null =
+      await ctx.runQuery(internal.jira.getRoomParticipantsAndTaskInternal, {
+        taskId: args.taskId,
+      });
+    if (!data) {
+      throw new Error("Task not found");
+    }
+    const { task, participants } = data;
+
+    if (!task.jiraKey) {
+      throw new Error("Task has no Jira key");
+    }
+
+    /*
+     * Authorization: caller must be a participant in the task's room AND a host;
+     * the room must currently have at least one host.
+     */
+    const caller = participants.find((p) => p.sessionId === args.sessionId);
+    if (!caller) {
+      throw new Error("You are not a participant in this room");
+    }
+    const hasAnyHost = participants.some((p) => p.isHost);
+    if (!hasAnyHost) {
+      throw new Error("Room has no host");
+    }
+    if (!caller.isHost) {
+      throw new Error("Only hosts can save Jira updates");
+    }
+
+    // Dirty-field analysis -------------------------------------------------
+    const trimmedEstimate = (args.estimate ?? "").trim();
+    const estimateChanged =
+      trimmedEstimate !== "" && trimmedEstimate !== (task.savedJiraEstimate ?? "");
+
+    const nextSprintId =
+      args.sprintId !== undefined && args.sprintId !== task.savedJiraSprintId
+        ? args.sprintId
+        : undefined;
+    const nextSprintName = args.sprintName?.trim() ?? "";
+    if (nextSprintId !== undefined && nextSprintName === "") {
+      /*
+       * The form must always submit name alongside id — fail loudly so we
+       * don't store a sprintId without its display name.
+       */
+      throw new Error("sprintName is required when sprintId is provided");
+    }
+
+    const sprintChanged = nextSprintId !== undefined;
+
+    // Short-circuit if nothing dirty: zero Jira calls, zero patches.
+    if (!estimateChanged && !sprintChanged) {
+      return {
+        estimate: { attempted: false, success: false },
+        sprint: { attempted: false, success: false },
+      };
+    }
+
+    const { authHeader, baseUrl } = getJiraEnv();
+    const jiraKey = task.jiraKey;
+
+    const estimateResult: SaveFieldResult = estimateChanged
+      ? await attemptUpdateEstimate(authHeader, baseUrl, jiraKey, trimmedEstimate)
+      : { attempted: false, success: false };
+
+    const sprintResult: SaveFieldResult =
+      nextSprintId !== undefined
+        ? await attemptMoveSprint(authHeader, baseUrl, jiraKey, nextSprintId)
+        : { attempted: false, success: false };
+
+    /*
+     * Build a single patch containing only successful fields. Skipped/failed
+     * fields are left undefined so `setSavedJiraFields` preserves their prior
+     * saved values.
+     */
+    const patch: {
+      taskId: Id<"tasks">;
+      savedJiraEstimate?: string;
+      savedJiraSprintId?: number;
+      savedJiraSprintName?: string;
+    } = { taskId: args.taskId };
+
+    if (estimateResult.attempted && estimateResult.success) {
+      patch.savedJiraEstimate = trimmedEstimate;
+    }
+    if (sprintResult.attempted && sprintResult.success && nextSprintId !== undefined) {
+      patch.savedJiraSprintId = nextSprintId;
+      patch.savedJiraSprintName = nextSprintName;
+    }
+
+    if (
+      patch.savedJiraEstimate !== undefined ||
+      patch.savedJiraSprintId !== undefined ||
+      patch.savedJiraSprintName !== undefined
+    ) {
+      await ctx.runMutation(internal.tasks.setSavedJiraFields, patch);
+    }
+
+    return { estimate: estimateResult, sprint: sprintResult };
   },
 });

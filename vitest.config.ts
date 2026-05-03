@@ -19,6 +19,8 @@ export default defineConfig({
       "src/pages/**/*.test.{ts,tsx}",
       "src/components/**/*.test.{ts,tsx}",
     ],
+    restoreMocks: true,
+    unstubEnvs: true,
     setupFiles: ["src/test/setup.ts"],
   },
 });
