@@ -5,12 +5,16 @@ import { useQuery } from "@tanstack/react-query";
 
 import { JIRA_QUERY_OPTIONS } from "@/lib/persister";
 
+const JIRA_DETAILS_CACHE_VERSION = 2;
+
 export function useJiraDetails(jiraKeys: string[]) {
   const sortedKeys = [...jiraKeys].sort();
   const { data: details = {} as Record<string, JiraTaskDetails>, isPending: loading } = useQuery({
     ...convexAction(
       api.jira.fetchTaskDetails,
-      sortedKeys.length > 0 ? { jiraKeys: sortedKeys } : "skip",
+      sortedKeys.length > 0
+        ? { detailsVersion: JIRA_DETAILS_CACHE_VERSION, jiraKeys: sortedKeys }
+        : "skip",
     ),
     ...JIRA_QUERY_OPTIONS,
   });

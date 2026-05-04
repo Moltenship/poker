@@ -16,6 +16,7 @@ export interface JiraIssue {
   description: string;
   sprintName?: string;
   assignee?: string;
+  reporter?: string;
   isBlocked: boolean;
   labels: string[];
 }
@@ -37,6 +38,7 @@ export interface JiraTaskDetails {
   sprintName?: string;
   url: string;
   assignee?: string;
+  reporter?: string;
   isBlocked: boolean;
   blockedBy: JiraBlocker[];
   labels: string[];

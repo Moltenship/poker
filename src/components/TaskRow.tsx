@@ -13,6 +13,7 @@ interface EnrichedTask {
   type?: string;
   status?: string;
   assignee?: string;
+  reporter?: string;
   labels?: string[];
   isBlocked?: boolean;
 }
@@ -108,6 +109,12 @@ export function TaskRow({
                 <span className="text-muted-foreground/50 inline-flex items-center gap-0.5 truncate text-[11px]">
                   <User className="size-3 shrink-0" />
                   <span className="truncate">{enriched.assignee}</span>
+                </span>
+              ) : null}
+              {enriched?.reporter ? (
+                <span className="text-muted-foreground/50 inline-flex items-center gap-0.5 truncate text-[11px]">
+                  <User className="size-3 shrink-0" />
+                  <span className="truncate">Reporter: {enriched.reporter}</span>
                 </span>
               ) : null}
               {enriched?.labels && enriched.labels.length > 0 ? (

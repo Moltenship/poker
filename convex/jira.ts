@@ -55,6 +55,7 @@ interface JiraIssueFields {
   description?: unknown;
   customfield_10020?: { name?: string; state?: string }[];
   assignee?: { displayName?: string; accountId?: string } | null;
+  reporter?: { displayName?: string; accountId?: string } | null;
   issuelinks?: {
     type?: { name?: string; inward?: string; outward?: string };
     inwardIssue?: {
@@ -419,7 +420,7 @@ function getBlockers(links: JiraIssueFields["issuelinks"], baseUrl: string): Jir
 }
 
 export const fetchTaskDetails = action({
-  args: { jiraKeys: v.array(v.string()) },
+  args: { detailsVersion: v.optional(v.number()), jiraKeys: v.array(v.string()) },
   handler: async (_ctx, args): Promise<Record<string, JiraTaskDetails>> => {
     if (args.jiraKeys.length === 0) {
       return {};
@@ -442,6 +443,7 @@ export const fetchTaskDetails = action({
             "description",
             "customfield_10020",
             "assignee",
+            "reporter",
             "issuelinks",
             "attachment",
             "labels",
@@ -466,6 +468,7 @@ export const fetchTaskDetails = action({
           sprintName = String(active.name ?? "");
         }
         const assignee = issue.fields.assignee?.displayName ?? undefined;
+        const reporter = issue.fields.reporter?.displayName ?? undefined;
         const blockedBy = getBlockers(issue.fields.issuelinks, baseUrl);
         const isBlocked = blockedBy.length > 0;
 
@@ -482,6 +485,7 @@ export const fetchTaskDetails = action({
           description: adfToMarkdown(issue.fields.description, mediaUrlMap),
           isBlocked,
           labels: issue.fields.labels ?? [],
+          reporter,
           sprintName,
           status: String(issue.fields.status?.name ?? ""),
           title: String(issue.fields.summary || issue.key),
@@ -532,6 +536,7 @@ export const fetchJiraBacklog = action({
           "description",
           "customfield_10020",
           "assignee",
+          "reporter",
           "issuelinks",
           "labels",
         ],
@@ -572,6 +577,7 @@ export const fetchJiraBacklog = action({
           isBlocked: checkIsBlocked(issue.fields.issuelinks),
           key: issue.key,
           labels: issue.fields.labels ?? [],
+          reporter: issue.fields.reporter?.displayName ?? undefined,
           sprintName,
           status: String(issue.fields.status?.name ?? ""),
           title: String(issue.fields.summary || issue.key),

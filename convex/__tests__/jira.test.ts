@@ -129,6 +129,43 @@ async function addJiraTask(
   );
 }
 
+describe("fetchTaskDetails", () => {
+  it("returns the Jira reporter display name", async () => {
+    setupJiraEnv();
+    const t = convexTest(schema, modules);
+    const fetchMock = installFetch(async () =>
+      mockOk({
+        issues: [
+          {
+            fields: {
+              assignee: { displayName: "Assignee One" },
+              customfield_10020: [],
+              description: null,
+              issuelinks: [],
+              labels: [],
+              reporter: { displayName: "Reporter One" },
+              status: { name: "To Do" },
+              summary: "Task with reporter",
+              issuetype: { name: "Story" },
+            },
+            key: "PROJ-1",
+          },
+        ],
+      }),
+    );
+
+    const details = await t.action(api.jira.fetchTaskDetails, {
+      jiraKeys: ["PROJ-1"],
+    });
+
+    expect(details["PROJ-1"]?.reporter).toBe("Reporter One");
+    const requestBody = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+      fields: string[];
+    };
+    expect(requestBody.fields).toContain("reporter");
+  });
+});
+
 describe("saveJiraTaskUpdates", () => {
   it("host can save changed estimate and changed sprint with one patch", async () => {
     setupJiraEnv();
