@@ -3,6 +3,7 @@ import { ExternalLink, OctagonAlert } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 import { TaskComments } from "@/components/TaskComments";
+import { TaskInfoBlock } from "@/components/TaskInfoBlock";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { statusColorClass } from "@/lib/jiraStatus";
@@ -12,7 +13,14 @@ interface EnrichedDetails {
   title?: string;
   description?: string;
   url?: string;
+  status?: string;
+  statusColor?: string;
   sprintName?: string;
+  assignee?: string;
+  assigneeAvatarUrl?: string;
+  reporter?: string;
+  reporterAvatarUrl?: string;
+  labels?: string[];
   blockedBy?: JiraBlocker[];
 }
 
@@ -44,6 +52,7 @@ export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: Task
             )}
             Lorem ipsum dolor sit amet consectetur
           </h2>
+          <TaskInfoBlock placeholder />
           <div className="mt-5 space-y-4 text-left text-[13px] blur-[6px]">
             <div>
               <h3 className="mb-1 text-base font-semibold">Description</h3>
@@ -89,6 +98,18 @@ export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: Task
               (enriched?.title ?? task.title ?? task.jiraKey ?? "Untitled")
             )}
           </h2>
+          {enriched && (
+            <TaskInfoBlock
+              assignee={enriched.assignee}
+              assigneeAvatarUrl={enriched.assigneeAvatarUrl}
+              reporter={enriched.reporter}
+              reporterAvatarUrl={enriched.reporterAvatarUrl}
+              status={enriched.status}
+              statusColor={enriched.statusColor}
+              sprintName={enriched.sprintName}
+              labels={enriched.labels ?? []}
+            />
+          )}
           {enriched?.description && (
             <div className="mt-5 text-left text-sm">
               <Streamdown
