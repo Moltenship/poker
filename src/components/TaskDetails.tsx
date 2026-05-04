@@ -3,32 +3,25 @@ import { ExternalLink, OctagonAlert } from "lucide-react";
 import { Streamdown } from "streamdown";
 
 import { TaskComments } from "@/components/TaskComments";
+import { TaskInfoBlock } from "@/components/TaskInfoBlock";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { statusColorClass } from "@/lib/jiraStatus";
 import { streamdownComponents, streamdownPlugins } from "@/lib/streamdown";
 
-/** Map Jira statusCategory colorName to badge styles. */
-function statusColorClass(colorName?: string): string {
-  switch (colorName) {
-    case "blue-gray":
-      return "border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300";
-    case "blue":
-      return "border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-900 dark:text-blue-300";
-    case "yellow":
-      return "border-yellow-300 bg-yellow-100 text-yellow-700 dark:border-yellow-600 dark:bg-yellow-900 dark:text-yellow-300";
-    case "green":
-      return "border-green-300 bg-green-100 text-green-700 dark:border-green-600 dark:bg-green-900 dark:text-green-300";
-    default:
-      return "";
-  }
-}
-
 interface EnrichedDetails {
-  title?: string;
-  description?: string;
-  url?: string;
-  sprintName?: string;
+  assignee?: string;
+  assigneeAvatarUrl?: string;
   blockedBy?: JiraBlocker[];
+  description?: string;
+  labels?: string[];
+  reporter?: string;
+  reporterAvatarUrl?: string;
+  sprintName?: string;
+  status?: string;
+  statusColor?: string;
+  title?: string;
+  url?: string;
 }
 
 interface TaskSummary {
@@ -59,6 +52,7 @@ export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: Task
             )}
             Lorem ipsum dolor sit amet consectetur
           </h2>
+          <TaskInfoBlock placeholder />
           <div className="mt-5 space-y-4 text-left text-[13px] blur-[6px]">
             <div>
               <h3 className="mb-1 text-base font-semibold">Description</h3>
@@ -104,6 +98,18 @@ export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: Task
               (enriched?.title ?? task.title ?? task.jiraKey ?? "Untitled")
             )}
           </h2>
+          {enriched && (
+            <TaskInfoBlock
+              assignee={enriched.assignee}
+              assigneeAvatarUrl={enriched.assigneeAvatarUrl}
+              labels={enriched.labels ?? []}
+              reporter={enriched.reporter}
+              reporterAvatarUrl={enriched.reporterAvatarUrl}
+              sprintName={enriched.sprintName}
+              status={enriched.status}
+              statusColor={enriched.statusColor}
+            />
+          )}
           {enriched?.description && (
             <div className="mt-5 text-left text-sm">
               <Streamdown

@@ -50,12 +50,20 @@ const jiraGlobals = globalThis as typeof globalThis & {
 
 interface JiraIssueFields {
   summary?: string;
-  status?: { name?: string };
+  status?: { name?: string; statusCategory?: { colorName?: string } };
   issuetype?: { name?: string };
   description?: unknown;
   customfield_10020?: { name?: string; state?: string }[];
-  assignee?: { displayName?: string; accountId?: string } | null;
-  reporter?: { displayName?: string; accountId?: string } | null;
+  assignee?: {
+    displayName?: string;
+    accountId?: string;
+    avatarUrls?: Record<string, string>;
+  } | null;
+  reporter?: {
+    displayName?: string;
+    accountId?: string;
+    avatarUrls?: Record<string, string>;
+  } | null;
   issuelinks?: {
     type?: { name?: string; inward?: string; outward?: string };
     inwardIssue?: {
@@ -468,9 +476,12 @@ export const fetchTaskDetails = action({
           sprintName = String(active.name ?? "");
         }
         const assignee = issue.fields.assignee?.displayName ?? undefined;
+        const assigneeAvatarUrl = issue.fields.assignee?.avatarUrls?.["24x24"] ?? undefined;
         const reporter = issue.fields.reporter?.displayName ?? undefined;
+        const reporterAvatarUrl = issue.fields.reporter?.avatarUrls?.["24x24"] ?? undefined;
         const blockedBy = getBlockers(issue.fields.issuelinks, baseUrl);
         const isBlocked = blockedBy.length > 0;
+        const statusColor = issue.fields.status?.statusCategory?.colorName ?? undefined;
 
         // Resolve embedded image URLs from attachments
         const mediaUrlMap = await resolveMediaUrls(
@@ -481,13 +492,16 @@ export const fetchTaskDetails = action({
 
         result[issue.key] = {
           assignee,
+          assigneeAvatarUrl,
           blockedBy,
           description: adfToMarkdown(issue.fields.description, mediaUrlMap),
           isBlocked,
           labels: issue.fields.labels ?? [],
           reporter,
+          reporterAvatarUrl,
           sprintName,
           status: String(issue.fields.status?.name ?? ""),
+          statusColor,
           title: String(issue.fields.summary || issue.key),
           type: String(issue.fields.issuetype?.name ?? ""),
           url: `${baseUrl}/browse/${issue.key}`,
