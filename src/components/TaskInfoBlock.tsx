@@ -16,11 +16,9 @@ interface TaskInfoBlockProps {
   placeholder?: boolean;
 }
 
-const PLACEHOLDER_PROPS: Required<Omit<TaskInfoBlockProps, "placeholder">> = {
+const PLACEHOLDER_PROPS: Omit<TaskInfoBlockProps, "placeholder"> = {
   assignee: "Lorem Ipsum",
-  assigneeAvatarUrl: "",
   reporter: "Dolor Sit",
-  reporterAvatarUrl: "",
   status: "In Progress",
   statusColor: "blue",
   sprintName: "Sprint 99",
@@ -69,20 +67,9 @@ function PersonCell({ name, avatarUrl, emptyLabel }: PersonCellProps) {
 
 export function TaskInfoBlock(props: TaskInfoBlockProps) {
   const isPlaceholder = props.placeholder === true;
-  const data: Required<Omit<TaskInfoBlockProps, "placeholder">> = isPlaceholder
-    ? PLACEHOLDER_PROPS
-    : {
-        assignee: props.assignee ?? "",
-        assigneeAvatarUrl: props.assigneeAvatarUrl ?? "",
-        reporter: props.reporter ?? "",
-        reporterAvatarUrl: props.reporterAvatarUrl ?? "",
-        status: props.status ?? "",
-        statusColor: props.statusColor ?? "",
-        sprintName: props.sprintName ?? "",
-        labels: props.labels ?? [],
-      };
-
-  const showLabels = data.labels.length > 0;
+  const data: Omit<TaskInfoBlockProps, "placeholder"> = isPlaceholder ? PLACEHOLDER_PROPS : props;
+  const labels = data.labels ?? [];
+  const showLabels = labels.length > 0;
 
   return (
     <dl
@@ -90,15 +77,15 @@ export function TaskInfoBlock(props: TaskInfoBlockProps) {
         "mt-4 grid grid-cols-[88px_1fr] items-center gap-x-4 gap-y-1.5 text-sm",
         isPlaceholder && "blur-[6px] select-none",
       )}
-      aria-hidden={isPlaceholder ? "true" : undefined}
+      aria-hidden={isPlaceholder || undefined}
     >
       <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         Assignee
       </dt>
       <dd className="min-w-0">
         <PersonCell
-          name={data.assignee || undefined}
-          avatarUrl={data.assigneeAvatarUrl || undefined}
+          name={data.assignee}
+          avatarUrl={data.assigneeAvatarUrl}
           emptyLabel="Unassigned"
         />
       </dd>
@@ -107,11 +94,7 @@ export function TaskInfoBlock(props: TaskInfoBlockProps) {
         Reporter
       </dt>
       <dd className="min-w-0">
-        <PersonCell
-          name={data.reporter || undefined}
-          avatarUrl={data.reporterAvatarUrl || undefined}
-          emptyLabel="Unknown"
-        />
+        <PersonCell name={data.reporter} avatarUrl={data.reporterAvatarUrl} emptyLabel="Unknown" />
       </dd>
 
       <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">Status</dt>
@@ -140,7 +123,7 @@ export function TaskInfoBlock(props: TaskInfoBlockProps) {
           </dt>
           <dd className="min-w-0">
             <div className="flex flex-wrap gap-1">
-              {data.labels.map((label) => (
+              {labels.map((label) => (
                 <span
                   key={label}
                   className="bg-primary/10 text-primary rounded px-1 py-px text-[10px] leading-tight"
