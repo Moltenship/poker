@@ -31,17 +31,20 @@ export interface JiraBlocker {
 }
 
 export interface JiraTaskDetails {
-  title: string;
-  description: string;
-  status: string;
-  type: string;
-  sprintName?: string;
-  url: string;
   assignee?: string;
-  reporter?: string;
-  isBlocked: boolean;
+  assigneeAvatarUrl?: string;
   blockedBy: JiraBlocker[];
+  description: string;
+  isBlocked: boolean;
   labels: string[];
+  reporter?: string;
+  reporterAvatarUrl?: string;
+  sprintName?: string;
+  status: string;
+  statusColor?: string;
+  title: string;
+  type: string;
+  url: string;
 }
 
 export interface JiraComment {
