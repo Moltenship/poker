@@ -30,6 +30,7 @@ const routeApi = getRouteApi("/room/$roomCode");
 
 /** Stable empty arrays to avoid re-render from new references each render. */
 const EMPTY_SPRINT_FILTER: number[] = [];
+const EMPTY_LABEL_FILTER: string[] = [];
 const EMPTY_TYPE_FILTER: string[] = [];
 
 export default function Room() {
@@ -182,6 +183,7 @@ export default function Room() {
           roomCode={roomCode!}
           tasks={tasks || []}
           jiraEnabled={room.jiraEnabled ?? false}
+          labelFilter={room.jiraLabelFilter ?? EMPTY_LABEL_FILTER}
           projectKey={room.jiraProjectKey ?? "BRV"}
           sprintFilter={room.jiraSprintFilter ?? EMPTY_SPRINT_FILTER}
           typeFilter={room.jiraTypeFilter ?? EMPTY_TYPE_FILTER}

@@ -3,6 +3,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { RotateCw, SlidersHorizontal, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 
+import { LabelFilterChips } from "@/components/LabelFilterChips";
 import { SprintFilterChips } from "@/components/SprintFilterChips";
 import { TaskRow } from "@/components/TaskRow";
 import { TypeFilterChips } from "@/components/TypeFilterChips";
@@ -14,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useJiraDetails } from "@/hooks/useJiraDetails";
 import { useJiraSync } from "@/hooks/useJiraSync";
 import { useSessionMutation } from "@/hooks/useSession";
+import { isTaskVisible } from "@/lib/taskFilters";
 import { cn } from "@/lib/utils";
 
 export interface Task {
@@ -32,6 +34,7 @@ interface TaskListManagerProps {
   roomCode: string;
   tasks: Task[];
   jiraEnabled: boolean;
+  labelFilter: string[];
   projectKey: string;
   sprintFilter: number[];
   typeFilter: string[];
@@ -42,6 +45,7 @@ export function TaskListManager({
   roomCode,
   tasks,
   jiraEnabled,
+  labelFilter,
   projectKey,
   sprintFilter,
   typeFilter,
@@ -58,19 +62,23 @@ export function TaskListManager({
 
   // Jira sync: sprints, filters, sync state
   const {
+    clearLabelFilter,
     clearTypeFilter,
     doSync,
     jiraSprints,
+    localLabelFilter,
     localSprintFilter,
     localTypeFilter,
     resetSyncFlag,
     syncError,
     syncing,
+    toggleLabel,
     toggleSprint,
     toggleType,
     updateSprintFilter,
   } = useJiraSync({
     jiraEnabled,
+    labelFilter,
     projectKey,
     roomId,
     sprintFilter,
@@ -111,13 +119,8 @@ export function TaskListManager({
   };
 
   const visibleTasks = tasks.filter((t) => {
-    if (localTypeFilter.length > 0 && t.jiraKey) {
-      const type = jiraDetails[t.jiraKey]?.type;
-      if (type && !localTypeFilter.includes(type)) {
-        return false;
-      }
-    }
-    return true;
+    const details = t.jiraKey ? jiraDetails[t.jiraKey] : undefined;
+    return isTaskVisible({ details, labelFilter: localLabelFilter, typeFilter: localTypeFilter });
   });
 
   return (
@@ -192,7 +195,9 @@ export function TaskListManager({
                           size="icon-xs"
                           className={cn(
                             "text-muted-foreground",
-                            (localSprintFilter.length > 0 || localTypeFilter.length > 0) &&
+                            (localSprintFilter.length > 0 ||
+                              localLabelFilter.length > 0 ||
+                              localTypeFilter.length > 0) &&
                               "text-primary",
                           )}
                         >
@@ -216,6 +221,11 @@ export function TaskListManager({
                         selectedTypes={localTypeFilter}
                         onToggle={toggleType}
                         onClear={clearTypeFilter}
+                      />
+                      <LabelFilterChips
+                        selectedLabels={localLabelFilter}
+                        onToggle={toggleLabel}
+                        onClear={clearLabelFilter}
                       />
                     </div>
                   </PopoverContent>

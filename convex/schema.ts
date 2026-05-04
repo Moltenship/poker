@@ -22,6 +22,7 @@ export default defineSchema({
     cardSet: v.array(v.string()),
     jiraProjectKey: v.optional(v.string()),
     jiraEnabled: v.optional(v.boolean()),
+    jiraLabelFilter: v.optional(v.array(v.string())),
     jiraSprintFilter: v.optional(v.array(v.number())),
     jiraTypeFilter: v.optional(v.array(v.string())),
     importStatus: v.optional(

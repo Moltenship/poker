@@ -4,6 +4,8 @@ import { nanoid } from "nanoid";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { sessionMutation, sessionQuery } from "./lib/sessions";
 
+const JIRA_LABEL_FILTERS = new Set(["tech_debt"]);
+
 export const createRoom = sessionMutation({
   args: {
     cardSet: v.array(v.string()),
@@ -76,6 +78,18 @@ export const setTypeFilter = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.roomId, { jiraTypeFilter: args.types });
+  },
+});
+
+export const setLabelFilter = mutation({
+  args: {
+    labels: v.array(v.string()),
+    roomId: v.id("rooms"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.roomId, {
+      jiraLabelFilter: args.labels.filter((label) => JIRA_LABEL_FILTERS.has(label)),
+    });
   },
 });
 

@@ -15,6 +15,7 @@ interface UseJiraSyncOptions {
   roomId: Id<"rooms">;
   projectKey: string;
   jiraEnabled: boolean;
+  labelFilter: string[];
   sprintFilter: number[];
   typeFilter: string[];
   tasks: Task[];
@@ -24,6 +25,7 @@ export function useJiraSync({
   roomId,
   projectKey,
   jiraEnabled,
+  labelFilter,
   sprintFilter,
   typeFilter,
   tasks,
@@ -31,6 +33,7 @@ export function useJiraSync({
   const [localSprintFilter, setLocalSprintFilter] = useState<number[]>(
     sprintFilter.length === 0 ? [BACKLOG_FILTER_ID] : sprintFilter,
   );
+  const [localLabelFilter, setLocalLabelFilter] = useState<string[]>(labelFilter);
   const [localTypeFilter, setLocalTypeFilter] = useState<string[]>(typeFilter);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -43,17 +46,23 @@ export function useJiraSync({
 
   const fetchJiraBacklog = useConvexAction(api.jira.fetchJiraBacklog);
   const importSelectedTasks = useConvexMutation(api.jira.importSelectedTasks);
+  const saveLabelFilter = useConvexMutation(api.rooms.setLabelFilter);
   const saveSprintFilter = useConvexMutation(api.rooms.setSprintFilter);
   const saveTypeFilter = useConvexMutation(api.rooms.setTypeFilter);
 
   // Stable string keys for shallow array comparison (avoids JSON.stringify in deps)
   const sprintFilterKey = useMemo(() => sprintFilter.join(","), [sprintFilter]);
+  const labelFilterKey = useMemo(() => labelFilter.join(","), [labelFilter]);
   const typeFilterKey = useMemo(() => typeFilter.join(","), [typeFilter]);
 
   // Keep local filters in sync when DB value changes (e.g. from another session)
   useEffect(() => {
     setLocalSprintFilter(sprintFilter.length === 0 ? [BACKLOG_FILTER_ID] : sprintFilter);
   }, [sprintFilterKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setLocalLabelFilter(labelFilter);
+  }, [labelFilterKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setLocalTypeFilter(typeFilter);
@@ -115,6 +124,19 @@ export function useJiraSync({
     saveTypeFilter({ roomId, types: newTypes });
   };
 
+  const toggleLabel = (label: string) => {
+    const newLabels = localLabelFilter.includes(label)
+      ? localLabelFilter.filter((existingLabel) => existingLabel !== label)
+      : [...localLabelFilter, label];
+    setLocalLabelFilter(newLabels);
+    saveLabelFilter({ labels: newLabels, roomId });
+  };
+
+  const clearLabelFilter = () => {
+    setLocalLabelFilter([]);
+    saveLabelFilter({ labels: [], roomId });
+  };
+
   const clearTypeFilter = () => {
     setLocalTypeFilter([]);
     saveTypeFilter({ roomId, types: [] });
@@ -125,15 +147,18 @@ export function useJiraSync({
   };
 
   return {
+    clearLabelFilter,
     clearTypeFilter,
     doSync,
     jiraSprints,
+    localLabelFilter,
     localSprintFilter,
     localTypeFilter,
     resetSyncFlag,
     syncError,
     syncing,
     toggleSprint,
+    toggleLabel,
     toggleType,
     updateSprintFilter,
   };
