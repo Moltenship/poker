@@ -10,18 +10,18 @@ import { statusColorClass } from "@/lib/jiraStatus";
 import { streamdownComponents, streamdownPlugins } from "@/lib/streamdown";
 
 interface EnrichedDetails {
-  title?: string;
-  description?: string;
-  url?: string;
-  status?: string;
-  statusColor?: string;
-  sprintName?: string;
   assignee?: string;
   assigneeAvatarUrl?: string;
+  blockedBy?: JiraBlocker[];
+  description?: string;
+  labels?: string[];
   reporter?: string;
   reporterAvatarUrl?: string;
-  labels?: string[];
-  blockedBy?: JiraBlocker[];
+  sprintName?: string;
+  status?: string;
+  statusColor?: string;
+  title?: string;
+  url?: string;
 }
 
 interface TaskSummary {
@@ -102,12 +102,12 @@ export function TaskDetails({ task, enriched, jiraLoading, comments = [] }: Task
             <TaskInfoBlock
               assignee={enriched.assignee}
               assigneeAvatarUrl={enriched.assigneeAvatarUrl}
+              labels={enriched.labels ?? []}
               reporter={enriched.reporter}
               reporterAvatarUrl={enriched.reporterAvatarUrl}
+              sprintName={enriched.sprintName}
               status={enriched.status}
               statusColor={enriched.statusColor}
-              sprintName={enriched.sprintName}
-              labels={enriched.labels ?? []}
             />
           )}
           {enriched?.description && (
