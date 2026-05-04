@@ -15,17 +15,33 @@ const fullProps = {
 };
 
 describe(TaskInfoBlock, () => {
-  it("renders all five labelled rows when full data is provided", () => {
+  it("renders all five row headings when full data is provided", () => {
     renderWithProviders(<TaskInfoBlock {...fullProps} />);
     expect(screen.getByText("Assignee")).toBeInTheDocument();
     expect(screen.getByText("Reporter")).toBeInTheDocument();
     expect(screen.getByText("Status")).toBeInTheDocument();
     expect(screen.getByText("Sprint")).toBeInTheDocument();
     expect(screen.getByText("Labels")).toBeInTheDocument();
+  });
+
+  it("renders the assignee and reporter names", () => {
+    renderWithProviders(<TaskInfoBlock {...fullProps} />);
     expect(screen.getByText("Anna Quinn")).toBeInTheDocument();
     expect(screen.getByText("Bob Reed")).toBeInTheDocument();
+  });
+
+  it("renders the status badge text", () => {
+    renderWithProviders(<TaskInfoBlock {...fullProps} />);
     expect(screen.getByText("In Progress")).toBeInTheDocument();
+  });
+
+  it("renders the sprint name", () => {
+    renderWithProviders(<TaskInfoBlock {...fullProps} />);
     expect(screen.getByText("Sprint 23")).toBeInTheDocument();
+  });
+
+  it("renders all label chips", () => {
+    renderWithProviders(<TaskInfoBlock {...fullProps} />);
     expect(screen.getByText("frontend")).toBeInTheDocument();
     expect(screen.getByText("urgent")).toBeInTheDocument();
   });

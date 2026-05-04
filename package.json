@@ -16,11 +16,11 @@
     "test": "vitest run",
     "typecheck": "tsc -b --noEmit",
     "typecheck:tsgo": "tsgo -b --noEmit",
-    "lint": "oxlint -c .oxlintrc.json",
-    "lint:fix": "oxlint -c .oxlintrc.json --fix",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "format": "oxfmt --write",
     "format:check": "oxfmt --check",
-    "check": "oxlint -c .oxlintrc.json && oxfmt --check",
+    "check": "oxlint && oxfmt --check",
     "prepare": "husky"
   },
   "dependencies": {
