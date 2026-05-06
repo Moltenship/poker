@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { JIRA_QUERY_OPTIONS } from "@/lib/persister";
+import { toggleLabelFilter } from "@/lib/taskFilters";
 
 interface Task {
   jiraKey?: string;
@@ -125,9 +126,7 @@ export function useJiraSync({
   };
 
   const toggleLabel = (label: string) => {
-    const newLabels = localLabelFilter.includes(label)
-      ? localLabelFilter.filter((existingLabel) => existingLabel !== label)
-      : [...localLabelFilter, label];
+    const newLabels = toggleLabelFilter(localLabelFilter, label);
     setLocalLabelFilter(newLabels);
     saveLabelFilter({ labels: newLabels, roomId });
   };

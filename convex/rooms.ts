@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { sessionMutation, sessionQuery } from "./lib/sessions";
 
-const JIRA_LABEL_FILTERS = new Set(["tech_debt"]);
+const JIRA_LABEL_FILTERS = new Set(["tech_debt", "exclude_tech_debt"]);
 
 export const createRoom = sessionMutation({
   args: {
