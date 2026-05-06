@@ -1,10 +1,6 @@
 import { FilterChip } from "@/components/FilterChip";
 import { Separator } from "@/components/ui/separator";
-import {
-  getLabelFilterState,
-  LABEL_FILTER_CHIP_LABELS,
-  LABEL_FILTER_CHIPS,
-} from "@/lib/taskFilters";
+import { getLabelFilterState, LABEL_FILTER_CHIPS } from "@/lib/taskFilters";
 
 interface LabelFilterChipsProps {
   selectedLabels: string[];
@@ -43,7 +39,7 @@ export function LabelFilterChips({ selectedLabels, onToggle, onClear }: LabelFil
               }
               onClick={() => onToggle(label)}
             >
-              {LABEL_FILTER_CHIP_LABELS[state]}
+              {label}
             </FilterChip>
           );
         })}

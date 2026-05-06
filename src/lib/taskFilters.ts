@@ -12,12 +12,6 @@ export const LABEL_FILTER_LABELS: Record<LabelFilter, string> = {
   [TECH_DEBT_LABEL]: TECH_DEBT_LABEL,
 };
 
-export const LABEL_FILTER_CHIP_LABELS: Record<LabelFilterState, string> = {
-  excluded: "Exclude tech_debt",
-  included: "Include tech_debt",
-  none: TECH_DEBT_LABEL,
-};
-
 interface JiraFilterDetails {
   labels?: string[];
   type?: string;
