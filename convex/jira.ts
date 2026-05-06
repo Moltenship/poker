@@ -109,19 +109,29 @@ interface AdfNode {
   marks?: AdfMark[];
 }
 
+function wrapMarkdownMark(text: string, before: string, after: string): string {
+  const match = text.match(/^(\s*)([\s\S]*?\S)(\s*)$/);
+  if (!match) {
+    return text;
+  }
+
+  const [, leadingWhitespace, content, trailingWhitespace] = match;
+  return `${leadingWhitespace}${before}${content}${after}${trailingWhitespace}`;
+}
+
 function applyMarks(text: string, marks: AdfMark[]): string {
   let out = text;
   for (const mark of marks) {
     if (mark.type === "strong") {
-      out = `**${out}**`;
+      out = wrapMarkdownMark(out, "**", "**");
     } else if (mark.type === "em") {
-      out = `_${out}_`;
+      out = wrapMarkdownMark(out, "_", "_");
     } else if (mark.type === "code") {
-      out = `\`${out}\``;
+      out = wrapMarkdownMark(out, "`", "`");
     } else if (mark.type === "strike") {
-      out = `~~${out}~~`;
+      out = wrapMarkdownMark(out, "~~", "~~");
     } else if (mark.type === "link") {
-      out = `[${out}](${mark.attrs?.href ?? ""})`;
+      out = wrapMarkdownMark(out, "[", `](${mark.attrs?.href ?? ""})`);
     }
   }
   return out;
