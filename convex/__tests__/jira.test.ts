@@ -164,6 +164,95 @@ describe("fetchTaskDetails", () => {
     };
     expect(requestBody.fields).toContain("reporter");
   });
+
+  it("keeps Jira mark whitespace outside markdown delimiters", async () => {
+    setupJiraEnv();
+    const t = convexTest(schema, modules);
+    installFetch(async () =>
+      mockOk({
+        issues: [
+          {
+            fields: {
+              assignee: null,
+              customfield_10020: [],
+              description: {
+                type: "doc",
+                content: [
+                  {
+                    type: "orderedList",
+                    content: [
+                      {
+                        type: "listItem",
+                        content: [
+                          {
+                            type: "paragraph",
+                            content: [
+                              {
+                                type: "text",
+                                text: "Решить вопрос с ",
+                                marks: [{ type: "strong" }],
+                              },
+                              { type: "text", text: "<video>", marks: [{ type: "code" }] },
+                              { type: "text", text: " — старый renderer" },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    type: "bulletList",
+                    content: [
+                      {
+                        type: "listItem",
+                        content: [
+                          {
+                            type: "paragraph",
+                            content: [
+                              {
+                                type: "text",
+                                text: "What’s included ",
+                                marks: [{ type: "em" }],
+                              },
+                              { type: "text", text: "(список скриптов) и " },
+                              {
+                                type: "text",
+                                text: "Author’s feed ",
+                                marks: [{ type: "em" }],
+                              },
+                              { type: "text", text: ", табы видимы" },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              issuelinks: [],
+              labels: [],
+              reporter: null,
+              status: { name: "To Do" },
+              summary: "Task with marked text",
+              issuetype: { name: "Story" },
+            },
+            key: "PROJ-1",
+          },
+        ],
+      }),
+    );
+
+    const details = await t.action(api.jira.fetchTaskDetails, {
+      jiraKeys: ["PROJ-1"],
+    });
+
+    expect(details["PROJ-1"]?.description).toContain(
+      "1. **Решить вопрос с** `<video>` — старый renderer",
+    );
+    expect(details["PROJ-1"]?.description).toContain(
+      "- _What’s included_ (список скриптов) и _Author’s feed_ , табы видимы",
+    );
+  });
 });
 
 describe("saveJiraTaskUpdates", () => {
