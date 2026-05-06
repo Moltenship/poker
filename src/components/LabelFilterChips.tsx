@@ -1,6 +1,10 @@
 import { FilterChip } from "@/components/FilterChip";
 import { Separator } from "@/components/ui/separator";
-import { AVAILABLE_LABEL_FILTERS } from "@/lib/taskFilters";
+import {
+  getLabelFilterState,
+  LABEL_FILTER_CHIP_LABELS,
+  LABEL_FILTER_CHIPS,
+} from "@/lib/taskFilters";
 
 interface LabelFilterChipsProps {
   selectedLabels: string[];
@@ -26,15 +30,23 @@ export function LabelFilterChips({ selectedLabels, onToggle, onClear }: LabelFil
         )}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {AVAILABLE_LABEL_FILTERS.map((label) => (
-          <FilterChip
-            key={label}
-            selected={selectedLabels.includes(label)}
-            onClick={() => onToggle(label)}
-          >
-            {label}
-          </FilterChip>
-        ))}
+        {LABEL_FILTER_CHIPS.map((label) => {
+          const state = getLabelFilterState(selectedLabels, label);
+          return (
+            <FilterChip
+              key={label}
+              selected={state !== "none"}
+              className={
+                state === "excluded"
+                  ? "border-destructive bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive"
+                  : undefined
+              }
+              onClick={() => onToggle(label)}
+            >
+              {LABEL_FILTER_CHIP_LABELS[state]}
+            </FilterChip>
+          );
+        })}
       </div>
       {selectedLabels.length === 0 && (
         <p className="text-muted-foreground text-xs">Showing all labels</p>
