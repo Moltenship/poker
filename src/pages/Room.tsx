@@ -175,7 +175,7 @@ export default function Room() {
   }
 
   return (
-    <div className="bg-background flex h-screen w-full flex-col overflow-hidden md:flex-row">
+    <div className="bg-background flex min-h-screen w-full flex-col overflow-x-hidden md:h-screen md:flex-row md:overflow-hidden">
       {/* Tasks */}
       <aside className="h-[30vh] w-full shrink-0 overflow-hidden bg-[var(--sidebar)] md:h-full md:w-72">
         <TaskListManager
