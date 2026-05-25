@@ -94,10 +94,14 @@ export default function Room() {
   const showVoteStatus = room?.status === "voting";
   const autoRejoinKeyRef = useRef<string | null>(null);
 
-  // Derive currentVote from server state (no useEffect sync needed).
-  // Optimistic vote stores the user's selection while the server round-trips.
-  const [optimisticVote, setOptimisticVote] = useState<string | null>(null);
-  const currentVote = myVote !== undefined ? myVote : optimisticVote;
+  // Optimistic vote is task-scoped — otherwise a previous task's value would flash as selected while the new task's `myVote` query is still loading.
+  const [optimisticVote, setOptimisticVote] = useState<{
+    taskId: Id<"tasks">;
+    value: string | null;
+  } | null>(null);
+  const optimisticForCurrentTask =
+    optimisticVote && optimisticVote.taskId === currentTask?._id ? optimisticVote.value : null;
+  const currentVote = myVote !== undefined ? myVote : optimisticForCurrentTask;
 
   useDocumentTitle(room?.name);
   useTrackRoom(roomCode, room?.name);
@@ -248,7 +252,9 @@ export default function Room() {
                       roomStatus={room.status}
                       taskId={currentTask._id}
                       participantId={participantId}
-                      onVoteChange={setOptimisticVote}
+                      onVoteChange={(value) =>
+                        setOptimisticVote({ taskId: currentTask._id, value })
+                      }
                     />
                   )}
                 </div>
