@@ -102,6 +102,12 @@ export default function Room() {
   useDocumentTitle(room?.name);
   useTrackRoom(roomCode, room?.name);
 
+  const taskScrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    taskScrollRef.current?.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
+  }, [currentTask?._id]);
+
   const [participantsOpen, setParticipantsOpen] = useState(() => {
     try {
       return localStorage.getItem("participants_sidebar_open") !== "false";
@@ -215,7 +221,7 @@ export default function Room() {
           }}
         />
 
-        <div className="flex flex-1 flex-col overflow-auto">
+        <div ref={taskScrollRef} className="flex flex-1 flex-col overflow-auto">
           {room.status === "lobby" ? <RoomLobby /> : null}
 
           {(room.status === "voting" || room.status === "revealed") && participantId ? (
