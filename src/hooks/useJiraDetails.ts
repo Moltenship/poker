@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { JIRA_QUERY_OPTIONS } from "@/lib/persister";
 
-const JIRA_DETAILS_CACHE_VERSION = 4;
+const JIRA_DETAILS_CACHE_VERSION = 5;
 
 export function useJiraDetails(jiraKeys: string[]) {
   const sortedKeys = [...jiraKeys].sort();

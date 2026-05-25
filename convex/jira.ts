@@ -90,6 +90,8 @@ interface JiraIssueFields {
     content: string;
   }[];
   labels?: string[];
+  created?: string;
+  updated?: string;
 }
 
 interface JiraSearchResponse {
@@ -465,6 +467,8 @@ export const fetchTaskDetails = action({
             "issuelinks",
             "attachment",
             "labels",
+            "created",
+            "updated",
           ],
         }),
         headers: {
@@ -504,6 +508,7 @@ export const fetchTaskDetails = action({
           assignee,
           assigneeAvatarUrl,
           blockedBy,
+          created: issue.fields.created,
           description: adfToMarkdown(issue.fields.description, mediaUrlMap),
           isBlocked,
           labels: issue.fields.labels ?? [],
@@ -514,6 +519,7 @@ export const fetchTaskDetails = action({
           statusColor,
           title: String(issue.fields.summary || issue.key),
           type: String(issue.fields.issuetype?.name ?? ""),
+          updated: issue.fields.updated,
           url: `${baseUrl}/browse/${issue.key}`,
         };
       }
