@@ -47,8 +47,8 @@ export function SortControls({ sortState, onModeChange, onDirectionChange }: Sor
             onClick={toggleDirection}
             aria-label={
               sortState.direction === "desc"
-                ? "Sort descending (newest first)"
-                : "Sort ascending (oldest first)"
+                ? "Switch to ascending (oldest first)"
+                : "Switch to descending (newest first)"
             }
           >
             {sortState.direction === "desc" ? <ArrowDownWideNarrow /> : <ArrowUpNarrowWide />}

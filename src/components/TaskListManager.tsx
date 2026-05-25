@@ -223,6 +223,7 @@ export function TaskListManager({
                         onModeChange={setSortMode}
                         onDirectionChange={setSortDirection}
                       />
+                      <Separator className="my-1" />
                       <SprintFilterChips
                         sprints={jiraSprints}
                         selectedIds={localSprintFilter}
