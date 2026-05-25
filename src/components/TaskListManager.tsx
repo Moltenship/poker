@@ -4,6 +4,7 @@ import { RotateCw, SlidersHorizontal, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 
 import { LabelFilterChips } from "@/components/LabelFilterChips";
+import { SortControls } from "@/components/SortControls";
 import { SprintFilterChips } from "@/components/SprintFilterChips";
 import { TaskRow } from "@/components/TaskRow";
 import { TypeFilterChips } from "@/components/TypeFilterChips";
@@ -15,10 +16,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useJiraDetails } from "@/hooks/useJiraDetails";
 import { useJiraSync } from "@/hooks/useJiraSync";
 import { useSessionMutation } from "@/hooks/useSession";
+import { useTaskSort } from "@/hooks/useTaskSort";
 import { isTaskVisible } from "@/lib/taskFilters";
+import { DEFAULT_TASK_SORT_STATE, sortTasks } from "@/lib/taskSort";
 import { cn } from "@/lib/utils";
 
 export interface Task {
+  _creationTime: number;
   _id: Id<"tasks">;
   title?: string;
   jiraKey?: string;
@@ -86,6 +90,9 @@ export function TaskListManager({
     typeFilter,
   });
 
+  const { sortState, setMode: setSortMode, setDirection: setSortDirection } = useTaskSort();
+  const effectiveSortState = jiraEnabled ? sortState : DEFAULT_TASK_SORT_STATE;
+
   // Derive unique types from enriched Jira details
   const availableTypes = [
     ...new Set(
@@ -118,10 +125,11 @@ export function TaskListManager({
     deleteTask({ taskId }).catch(console.error);
   };
 
-  const visibleTasks = tasks.filter((t) => {
+  const filteredTasks = tasks.filter((t) => {
     const details = t.jiraKey ? jiraDetails[t.jiraKey] : undefined;
     return isTaskVisible({ details, labelFilter: localLabelFilter, typeFilter: localTypeFilter });
   });
+  const visibleTasks = sortTasks(filteredTasks, jiraDetails, effectiveSortState);
 
   return (
     <div className="flex h-full flex-col" data-testid="task-list-manager">
@@ -195,7 +203,8 @@ export function TaskListManager({
                           size="icon-xs"
                           className={cn(
                             "text-muted-foreground",
-                            (localSprintFilter.length > 0 ||
+                            (sortState.mode !== "manual" ||
+                              localSprintFilter.length > 0 ||
                               localLabelFilter.length > 0 ||
                               localTypeFilter.length > 0) &&
                               "text-primary",
@@ -209,6 +218,12 @@ export function TaskListManager({
                   </Tooltip>
                   <PopoverContent className="w-72 p-3" align="end">
                     <div className="flex flex-col gap-2">
+                      <SortControls
+                        sortState={sortState}
+                        onModeChange={setSortMode}
+                        onDirectionChange={setSortDirection}
+                      />
+                      <Separator className="my-1" />
                       <SprintFilterChips
                         sprints={jiraSprints}
                         selectedIds={localSprintFilter}

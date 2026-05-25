@@ -34,6 +34,7 @@ export interface JiraTaskDetails {
   assignee?: string;
   assigneeAvatarUrl?: string;
   blockedBy: JiraBlocker[];
+  created?: string;
   description: string;
   isBlocked: boolean;
   labels: string[];
@@ -44,6 +45,7 @@ export interface JiraTaskDetails {
   statusColor?: string;
   title: string;
   type: string;
+  updated?: string;
   url: string;
 }
 
