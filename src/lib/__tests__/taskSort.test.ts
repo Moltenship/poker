@@ -1,3 +1,4 @@
+import type { JiraTaskDetails } from "@convex/jiraTypes";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -6,7 +7,6 @@ import {
   sortTasks,
   type TaskSortState,
 } from "@/lib/taskSort";
-import type { JiraTaskDetails } from "@convex/jiraTypes";
 
 function task(overrides: Partial<SortableTask>): SortableTask {
   return {
@@ -18,9 +18,7 @@ function task(overrides: Partial<SortableTask>): SortableTask {
   };
 }
 
-function jiraDetails(
-  overrides: Partial<JiraTaskDetails>,
-): JiraTaskDetails {
+function jiraDetails(overrides: Partial<JiraTaskDetails>): JiraTaskDetails {
   return {
     blockedBy: [],
     description: "",
@@ -48,10 +46,7 @@ describe(sortTasks, () => {
   });
 
   it("manual mode ignores direction", () => {
-    const tasks = [
-      task({ order: 2 }),
-      task({ order: 1 }),
-    ];
+    const tasks = [task({ order: 2 }), task({ order: 1 })];
     const state: TaskSortState = { direction: "asc", mode: "manual" };
 
     const result = sortTasks(tasks, {}, state);
@@ -78,10 +73,7 @@ describe(sortTasks, () => {
   });
 
   it("updated asc sorts Jira tasks by Jira updated oldest first", () => {
-    const tasks = [
-      task({ jiraKey: "A", order: 1 }),
-      task({ jiraKey: "B", order: 2 }),
-    ];
+    const tasks = [task({ jiraKey: "A", order: 1 }), task({ jiraKey: "B", order: 2 })];
     const details = {
       A: jiraDetails({ updated: "2026-05-01T00:00:00.000Z" }),
       B: jiraDetails({ updated: "2026-04-01T00:00:00.000Z" }),
@@ -157,10 +149,7 @@ describe(sortTasks, () => {
   });
 
   it("does not mutate the input array", () => {
-    const tasks = [
-      task({ order: 2 }),
-      task({ order: 1 }),
-    ];
+    const tasks = [task({ order: 2 }), task({ order: 1 })];
     const originalRef = tasks;
     const originalOrders = tasks.map((t) => t.order);
 
