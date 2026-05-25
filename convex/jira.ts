@@ -70,7 +70,7 @@ interface JiraIssueFields {
       key?: string;
       fields?: {
         summary?: string;
-        status?: { name?: string; statusCategory?: { colorName?: string } };
+        status?: { name?: string; statusCategory?: { key?: string; colorName?: string } };
         issuetype?: { name?: string; iconUrl?: string };
       };
     };
@@ -78,7 +78,7 @@ interface JiraIssueFields {
       key?: string;
       fields?: {
         summary?: string;
-        status?: { name?: string; statusCategory?: { colorName?: string } };
+        status?: { name?: string; statusCategory?: { key?: string; colorName?: string } };
         issuetype?: { name?: string; iconUrl?: string };
       };
     };
@@ -397,21 +397,24 @@ export const fetchJiraSprints = action({
   },
 });
 
+/**
+ * A blocker is "active" when its statusCategory is not "done". Jira's
+ * statusCategory key is a stable, language-independent identifier — "done"
+ * covers Done, Closed, Resolved, Cancelled, Won't Do, Released, etc.
+ */
+function isActiveBlocker(link: NonNullable<JiraIssueFields["issuelinks"]>[number]): boolean {
+  if (!link.type?.inward?.toLowerCase().includes("is blocked by") || !link.inwardIssue?.key) {
+    return false;
+  }
+  return link.inwardIssue.fields?.status?.statusCategory?.key !== "done";
+}
+
 /** Check if a Jira issue is blocked based on its issue links. */
 function checkIsBlocked(links: JiraIssueFields["issuelinks"]): boolean {
   if (!Array.isArray(links)) {
     return false;
   }
-  return links.some((link) => {
-    // "is blocked by" link — the blocking issue is the inward issue
-    if (link.type?.inward?.toLowerCase().includes("is blocked by") && link.inwardIssue) {
-      const status = link.inwardIssue.fields?.status?.name?.toLowerCase() ?? "";
-      // Only blocked if the blocker isn't done
-      return !status.includes("done") && !status.includes("closed") && !status.includes("resolved");
-    }
-    // "blocks" link — this issue blocks the outward issue (not blocked itself)
-    return false;
-  });
+  return links.some(isActiveBlocker);
 }
 
 /** Extract blocker details (key, summary, url) from issue links. */
@@ -419,24 +422,14 @@ function getBlockers(links: JiraIssueFields["issuelinks"], baseUrl: string): Jir
   if (!Array.isArray(links)) {
     return [];
   }
-  return links
-    .filter((link) => {
-      if (link.type?.inward?.toLowerCase().includes("is blocked by") && link.inwardIssue?.key) {
-        const status = link.inwardIssue.fields?.status?.name?.toLowerCase() ?? "";
-        return (
-          !status.includes("done") && !status.includes("closed") && !status.includes("resolved")
-        );
-      }
-      return false;
-    })
-    .map((link) => ({
-      key: link.inwardIssue!.key!,
-      status: String(link.inwardIssue!.fields?.status?.name ?? ""),
-      statusColor: link.inwardIssue!.fields?.status?.statusCategory?.colorName ?? undefined,
-      summary: String(link.inwardIssue!.fields?.summary ?? link.inwardIssue!.key!),
-      typeIconUrl: link.inwardIssue!.fields?.issuetype?.iconUrl ?? undefined,
-      url: `${baseUrl}/browse/${link.inwardIssue!.key!}`,
-    }));
+  return links.filter(isActiveBlocker).map((link) => ({
+    key: link.inwardIssue!.key!,
+    status: String(link.inwardIssue!.fields?.status?.name ?? ""),
+    statusColor: link.inwardIssue!.fields?.status?.statusCategory?.colorName ?? undefined,
+    summary: String(link.inwardIssue!.fields?.summary ?? link.inwardIssue!.key!),
+    typeIconUrl: link.inwardIssue!.fields?.issuetype?.iconUrl ?? undefined,
+    url: `${baseUrl}/browse/${link.inwardIssue!.key!}`,
+  }));
 }
 
 export const fetchTaskDetails = action({
